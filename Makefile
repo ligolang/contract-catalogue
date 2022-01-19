@@ -1,5 +1,5 @@
 ifndef LIGO
-LIGO=sudo docker run --rm -v "$(PWD)":"$(PWD)" -w "$(PWD)" ligolang/ligo:next
+LIGO=docker run --rm -v "$(PWD)":"$(PWD)" -w "$(PWD)" ligolang/ligo:next
 endif
 
 test:
