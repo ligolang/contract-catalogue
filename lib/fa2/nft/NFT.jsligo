@@ -1,0 +1,216 @@
+// This file implement the TZIP-12 protocol (a.k.a FA2) for NFT on Tezos
+// copyright Wulfman Corporation 2021
+
+// Errors
+#import "../common/errors.mligo" "Errors"
+
+namespace Operators {
+   type owner    = address;
+   type operator = address;
+   type token_id = nat;
+   export type t = big_map<[owner, operator], set<token_id>>;
+
+   // if transfer policy is Owner_or_operator_transfer
+   export let assert_authorisation = ([operators, from_, token_id]: [t, address, nat]): unit => {
+      let sender_ = Tezos.sender;
+      if (sender_ != from_){
+         let authorized = match ((Big_map.find_opt ([from_,sender_], operators)),
+         {Some: (a : set<token_id>) => a , None : () => Set.empty});
+         if (!(Set.mem (token_id, authorized))) 
+            {failwith (Errors.not_operator)}
+      }
+   };
+// if transfer policy is Owner_transfer
+// export let assert_authorisation = ([operators, from_, token_id]: [t, address, nat]): unit => {
+//    let sender_ = Tezos.sender;
+//    if (sender_ != from_)
+//       {failwith (Errors.not_owner)}
+// }
+
+// if transfer policy is No_transfer
+// export let assert_authorisation = ([operators, from_, token_id]: [t, address, nat]): unit =>
+//    failwith (Errors.no_owner)
+
+   let assert_update_permission = (owner : owner) : unit =>
+      assert_with_error ((owner = Tezos.sender), "The sender can only manage operators for his own token");
+   // For an administator
+   // let admin = tz1.... ;
+   // assert_with_error ((Tezos.sender = admiin), "Only administrator can manage operators")
+
+
+   export let add_operator = ([operators,owner,operator,token_id]: [t, owner, operator, token_id]) : t => {
+      if (owner = operator) {operators} // assert_authorisation always allow the owner so this case is not relevant
+      else {
+         assert_update_permission (owner);
+         let auth_tokens = match (Big_map.find_opt ([owner,operator], operators),
+            {Some : (ts: set<token_id>) => ts , None : () => Set.empty});
+         let auth_tokens  = Set.add (token_id, auth_tokens);
+         Big_map.update ([owner,operator], Some (auth_tokens), operators);
+      }
+   };
+         
+   export let remove_operator = ([operators,owner,operator,token_id]: [t, owner, operator, token_id]) : t => {
+      if (owner = operator) {operators} // assert_authorisation always allow the owner so this case is not relevant
+      else {
+         assert_update_permission (owner);
+         let auth_tokens = match (Big_map.find_opt ([owner,operator], operators),
+         {Some : (ts : set<token_id>) => {
+            let ts = Set.remove (token_id, ts);
+            if (Set.size (ts) == 0 as nat) {None ()} else {Some (ts)}
+          },
+          None : () => None ()
+         });
+         Big_map.update ([owner,operator], auth_tokens, operators);
+      }
+   };
+};
+
+namespace Ledger {
+   type token_id = nat;
+   type owner = address;
+   export type t = big_map<token_id,owner>;
+   
+   export let is_owner_of = ([ledger,token_id,owner]: [t, token_id, address]): bool => {
+      // We already sanitized token_id, a failwith here indicated a patological storage
+      let current_owner = Option.unopt (Big_map.find_opt (token_id, ledger));
+      (current_owner = owner)
+   };
+
+   let assert_owner_of = ([ledger,token_id,owner]: [t, token_id, address]): unit =>
+      assert_with_error (is_owner_of (ledger, token_id, owner), Errors.ins_balance);
+
+   export let transfer_token_from_user_to_user = ([ledger,token_id,from_,to_]: [t, token_id, owner, owner]): t => {
+      assert_owner_of (ledger, token_id, from_);
+      let ledger = Big_map.update (token_id, Some (to_), ledger);
+      ledger 
+   };
+};
+
+namespace TokenMetadata {
+   // This should be initialized at origination, conforming to either 
+   // TZIP-12 : https://gitlab.com/tezos/tzip/-/blob/master/proposals/tzip-12/tzip-12.md#token-metadata
+   // or TZIP-16 : https://gitlab.com/tezos/tzip/-/blob/master/proposals/tzip-12/tzip-12.md#contract-metadata-tzip-016 
+   type data = {token_id:nat,token_info:map<string,bytes>};
+   export type t = big_map <nat, data>;
+};
+
+namespace Storage {
+   type token_id = nat;
+   export type t = {
+      ledger : Ledger.t,
+      token_metadata : TokenMetadata.t,
+      operators : Operators.t,
+   };
+
+   export let is_owner_of = ([s,owner,token_id]: [t, address, token_id]) : bool =>
+      Ledger.is_owner_of (s.ledger, token_id, owner);
+
+   export let assert_token_exist = ([s, token_id]: [t, nat]) : unit =>
+      Option.unopt_with_error (Big_map.find_opt (token_id, s.token_metadata),
+         Errors.undefined_token);
+
+   export let set_ledger = ([s, ledger]: [t, Ledger.t]) : t => ({...s, ledger : ledger});
+
+   export let get_operators = (s:t) : Operators.t => s.operators;
+   export let set_operators = ([s, operators]: [t, Operators.t]) : t => ({...s, operators : operators});
+};
+
+
+type storage = Storage.t;
+
+// Transfer entrypoint
+type atomic_trans = [@layout:comb] {
+   to_      : address,
+   token_id : nat,
+};
+
+type transfer_from = {
+   from_ : address,
+   tx    : list<atomic_trans>,
+};
+
+type transfer = list<transfer_from>;
+
+let transfer = ([t, s]: [transfer, storage]): [list<operation>, storage] => {
+   // This function process the "tx" list. Since all transfer share the same "from_" address, we use a se
+   let process_atomic_transfer = (from_ : address) => ([ledger,t] : [Ledger.t, atomic_trans]) => {
+      let {to_,token_id} = t;
+      Storage.assert_token_exist (s, token_id);
+      Operators.assert_authorisation (s.operators, from_, token_id);
+      let ledger = Ledger.transfer_token_from_user_to_user (ledger, token_id, from_, to_);
+      ledger
+   };
+   let process_single_transfer = ([ledger, t]: [Ledger.t, transfer_from]) => {
+      let {from_,tx} = t;
+      let ledger     = List.fold_left (process_atomic_transfer (from_), ledger, tx);
+      ledger
+   };
+   let ledger = List.fold_left (process_single_transfer, s.ledger, t);
+   let s = Storage.set_ledger (s, ledger);
+   [list ([]),s]
+}
+
+type request = {
+   owner    : address,
+   token_id : nat,
+};
+
+type callback = [@layout:comb] {
+   request : request,
+   balance : nat,
+};
+
+type balance_of = [@layout:comb] {
+   requests : list<request>,
+   callback : contract<list<callback>>,
+};
+
+// Balance_of entrypoint
+let balance_of = ([b, c] : [balance_of, storage]): [list<operation>, storage] => {
+   let {requests, callback} = b;
+   let get_balance_info = (request : request) : callback => {
+      let {owner,token_id} = request;
+      Storage.assert_token_exist  (s, token_id); 
+      let balance_ = 0 as nat;
+      if (Storage.is_owner_of (s, owner, token_id)) {balance_ = 1 as nat};
+      ({request:request,balance:balance_})
+   };
+   let callback_param = List.map (get_balance_info, requests);
+   let operation = Tezos.transaction (callback_param, (0 as tez), callback);
+   [list([operation]),s]
+};
+
+// Update_operators entrypoint
+type operator = [@layout:comb] {
+   owner    : address,
+   operator : address,
+   token_id : nat,
+};
+
+type unit_update      = ["Add_operator", operator] | ["Remove_operator", operator];
+type update_operators = list<unit_update>;
+
+let update_ops = ([updates, s]: [update_operators, storage]): [list<operation>, storage] => {
+   let update_operator = ([operators,update] : [Operators.t, unit_update]) => match (update, 
+   { Add_operator    : ({owner:owner,operator:operator,token_id:token_id} : operator) => Operators.add_operator    (operators, owner, operator, token_id)
+   , Remove_operator : ({owner:owner,operator:operator,token_id:token_id} : operator) => Operators.remove_operator (operators, owner, operator, token_id)
+   });
+   let operators = Storage.get_operators (s);
+   let operators = List.fold_left (update_operator, operators, updates);
+   let s = Storage.set_operators (s, operators);
+   [list([]),s]
+};
+
+// If transfer_policy is  No_transfer or Owner_transfer
+//let update_ops : update_operators -> storage -> operation list * storage = 
+//   fun (updates: update_operators) (s: storage) -> 
+//   let () = failwith Errors.not_supported in
+//   ([]: operation list),s
+
+
+type parameter = [@layout:comb] ["Transfer", transfer] | ["Balance_of", balance_of] | ["Update_operators", update_operators]
+let main = ([p, s]: [parameter, storage]) => match (p,
+{  Transfer         : (p : transfer        ) => transfer   (p, s)
+,  Balance_of       : (p : balance_of      ) => balance_of (p, s)
+,  Update_operators : (p : update_operator ) => update_ops (p, s)
+});
