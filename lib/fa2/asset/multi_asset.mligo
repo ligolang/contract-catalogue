@@ -1,23 +1,9 @@
 (** 
-   This file implement the TZIP-12 protocol (a.k.a FA2) for NFT on Tezos
+   This file implement the TZIP-12 protocol (a.k.a FA2) for Multi asset on Tezos
    copyright Wulfman Corporation 2021
 *)
 
-(* 
-   Errors
-*)
-module Errors = struct
-   let undefined_token = "FA2_TOKEN_UNDEFINED"
-   let ins_balance     = "FA2_INSUFFICIENT_BALANCE"
-   let no_transfer     = "FA2_TX_DENIED"
-   let not_owner       = "FA2_NOT_OWNER"
-   let not_operator    = "FA2_NOT_OPERATOR"
-   let not_supported   = "FA2_OPERATORS_UNSUPPORTED"
-   let rec_hook_fail   = "FA2_RECEIVER_HOOK_FAILED"
-   let send_hook_fail  = "FA2_SENDER_HOOK_FAILED"
-   let rec_hook_undef  = "FA2_RECEIVER_HOOK_UNDEFINED"
-   let send_hook_under = "FA2_SENDER_HOOK_UNDEFINED"
-end
+#import "../common/errors.mligo" "Errors"
 
 module Operators = struct
    type owner    = address
@@ -75,21 +61,29 @@ module Operators = struct
 end
 
 module Ledger = struct
+   type owner    = address
    type token_id = nat
-   type owner = address
-   type t = (token_id,owner) big_map
+   type amount_  = nat
+   type t = ((owner * token_id), amount_) big_map
    
-   let is_owner_of (ledger:t) (token_id : token_id) (owner: address) : bool =
-      (** We already sanitized token_id, a failwith here indicated a patological storage *)
-      let current_owner = Option.unopt (Big_map.find_opt token_id ledger) in
-      current_owner=owner
+   let get_for_user (ledger:t) (owner: owner) (token_id : token_id) : amount_ =
+      match Big_map.find_opt (owner,token_id) ledger with Some (a) -> a | None -> 0n
+   
 
-   let assert_owner_of (ledger:t) (token_id : token_id) (owner: address) : unit =
-      assert_with_error (is_owner_of ledger token_id owner) Errors.ins_balance
+   let set_for_user (ledger:t) (owner: owner) (token_id : token_id ) (amount_:amount_) : t = 
+      Big_map.update (owner,token_id) (Some amount_) ledger
 
-   let transfer_token_from_user_to_user (ledger : t) (token_id : token_id) (from_ : owner) (to_ : owner) : t = 
-      let () = assert_owner_of ledger token_id from_ in
-      let ledger = Big_map.update token_id (Some to_) ledger in
+   let decrease_token_amount_for_user (ledger : t) (from_ : owner) (token_id : nat) (amount_ : nat) : t = 
+      let balance_ = get_for_user ledger from_ token_id in
+      let ()       = assert_with_error (balance_ >= amount_) Errors.ins_balance in
+      let balance_ = abs (balance_ - amount_) in
+      let ledger   = set_for_user ledger from_ token_id balance_ in
+      ledger 
+
+   let increase_token_amount_for_user (ledger : t) (to_   : owner) (token_id : nat) (amount_ : nat) : t = 
+      let balance_ = get_for_user ledger to_ token_id in
+      let balance_ = balance_ + amount_ in
+      let ledger   = set_for_user ledger to_ token_id balance_ in
       ledger 
 end
 
@@ -111,9 +105,6 @@ module Storage = struct
       operators : Operators.t;
    }
 
-   let is_owner_of (s:t) (owner : address) (token_id : token_id) : bool = 
-      Ledger.is_owner_of s.ledger token_id owner
-
    let assert_token_exist (s:t) (token_id : nat) : unit  = 
       let _ = Option.unopt_with_error (Big_map.find_opt token_id s.token_metadata)
          Errors.undefined_token in
@@ -128,10 +119,13 @@ end
 
 type storage = Storage.t
 
-(** Transfer entrypoint *)
+(** transfer entrypoint
+*)
+
 type atomic_trans = [@layout:comb] {
    to_      : address;
    token_id : nat;
+   amount   : nat;
 }
 
 type transfer_from = {
@@ -144,10 +138,11 @@ let transfer : transfer -> storage -> operation list * storage =
    fun (t:transfer) (s:storage) -> 
    (* This function process the "tx" list. Since all transfer share the same "from_" address, we use a se *)
    let process_atomic_transfer (from_:address) (ledger, t:Ledger.t * atomic_trans) =
-      let {to_;token_id} = t in
+      let {to_;token_id;amount=amount_} = t in
       let ()     = Storage.assert_token_exist s token_id in
       let ()     = Operators.assert_authorisation s.operators from_ token_id in
-      let ledger = Ledger.transfer_token_from_user_to_user ledger token_id from_ to_ in
+      let ledger = Ledger.decrease_token_amount_for_user ledger from_ token_id amount_ in
+      let ledger = Ledger.increase_token_amount_for_user ledger to_   token_id amount_ in
       ledger
    in
    let process_single_transfer (ledger, t:Ledger.t * transfer_from ) =
@@ -159,6 +154,8 @@ let transfer : transfer -> storage -> operation list * storage =
    let s = Storage.set_ledger s ledger in
    ([]: operation list),s
 
+(** balance_of entrypoint 
+*)
 type request = {
    owner    : address;
    token_id : nat;
@@ -174,21 +171,20 @@ type balance_of = [@layout:comb] {
    callback : callback list contract;
 }
 
-(** Balance_of entrypoint *)
 let balance_of : balance_of -> storage -> operation list * storage = 
    fun (b: balance_of) (s: storage) -> 
    let {requests;callback} = b in
    let get_balance_info (request : request) : callback =
       let {owner;token_id} = request in
-      let ()       = Storage.assert_token_exist  s token_id in 
-      let balance_ = if Storage.is_owner_of s owner token_id then 1n else 0n in
+      let ()          = Storage.assert_token_exist  s token_id in 
+      let balance_    = Ledger.get_for_user s.ledger owner token_id in
       {request=request;balance=balance_}
    in
    let callback_param = List.map get_balance_info requests in
    let operation = Tezos.transaction callback_param 0tez callback in
    ([operation]: operation list),s
 
-(** Update_operators entrypoint *)
+(** update operators entrypoint *)
 type operator = [@layout:comb] {
    owner    : address;
    operator : address;
