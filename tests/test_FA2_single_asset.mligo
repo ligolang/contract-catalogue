@@ -1,4 +1,5 @@
-#include "FA2_single_asset.mligo"
+#include "../contract/FA2_single_asset.mligo"
+#import "./balance_of_callback_contract.mligo" "Callback"
 
 type owner    = address
 type operator = address
@@ -72,7 +73,7 @@ module Test_helper = struct
     }: storage)
     in
     let (t_addr,_,_) = Test.originate main initial_storage 1tez in
-    let (b_addr,_,_) = Test.originate_from_file "./contract/balance_of_tester.mligo" "main" (Test.eval 0) 1tez in
+    let (b_addr,_,_) = Test.originate Callback.main ([] : nat list) 1tez in
     t_addr, b_addr, addresses (List.length amount_ - 1)
 
 end
@@ -159,7 +160,7 @@ let test_atomic () =
   | Fail _ -> 
     (* Tezos.get_contract_with_error *)
     type x = {balance: nat; request: {owner: address; token_id: nat}} in
-    let callback = (Tezos.get_contract_with_error b_contr "nohooo": x list contract) in
+    let callback = (Test.to_contract b_contr) in
     ( match (Test.transfer_to_contract contr (
       (Balance_of {
         callback = callback;  
