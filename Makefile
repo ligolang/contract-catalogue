@@ -1,16 +1,12 @@
 ifndef LIGO
-LIGO=sudo docker run --rm -v "$(PWD)":"$(PWD)" -w "$(PWD)" ligolang/ligo:next
+LIGO=docker run --rm -v "$(PWD)":"$(PWD)" -w "$(PWD)" ligolang/ligo:next
 endif
 
 test:
-	$(LIGO) run test ./tests/FA2_single_asset.test.mligo
-	$(LIGO) run test ./tests/FA2_multi_asset.test.mligo
-	$(LIGO) run test ./tests/FA2_nft.test.mligo
-
-	$(LIGO) run test ./tests/test_FA2_single_asset.mligo
+	$(LIGO) run test ./test/fa2/single_asset.test.mligo
+	$(LIGO) run test ./test/fa2/multi_asset.test.mligo
+	$(LIGO) run test ./test/fa2/nft.test.mligo
+	$(LIGO) run test ./test/fa2/test_FA2_single_asset.mligo
 
 compile:
-	$(LIGO) compile contract contract/FA2_single_asset.mligo
-
-check:
-	$(LIGO) run test contract/foo.mligo
+	$(LIGO) compile contract lib/fa2/single_asset.mligo

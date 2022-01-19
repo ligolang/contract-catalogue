@@ -1,4 +1,4 @@
-#import "../contract/FA2_multi_asset.mligo" "FA2_multi_asset"
+#import "../../lib/fa2/asset/multi_asset.mligo" "FA2_multi_asset"
 #import "./balance_of_callback_contract.mligo" "Callback"
 
 (* Tests for FA2 multi asset contract *)
