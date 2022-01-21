@@ -304,7 +304,7 @@ let test_update_operator_remove_operator_and_transfer =
         owner    = owner1;
         operator = op1;
         token_id = 1n;
-      } : FA2_NFT.Operators.operator_request) : FA2_NFT.unit_update)
+      } : FA2_NFT.operator) : FA2_NFT.unit_update)
     ] : FA2_NFT.update_operators)) 0tez in
 
   let () = Test.set_source op1 in
@@ -332,7 +332,7 @@ let test_update_operator_add_operator_and_transfer =
         owner    = owner1;
         operator = op3;
         token_id = 1n;
-      } : FA2_NFT.Operators.operator_request) : FA2_NFT.unit_update);
+      } : FA2_NFT.operator) : FA2_NFT.unit_update);
     ] : FA2_NFT.update_operators)) 0tez in
 
   let () = Test.set_source op3 in

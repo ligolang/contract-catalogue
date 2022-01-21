@@ -10,11 +10,6 @@ module Operators = struct
    type operator = address
    type token_id = nat
    type t = ((owner * operator), token_id set) big_map
-   type operator_request = [@layout:comb] {
-      owner    : address;
-      operator : address;
-      token_id : nat; 
-   }
 
 (** if transfer policy is Owner_or_operator_transfer *)
    let assert_authorisation (operators : t) (from_ : address) (token_id : nat) : unit = 
@@ -37,8 +32,7 @@ module Operators = struct
       failwith Errors.no_owner
 *)
 
-   let is_operator (operators : t) (op : operator_request) : bool =
-      let {owner;operator;token_id} = op in
+   let is_operator (operators, owner, operator, token_id : (t * address * address * nat)) : bool =
       let authorized = match Big_map.find_opt (owner,operator) operators with
          Some (a) -> a | None -> Set.empty in
       Set.mem token_id authorized
@@ -199,7 +193,12 @@ let balance_of : balance_of -> storage -> operation list * storage =
    ([operation]: operation list),s
 
 (** Update_operators entrypoint *)
-type unit_update      = Add_operator of Operators.operator_request | Remove_operator of Operators.operator_request
+type operator = [@layout:comb] {
+   owner    : address;
+   operator : address;
+   token_id : nat; 
+}
+type unit_update      = Add_operator of operator | Remove_operator of operator
 type update_operators = unit_update list
 
 let update_ops : update_operators -> storage -> operation list * storage = 
@@ -239,7 +238,7 @@ let main ((p,s):(parameter * storage)) = match p with
 
 [@view] let all_tokens ((_, s) : (unit * storage)) : nat list = s.token_ids
    
-[@view] let is_operator ((op, s) : (Operators.operator_request * storage)) : bool = 
-   Operators.is_operator s.operators op
+[@view] let is_operator ((op, s) : (operator * storage)) : bool = 
+   Operators.is_operator (s.operators, op.owner, op.operator, op.token_id)
 
 (* [@view] let token_metadata *)
