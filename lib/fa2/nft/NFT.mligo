@@ -88,9 +88,6 @@ module Ledger = struct
       let () = assert_owner_of ledger token_id from_ in
       let ledger = Big_map.update token_id (Some to_) ledger in
       ledger 
-
-   let does_token_exist (ledger : t) (token_id : nat) : bool =
-      Big_map.mem token_id ledger
 end
 
 module TokenMetadata = struct
@@ -237,9 +234,8 @@ let main ((p,s):(parameter * storage)) = match p with
    balance_
 
 [@view] let total_supply ((token_id, s) : (nat * storage)) : nat =
-   if Ledger.does_token_exist s.ledger token_id
-   then 1n
-   else 0n
+   let () = Storage.assert_token_exist s token_id in
+   1n
 
 [@view] let all_tokens ((_, s) : (unit * storage)) : nat list = s.token_ids
    
