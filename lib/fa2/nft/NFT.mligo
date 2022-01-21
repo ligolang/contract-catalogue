@@ -10,6 +10,11 @@ module Operators = struct
    type operator = address
    type token_id = nat
    type t = ((owner * operator), token_id set) big_map
+   type operator_request = [@layout:comb] {
+      owner    : address;
+      operator : address;
+      token_id : nat; 
+   }
 
 (** if transfer policy is Owner_or_operator_transfer *)
    let assert_authorisation (operators : t) (from_ : address) (token_id : nat) : unit = 
@@ -31,6 +36,12 @@ module Operators = struct
    let assert_authorisation (operators : t) (from_ : address) : unit = 
       failwith Errors.no_owner
 *)
+
+   let is_operator (operators : t) (op : operator_request) : bool =
+      let {owner;operator;token_id} = op in
+      let authorized = match Big_map.find_opt (owner,operator) operators with
+         Some (a) -> a | None -> Set.empty in
+      Set.mem token_id authorized
 
    let assert_update_permission (owner : owner) : unit =
       assert_with_error (owner = Tezos.sender) "The sender can only manage operators for his own token"
@@ -77,6 +88,9 @@ module Ledger = struct
       let () = assert_owner_of ledger token_id from_ in
       let ledger = Big_map.update token_id (Some to_) ledger in
       ledger 
+
+   let does_token_exist (ledger : t) (token_id : nat) : bool =
+      Big_map.mem token_id ledger
 end
 
 module TokenMetadata = struct
@@ -160,14 +174,19 @@ type balance_of = [@layout:comb] {
    callback : callback list contract;
 }
 
+let get_balance : storage -> address -> nat -> nat = 
+   fun (s : storage) (owner : address) (token_id : nat) ->
+      let ()       = Storage.assert_token_exist s token_id in 
+      let balance_ = if Storage.is_owner_of s owner token_id then 1n else 0n in
+      balance_
+
 (** Balance_of entrypoint *)
 let balance_of : balance_of -> storage -> operation list * storage = 
    fun (b: balance_of) (s: storage) -> 
    let {requests;callback} = b in
    let get_balance_info (request : request) : callback =
       let {owner;token_id} = request in
-      let ()       = Storage.assert_token_exist  s token_id in 
-      let balance_ = if Storage.is_owner_of s owner token_id then 1n else 0n in
+      let balance_ = get_balance s owner token_id in
       {request=request;balance=balance_}
    in
    let callback_param = List.map get_balance_info requests in
@@ -175,13 +194,7 @@ let balance_of : balance_of -> storage -> operation list * storage =
    ([operation]: operation list),s
 
 (** Update_operators entrypoint *)
-type operator = [@layout:comb] {
-   owner    : address;
-   operator : address;
-   token_id : nat; 
-}
-
-type unit_update      = Add_operator of operator | Remove_operator of operator
+type unit_update      = Add_operator of Operators.operator_request | Remove_operator of Operators.operator_request
 type update_operators = unit_update list
 
 let update_ops : update_operators -> storage -> operation list * storage = 
@@ -208,3 +221,21 @@ let main ((p,s):(parameter * storage)) = match p with
    Transfer         p -> transfer   p s
 |  Balance_of       p -> balance_of p s
 |  Update_operators p -> update_ops p s
+
+
+[@view] let get_balance ((p, s) : ((address * nat) * storage)) : nat = 
+   let (owner, token_id) = p in
+   let balance_ = get_balance s owner token_id in
+   balance_
+
+[@view] let total_supply ((token_id, s) : (nat * storage)) : nat =
+   if Ledger.does_token_exist s.ledger token_id
+   then 1n
+   else 0n
+
+(* [@view] let all_tokens ((_, s) : (unit * storage)) : nat list = *)
+   
+[@view] let is_operator ((op, s) : (Operators.operator_request * storage)) : bool = 
+   Operators.is_operator s.operators op
+
+(* [@view] let token_metadata *)
