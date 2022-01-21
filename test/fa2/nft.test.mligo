@@ -361,7 +361,7 @@ let test_get_balance_view =
   let owner1 = List_helper.nth_exn 0 owners in
   
   let (c_addr,_,_) = Test.originate_from_file 
-    "../../lib/fa2/nft/NFT.mligo" 
+    "./lib/fa2/nft/NFT.mligo" 
     "main"
     (["get_balance"; "total_supply"; "is_operator"] : string list)
     (Test.eval initial_storage) 0tez in
@@ -387,7 +387,7 @@ let test_total_supply_view =
   let initial_storage, owners, operators = get_initial_storage (10n, 10n, 10n) in
   
   let (c_addr,_,_) = Test.originate_from_file 
-    "../../lib/fa2/nft/NFT.mligo" 
+    "./lib/fa2/nft/NFT.mligo" 
     "main"
     (["get_balance"; "total_supply"; "is_operator"] : string list)
     (Test.eval initial_storage) 0tez in
@@ -415,7 +415,7 @@ let test_is_operator_view =
   let op1    = List_helper.nth_exn 0 operators in
   
   let (c_addr,_,_) = Test.originate_from_file 
-    "../../lib/fa2/nft/NFT.mligo" 
+    "./lib/fa2/nft/NFT.mligo" 
     "main"
     (["get_balance"; "total_supply"; "is_operator"] : string list)
     (Test.eval initial_storage) 0tez in
