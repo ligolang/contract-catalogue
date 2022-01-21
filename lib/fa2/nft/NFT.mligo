@@ -124,6 +124,13 @@ module Storage = struct
 
    let get_operators (s:t) = s.operators
    let set_operators (s:t) (operators:Operators.t) = {s with operators = operators}
+
+   let get_balance : t -> address -> nat -> nat = 
+      fun (s : t) (owner : address) (token_id : nat) ->
+         let ()       = assert_token_exist s token_id in 
+         let balance_ = if is_owner_of s owner token_id then 1n else 0n in
+         balance_
+
 end
 
 
@@ -187,7 +194,7 @@ let balance_of : balance_of -> storage -> operation list * storage =
    let {requests;callback} = b in
    let get_balance_info (request : request) : callback =
       let {owner;token_id} = request in
-      let balance_ = get_balance s owner token_id in
+      let balance_ = Storage.get_balance s owner token_id in
       {request=request;balance=balance_}
    in
    let callback_param = List.map get_balance_info requests in
@@ -226,7 +233,7 @@ let main ((p,s):(parameter * storage)) = match p with
 
 [@view] let get_balance ((p, s) : ((address * nat) * storage)) : nat = 
    let (owner, token_id) = p in
-   let balance_ = get_balance s owner token_id in
+   let balance_ = Storage.get_balance s owner token_id in
    balance_
 
 [@view] let total_supply ((token_id, s) : (nat * storage)) : nat =
