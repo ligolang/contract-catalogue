@@ -109,6 +109,7 @@ module Storage = struct
       ledger : Ledger.t;
       token_metadata : TokenMetadata.t;
       operators : Operators.t;
+      token_ids : token_id list;
    }
 
    let is_owner_of (s:t) (owner : address) (token_id : token_id) : bool = 
@@ -233,7 +234,7 @@ let main ((p,s):(parameter * storage)) = match p with
    then 1n
    else 0n
 
-(* [@view] let all_tokens ((_, s) : (unit * storage)) : nat list = *)
+[@view] let all_tokens ((_, s) : (unit * storage)) : nat list = s.token_ids
    
 [@view] let is_operator ((op, s) : (Operators.operator_request * storage)) : bool = 
    Operators.is_operator s.operators op

@@ -61,6 +61,7 @@ let get_initial_storage (a, b, c : nat * nat * nat) =
     ledger         = ledger;
     token_metadata = token_metadata;
     operators      = operators;
+    token_ids      = [1n; 2n; 3n];
   } in
 
   initial_storage, owners, ops
@@ -363,7 +364,7 @@ let test_get_balance_view =
   let (c_addr,_,_) = Test.originate_from_file 
     "./lib/fa2/nft/NFT.mligo" 
     "main"
-    (["get_balance"; "total_supply"; "is_operator"] : string list)
+    (["get_balance"; "total_supply"; "is_operator"; "all_tokens"] : string list)
     (Test.eval initial_storage) 0tez in
 
   let initial_storage : ViewsTest.storage = {
@@ -371,6 +372,7 @@ let test_get_balance_view =
     get_balance   = (None : nat option);
     total_supply  = (None : nat option);
     is_operator   = (None : bool option);
+    all_tokens    = (None : nat list option);
   } in
 
   let (t_addr,_,_) = Test.originate ViewsTest.main initial_storage 0tez in
@@ -389,7 +391,7 @@ let test_total_supply_view =
   let (c_addr,_,_) = Test.originate_from_file 
     "./lib/fa2/nft/NFT.mligo" 
     "main"
-    (["get_balance"; "total_supply"; "is_operator"] : string list)
+    (["get_balance"; "total_supply"; "is_operator"; "all_tokens"] : string list)
     (Test.eval initial_storage) 0tez in
 
   let initial_storage : ViewsTest.storage = {
@@ -397,6 +399,7 @@ let test_total_supply_view =
     get_balance   = (None : nat option);
     total_supply  = (None : nat option);
     is_operator   = (None : bool option);
+    all_tokens    = (None : nat list option);
   } in
 
   let (t_addr,_,_) = Test.originate ViewsTest.main initial_storage 0tez in
@@ -417,7 +420,7 @@ let test_is_operator_view =
   let (c_addr,_,_) = Test.originate_from_file 
     "./lib/fa2/nft/NFT.mligo" 
     "main"
-    (["get_balance"; "total_supply"; "is_operator"] : string list)
+    (["get_balance"; "total_supply"; "is_operator"; "all_tokens"] : string list)
     (Test.eval initial_storage) 0tez in
 
   let initial_storage : ViewsTest.storage = {
@@ -425,6 +428,7 @@ let test_is_operator_view =
     get_balance   = (None : nat option);
     total_supply  = (None : nat option);
     is_operator   = (None : bool option);
+    all_tokens    = (None : nat list option);
   } in
 
   let (t_addr,_,_) = Test.originate ViewsTest.main initial_storage 0tez in
@@ -439,3 +443,32 @@ let test_is_operator_view =
   let storage = Test.get_storage t_addr in
   let is_operator = storage.is_operator in
   assert (is_operator = Some true)
+
+(* Test all_tokens view *)
+let test_all_tokens_view = 
+  let initial_storage, owners, operators = get_initial_storage (10n, 10n, 10n) in
+  let owner1 = List_helper.nth_exn 0 owners in
+  let op1    = List_helper.nth_exn 0 operators in
+  
+  let (c_addr,_,_) = Test.originate_from_file 
+    "./lib/fa2/nft/NFT.mligo" 
+    "main"
+    (["get_balance"; "total_supply"; "is_operator"; "all_tokens"] : string list)
+    (Test.eval initial_storage) 0tez in
+
+  let initial_storage : ViewsTest.storage = {
+    main_contract = c_addr;
+    get_balance   = (None : nat option);
+    total_supply  = (None : nat option);
+    is_operator   = (None : bool option);
+    all_tokens    = (None : nat list option);
+  } in
+
+  let (t_addr,_,_) = Test.originate ViewsTest.main initial_storage 0tez in
+  let contr = Test.to_contract t_addr in
+  let () = Test.transfer_to_contract_exn contr 
+    (All_tokens: ViewsTest.parameter) 0tez
+  in
+  let storage = Test.get_storage t_addr in
+  let all_tokens = storage.all_tokens in
+  assert (all_tokens = Some [1n; 2n; 3n])
