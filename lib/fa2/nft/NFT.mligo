@@ -227,18 +227,22 @@ let main ((p,s):(parameter * storage)) = match p with
 |  Update_operators p -> update_ops p s
 
 
-[@view] let get_balance ((p, s) : ((address * nat) * storage)) : nat = 
-   let (owner, token_id) = p in
-   let balance_ = Storage.get_balance s owner token_id in
-   balance_
+[@view] let get_balance : ((address * nat) * storage) -> nat = 
+   fun (p, s : (address * nat) * storage) ->
+      let (owner, token_id) = p in
+      let balance_ = Storage.get_balance s owner token_id in
+      balance_
 
-[@view] let total_supply ((token_id, s) : (nat * storage)) : nat =
-   let () = Storage.assert_token_exist s token_id in
-   1n
+[@view] let total_supply : (nat * storage) -> nat =
+   fun ((token_id, s) : (nat * storage)) ->
+      let () = Storage.assert_token_exist s token_id in
+      1n
 
-[@view] let all_tokens ((_, s) : (unit * storage)) : nat list = s.token_ids
+[@view] let all_tokens : (unit * storage) -> nat list =
+   fun ((_, s) : (unit * storage)) -> s.token_ids
    
-[@view] let is_operator ((op, s) : (operator * storage)) : bool = 
-   Operators.is_operator (s.operators, op.owner, op.operator, op.token_id)
+[@view] let is_operator : (operator * storage) -> bool =
+   fun ((op, s) : (operator * storage)) -> 
+      Operators.is_operator (s.operators, op.owner, op.operator, op.token_id)
 
-(* [@view] let token_metadata *)
+(* [@view] let token_metadata : (nat * storage) -> TokenMetadata.data *)
