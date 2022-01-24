@@ -92,6 +92,11 @@ module TokenMetadata = struct
    *)
    type data = {token_id:nat;token_info:(string,bytes)map}
    type t = (nat, data) big_map 
+
+   let get_token_metadata (token_id : nat) (tm : t) =
+      match Big_map.find_opt token_id tm with
+        Some data -> data
+      | None -> failwith Errors.undefined_token
 end
 
 module Storage = struct
@@ -173,12 +178,6 @@ type balance_of = [@layout:comb] {
    callback : callback list contract;
 }
 
-let get_balance : storage -> address -> nat -> nat = 
-   fun (s : storage) (owner : address) (token_id : nat) ->
-      let ()       = Storage.assert_token_exist s token_id in 
-      let balance_ = if Storage.is_owner_of s owner token_id then 1n else 0n in
-      balance_
-
 (** Balance_of entrypoint *)
 let balance_of : balance_of -> storage -> operation list * storage = 
    fun (b: balance_of) (s: storage) -> 
@@ -245,4 +244,6 @@ let main ((p,s):(parameter * storage)) = match p with
    fun ((op, s) : (operator * storage)) -> 
       Operators.is_operator (s.operators, op.owner, op.operator, op.token_id)
 
-(* [@view] let token_metadata : (nat * storage) -> TokenMetadata.data *)
+[@view] let token_metadata : (nat * storage) -> TokenMetadata.data = 
+   fun ((p, s) : (nat * storage)) -> 
+      TokenMetadata.get_token_metadata p s.token_metadata
