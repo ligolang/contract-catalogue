@@ -35,7 +35,7 @@ module Operators = struct
    let is_operator (operators, owner, operator, token_id : (t * address * address * nat)) : bool =
       let authorized = match Big_map.find_opt (owner,operator) operators with
          Some (a) -> a | None -> Set.empty in
-      Set.mem token_id authorized
+      (owner = operator || Set.mem token_id authorized)
 
    let assert_update_permission (owner : owner) : unit =
       assert_with_error (owner = Tezos.sender) "The sender can only manage operators for his own token"
