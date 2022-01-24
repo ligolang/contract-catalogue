@@ -41,6 +41,7 @@ let get_initial_storage (a, b, c : nat * nat * nat) =
     ledger         = ledger;
     token_metadata = token_metadata;
     operators      = operators;
+    token_ids      = [1n; 2n; 3n];
   } in
 
   initial_storage, owners, ops
@@ -67,3 +68,9 @@ let assert_balances
   | None -> failwith "incorret address" 
   in
   ()
+
+let assert_error (result : test_exec_result) (error : FA2_NFT.Errors.t) =
+  match result with
+    Success -> failwith "This test should fail"
+  | Fail (Rejected (err, _))  -> assert (Test.michelson_equal err (Test.eval error))
+  | Fail _ -> failwith "invalid test failure"
