@@ -1,3 +1,5 @@
+type t = string
+
 let undefined_token = "FA2_TOKEN_UNDEFINED"
 let ins_balance     = "FA2_INSUFFICIENT_BALANCE"
 let no_transfer     = "FA2_TX_DENIED"
