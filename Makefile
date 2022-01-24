@@ -5,7 +5,7 @@ endif
 test:
 	$(LIGO) run test ./test/fa2/single_asset.test.mligo
 	$(LIGO) run test ./test/fa2/multi_asset.test.mligo
-	$(LIGO) run test ./test/fa2/nft.test.mligo --protocol hangzhou
+	$(LIGO) run test ./test/fa2/nft/nft.test.mligo
 
 compile:
 	$(LIGO) compile contract lib/fa2/single_asset.mligo
