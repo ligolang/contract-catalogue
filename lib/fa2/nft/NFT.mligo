@@ -121,11 +121,9 @@ module Storage = struct
    let get_operators (s:t) = s.operators
    let set_operators (s:t) (operators:Operators.t) = {s with operators = operators}
 
-   let get_balance : t -> address -> nat -> nat = 
-      fun (s : t) (owner : address) (token_id : nat) ->
-         let ()       = assert_token_exist s token_id in 
-         let balance_ = if is_owner_of s owner token_id then 1n else 0n in
-         balance_
+   let get_balance (s : t) (owner : address) (token_id : nat) : nat =
+      let ()       = assert_token_exist s token_id in 
+      if is_owner_of s owner token_id then 1n else 0n
 
 end
 
@@ -144,8 +142,7 @@ type transfer_from = {
 }
 type transfer = transfer_from list
 
-let transfer : transfer -> storage -> operation list * storage = 
-   fun (t:transfer) (s:storage) -> 
+let transfer (t:transfer) (s:storage) : operation list * storage = 
    (* This function process the "tx" list. Since all transfer share the same "from_" address, we use a se *)
    let process_atomic_transfer (from_:address) (ledger, t:Ledger.t * atomic_trans) =
       let {to_;token_id} = t in
@@ -179,8 +176,7 @@ type balance_of = [@layout:comb] {
 }
 
 (** Balance_of entrypoint *)
-let balance_of : balance_of -> storage -> operation list * storage = 
-   fun (b: balance_of) (s: storage) -> 
+let balance_of (b: balance_of) (s: storage) : operation list * storage =
    let {requests;callback} = b in
    let get_balance_info (request : request) : callback =
       let {owner;token_id} = request in
@@ -200,8 +196,7 @@ type operator = [@layout:comb] {
 type unit_update      = Add_operator of operator | Remove_operator of operator
 type update_operators = unit_update list
 
-let update_ops : update_operators -> storage -> operation list * storage = 
-   fun (updates: update_operators) (s: storage) -> 
+let update_ops (updates: update_operators) (s: storage) : operation list * storage =
    let update_operator (operators,update : Operators.t * unit_update) = match update with 
       Add_operator    {owner=owner;operator=operator;token_id=token_id} -> Operators.add_operator    operators owner operator token_id
    |  Remove_operator {owner=owner;operator=operator;token_id=token_id} -> Operators.remove_operator operators owner operator token_id
