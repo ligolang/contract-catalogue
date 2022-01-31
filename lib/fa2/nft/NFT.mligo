@@ -5,40 +5,45 @@
 
 #import "../common/errors.mligo" "Errors"
 
+module Address = struct
+   type t = address
+   [@no_mutation] let equal (a : t) (b : t) = a = b
+end
+
 module Operators = struct
-   type owner    = address
-   type operator = address
+   type owner    = Address.t
+   type operator = Address.t
    type token_id = nat
    type t = ((owner * operator), token_id set) big_map
 
 (** if transfer policy is Owner_or_operator_transfer *)
-   let assert_authorisation (operators : t) (from_ : address) (token_id : nat) : unit = 
+   let assert_authorisation (operators : t) (from_ : Address.t) (token_id : nat) : unit = 
       let sender_ = Tezos.sender in
-      if (sender_ = from_) then ()
+      if (Address.equal sender_ from_) then ()
       else 
       let authorized = match Big_map.find_opt (from_,sender_) operators with
          Some (a) -> a | None -> Set.empty
       in if Set.mem token_id authorized then ()
       else failwith Errors.not_operator
 (** if transfer policy is Owner_transfer
-   let assert_authorisation (operators : t) (from_ : address) : unit = 
+   let assert_authorisation (operators : t) (from_ : Address.t) : unit = 
       let sender_ = Tezos.sender in
       if (sender_ = from_) then ()
       else failwith Errors.not_owner
 *)
 
 (** if transfer policy is No_transfer
-   let assert_authorisation (operators : t) (from_ : address) : unit = 
+   let assert_authorisation (operators : t) (from_ : Address.t) : unit = 
       failwith Errors.no_owner
 *)
 
-   let is_operator (operators, owner, operator, token_id : (t * address * address * nat)) : bool =
+   let is_operator (operators, owner, operator, token_id : (t * Address.t * Address.t * nat)) : bool =
       let authorized = match Big_map.find_opt (owner,operator) operators with
          Some (a) -> a | None -> Set.empty in
       (owner = operator || Set.mem token_id authorized)
 
    let assert_update_permission (owner : owner) : unit =
-      assert_with_error (owner = Tezos.sender) "The sender can only manage operators for his own token"
+      assert_with_error (Address.equal owner Tezos.sender) Errors.only_sender_manage_operators
    (** For an administator
       let admin = tz1.... in
       assert_with_error (Tezos.sender = admiin) "Only administrator can manage operators"
@@ -60,22 +65,23 @@ module Operators = struct
          let auth_tokens = match Big_map.find_opt (owner,operator) operators with
          None -> None | Some (ts) ->
             let ts = Set.remove token_id ts in
-            if (Set.size ts = 0n) then None else Some (ts)
+            [@no_mutation] let is_empty = Set.size ts = 0n in 
+            if is_empty then None else Some (ts)
          in
          Big_map.update (owner,operator) auth_tokens operators
 end
 
 module Ledger = struct
    type token_id = nat
-   type owner = address
+   type owner = Address.t
    type t = (token_id,owner) big_map
    
-   let is_owner_of (ledger:t) (token_id : token_id) (owner: address) : bool =
+   let is_owner_of (ledger:t) (token_id : token_id) (owner: Address.t) : bool =
       (** We already sanitized token_id, a failwith here indicated a patological storage *)
       let current_owner = Option.unopt (Big_map.find_opt token_id ledger) in
-      current_owner=owner
+      Address.equal current_owner owner
 
-   let assert_owner_of (ledger:t) (token_id : token_id) (owner: address) : unit =
+   let assert_owner_of (ledger:t) (token_id : token_id) (owner: Address.t) : unit =
       assert_with_error (is_owner_of ledger token_id owner) Errors.ins_balance
 
    let transfer_token_from_user_to_user (ledger : t) (token_id : token_id) (from_ : owner) (to_ : owner) : t = 
@@ -108,7 +114,7 @@ module Storage = struct
       token_ids : token_id list;
    }
 
-   let is_owner_of (s:t) (owner : address) (token_id : token_id) : bool = 
+   let is_owner_of (s:t) (owner : Address.t) (token_id : token_id) : bool = 
       Ledger.is_owner_of s.ledger token_id owner
 
    let assert_token_exist (s:t) (token_id : nat) : unit  = 
@@ -121,7 +127,7 @@ module Storage = struct
    let get_operators (s:t) = s.operators
    let set_operators (s:t) (operators:Operators.t) = {s with operators = operators}
 
-   let get_balance (s : t) (owner : address) (token_id : nat) : nat =
+   let get_balance (s : t) (owner : Address.t) (token_id : nat) : nat =
       let ()       = assert_token_exist s token_id in 
       if is_owner_of s owner token_id then 1n else 0n
 
@@ -132,19 +138,19 @@ type storage = Storage.t
 
 (** Transfer entrypoint *)
 type atomic_trans = [@layout:comb] {
-   to_      : address;
+   to_      : Address.t;
    token_id : nat;
 }
 
 type transfer_from = {
-   from_ : address;
+   from_ : Address.t;
    tx    : atomic_trans list
 }
 type transfer = transfer_from list
 
 let transfer (t:transfer) (s:storage) : operation list * storage = 
    (* This function process the "tx" list. Since all transfer share the same "from_" address, we use a se *)
-   let process_atomic_transfer (from_:address) (ledger, t:Ledger.t * atomic_trans) =
+   let process_atomic_transfer (from_:Address.t) (ledger, t:Ledger.t * atomic_trans) =
       let {to_;token_id} = t in
       let ()     = Storage.assert_token_exist s token_id in
       let ()     = Operators.assert_authorisation s.operators from_ token_id in
@@ -161,7 +167,7 @@ let transfer (t:transfer) (s:storage) : operation list * storage =
    ([]: operation list),s
 
 type request = {
-   owner    : address;
+   owner    : Address.t;
    token_id : nat;
 }
 
@@ -189,8 +195,8 @@ let balance_of (b: balance_of) (s: storage) : operation list * storage =
 
 (** Update_operators entrypoint *)
 type operator = [@layout:comb] {
-   owner    : address;
-   operator : address;
+   owner    : Address.t;
+   operator : Address.t;
    token_id : nat; 
 }
 type unit_update      = Add_operator of operator | Remove_operator of operator
@@ -221,8 +227,8 @@ let main ((p,s):(parameter * storage)) = match p with
 |  Update_operators p -> update_ops p s
 
 
-[@view] let get_balance : ((address * nat) * storage) -> nat = 
-   fun (p, s : (address * nat) * storage) ->
+[@view] let get_balance : ((Address.t * nat) * storage) -> nat = 
+   fun (p, s : (Address.t * nat) * storage) ->
       let (owner, token_id) = p in
       let balance_ = Storage.get_balance s owner token_id in
       balance_
