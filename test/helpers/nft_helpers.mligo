@@ -1,13 +1,14 @@
 #import "../../lib/fa2/nft/NFT.mligo" "FA2_NFT"
 
 let get_initial_storage (a, b, c : nat * nat * nat) = 
-  let () = Test.reset_state 6n ([] : tez list) in
+  let () = Test.reset_state 7n ([] : tez list) in
 
   let owner1 = Test.nth_bootstrap_account 0 in 
   let owner2 = Test.nth_bootstrap_account 1 in 
   let owner3 = Test.nth_bootstrap_account 2 in 
+  let owner4 = Test.nth_bootstrap_account 6 in 
 
-  let owners = [owner1; owner2; owner3] in
+  let owners = [owner1; owner2; owner3; owner4] in
 
   let op1 = Test.nth_bootstrap_account 3 in
   let op2 = Test.nth_bootstrap_account 4 in
@@ -19,6 +20,8 @@ let get_initial_storage (a, b, c : nat * nat * nat) =
     (1n, owner1);
     (2n, owner2);
     (3n, owner3);
+    (4n, owner4);
+    (5n, owner4);
   ])
   in
 
@@ -27,6 +30,7 @@ let get_initial_storage (a, b, c : nat * nat * nat) =
     ((owner2, op1), Set.literal [2n]);
     ((owner3, op1), Set.literal [3n]);
     ((op1   , op3), Set.literal [1n]);
+    ((owner4, op1), Set.literal [4n; 5n]);
   ])
   in
   
@@ -35,6 +39,8 @@ let get_initial_storage (a, b, c : nat * nat * nat) =
     (1n, ({token_id=1n;token_info=(Map.empty : (string, bytes) map);} : FA2_NFT.TokenMetadata.data));
     (2n, ({token_id=2n;token_info=(Map.empty : (string, bytes) map);} : FA2_NFT.TokenMetadata.data));
     (3n, ({token_id=3n;token_info=(Map.empty : (string, bytes) map);} : FA2_NFT.TokenMetadata.data));
+    (4n, ({token_id=3n;token_info=(Map.empty : (string, bytes) map);} : FA2_NFT.TokenMetadata.data));
+    (5n, ({token_id=3n;token_info=(Map.empty : (string, bytes) map);} : FA2_NFT.TokenMetadata.data));
   ] : FA2_NFT.TokenMetadata.t) in
 
   let initial_storage = {
@@ -71,6 +77,6 @@ let assert_balances
 
 let assert_error (result : test_exec_result) (error : FA2_NFT.Errors.t) =
   match result with
-    Success -> failwith "This test should fail"
+    Success _ -> failwith "This test should fail"
   | Fail (Rejected (err, _))  -> assert (Test.michelson_equal err (Test.eval error))
   | Fail _ -> failwith "invalid test failure"

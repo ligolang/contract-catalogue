@@ -26,7 +26,7 @@ let test_get_balance_view =
 
   let (t_addr,_,_) = Test.originate ViewsTestContract.main initial_storage 0tez in
   let contr = Test.to_contract t_addr in
-  let () = Test.transfer_to_contract_exn contr 
+  let _ = Test.transfer_to_contract_exn contr 
     (Get_balance (owner1,1n) : ViewsTestContract.parameter) 0tez
   in
   let storage = Test.get_storage t_addr in
@@ -53,7 +53,7 @@ let test_total_supply_view =
 
   let (t_addr,_,_) = Test.originate ViewsTestContract.main initial_storage 0tez in
   let contr = Test.to_contract t_addr in
-  let () = Test.transfer_to_contract_exn contr 
+  let _ = Test.transfer_to_contract_exn contr 
     (Total_supply 2n : ViewsTestContract.parameter) 0tez
   in
   let storage = Test.get_storage t_addr in
@@ -108,7 +108,7 @@ let test_is_operator_view =
 
   let (t_addr,_,_) = Test.originate ViewsTestContract.main initial_storage 0tez in
   let contr = Test.to_contract t_addr in
-  let () = Test.transfer_to_contract_exn contr 
+  let _ = Test.transfer_to_contract_exn contr 
     (Is_operator {
       owner    = owner1;
       operator = op1;
@@ -141,7 +141,7 @@ let test_all_tokens_view =
 
   let (t_addr,_,_) = Test.originate ViewsTestContract.main initial_storage 0tez in
   let contr = Test.to_contract t_addr in
-  let () = Test.transfer_to_contract_exn contr 
+  let _ = Test.transfer_to_contract_exn contr 
     (All_tokens: ViewsTestContract.parameter) 0tez
   in
   let storage = Test.get_storage t_addr in
