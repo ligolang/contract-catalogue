@@ -46,13 +46,12 @@ async function main() {
             code: contract,
             storage: initialStorage
         })
-        console.log(`Waiting for nft ${originated.contractAddress} to be confirmed...`)
+        console.log(`Waiting for contract ${originated.contractAddress} to be confirmed...`)
         await originated.confirmation(2)
-        console.log('confirmed nft: ', originated.contractAddress)
+        console.log('confirmed contract: ', originated.contractAddress)
     } catch (error: any) {
         console.log(error)
     }
-
 
 }
 
