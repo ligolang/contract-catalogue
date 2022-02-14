@@ -3,6 +3,7 @@ LIGO=docker run --rm -v "$(PWD)":"$(PWD)" -w "$(PWD)" ligolang/ligo:next
 endif
 
 json=--michelson-format json
+tsc=npx tsc
 
 test:
 	$(LIGO) run test ./test/fa2/single_asset.test.mligo
@@ -17,3 +18,6 @@ compile:
 	$(LIGO) compile contract lib/fa2/nft/NFT.mligo > compiled/fa2/nft/NFT_mligo.tz
 	$(LIGO) compile contract lib/fa2/nft/NFT.mligo $(json) > compiled/fa2/nft/NFT_mligo.json
 
+
+deploy: 
+	cd deploy/fa2/nft && $(tsc) deploy.ts --esModuleInterop --resolveJsonModule && node deploy.js
