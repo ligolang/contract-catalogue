@@ -1,0 +1,14 @@
+{
+  "name": "deploy-nft",
+  "version": "1.0.0",
+  "description": "",
+  "main": "deploy.js",
+  "dependencies": {
+    "@taquito/signer": "^11.2.0",
+    "@taquito/taquito": "^11.2.0",
+    "dotenv": "^16.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^4.5.5"
+  }
+}
