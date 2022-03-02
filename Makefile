@@ -5,6 +5,7 @@ endif
 json=--michelson-format json
 tsc=npx tsc
 
+.PHONY: test
 test:
 	$(LIGO) run test ./test/fa2/single_asset.test.mligo
 	$(LIGO) run test ./test/fa2/multi_asset.test.mligo
