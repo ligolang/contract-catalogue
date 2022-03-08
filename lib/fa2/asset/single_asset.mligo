@@ -171,7 +171,7 @@ let balance_of : balance_of -> storage -> operation list * storage =
    fun (b: balance_of) (s: storage) -> 
    let {requests;callback} = b in
    let get_balance_info (request : request) : callback =
-      let {owner;token_id} = request in
+      let {owner;token_id=_token_id} = request in
       let balance_ = Storage.get_amount_for_owner s owner    in
       {request=request;balance=balance_}
    in
@@ -229,8 +229,8 @@ operator of A, C cannot transfer tokens that are owned by A, on behalf of B.
 let update_ops : update_operators -> storage -> operation list * storage = 
    fun (updates: update_operators) (s: storage) -> 
    let update_operator (operators,update : Operators.t * unit_update) = match update with 
-      Add_operator    {owner=owner;operator=operator;token_id=token_id} -> Operators.add_operator    operators owner operator
-   |  Remove_operator {owner=owner;operator=operator;token_id=token_id} -> Operators.remove_operator operators owner operator
+      Add_operator    {owner=owner;operator=operator;token_id=_token_id} -> Operators.add_operator    operators owner operator
+   |  Remove_operator {owner=owner;operator=operator;token_id=_token_id} -> Operators.remove_operator operators owner operator
    in
    let operators = Storage.get_operators s in
    let operators = List.fold_left update_operator operators updates in
