@@ -55,23 +55,19 @@
                                   "args":
                                     [ { "prim": "address",
                                         "annots": [ "%owner" ] },
-                                      { "prim": "pair",
-                                        "args":
-                                          [ { "prim": "address",
-                                              "annots": [ "%operator" ] },
-                                            { "prim": "nat",
-                                              "annots": [ "%token_id" ] } ] } ],
+                                      { "prim": "address",
+                                        "annots": [ "%operator" ] },
+                                      { "prim": "nat",
+                                        "annots": [ "%token_id" ] } ],
                                   "annots": [ "%add_operator" ] },
                                 { "prim": "pair",
                                   "args":
                                     [ { "prim": "address",
                                         "annots": [ "%owner" ] },
-                                      { "prim": "pair",
-                                        "args":
-                                          [ { "prim": "address",
-                                              "annots": [ "%operator" ] },
-                                            { "prim": "nat",
-                                              "annots": [ "%token_id" ] } ] } ],
+                                      { "prim": "address",
+                                        "annots": [ "%operator" ] },
+                                      { "prim": "nat",
+                                        "annots": [ "%token_id" ] } ],
                                   "annots": [ "%remove_operator" ] } ] } ],
                       "annots": [ "%update_operators" ] } ] } ] } ] },
   { "prim": "storage",
@@ -161,9 +157,7 @@
                           [ { "prim": "big_map",
                               "args":
                                 [ { "prim": "nat" }, { "prim": "address" } ] },
-                            { "prim": "pair",
-                              "args":
-                                [ { "prim": "nat" }, { "prim": "address" } ] } ] } ] },
+                            { "prim": "nat" }, { "prim": "address" } ] } ] },
                 { "prim": "bool" },
                 [ { "prim": "UNPAIR" }, { "prim": "SWAP" },
                   { "prim": "UNPAIR", "args": [ { "int": "3" } ] },
@@ -584,10 +578,8 @@
         { "prim": "pair",
           "args":
             [ { "prim": "address", "annots": [ "%owner" ] },
-              { "prim": "pair",
-                "args":
-                  [ { "prim": "address", "annots": [ "%operator" ] },
-                    { "prim": "nat", "annots": [ "%token_id" ] } ] } ] },
+              { "prim": "address", "annots": [ "%operator" ] },
+              { "prim": "nat", "annots": [ "%token_id" ] } ] },
         { "prim": "bool" },
         [ { "prim": "UNPAIR" }, { "prim": "DUP" },
           { "prim": "GET", "args": [ { "int": "4" } ] }, { "prim": "SWAP" },
