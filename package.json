@@ -1,6 +1,6 @@
 {
   "name": "tezos-ligo-fa2",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A FA2 contract with nft, single asset & multi asset contracts",
   "directories": {
     "lib": "lib",
@@ -17,8 +17,8 @@
     "cameligo",
     "nft"
   ],
-  "author": "ligo team",
-  "license": "ISC",
+  "author": "ligoLANG",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/ligolang/contract-catalogue/issues"
   },
