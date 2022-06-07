@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@gitlab.com/ligolang/contract-catalogue.git"
+    "url": "git+ssh://git@github.com/ligolang/contract-catalogue.git"
   },
   "keywords": [
     "ligo",
@@ -20,7 +20,7 @@
   "author": "ligo team",
   "license": "ISC",
   "bugs": {
-    "url": "https://gitlab.com/ligolang/contract-catalogue/issues"
+    "url": "https://github.com/ligolang/contract-catalogue/issues"
   },
-  "homepage": "https://gitlab.com/ligolang/contract-catalogue#readme"
+  "homepage": "https://github.com/ligolang/contract-catalogue#readme"
 }
