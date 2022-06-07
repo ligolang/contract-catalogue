@@ -1,7 +1,19 @@
 #import "../../lib/fa2/nft/NFT.mligo" "FA2_NFT"
 
-let get_initial_storage (a, b, c : nat * nat * nat) = 
-  let () = Test.reset_state 7n ([] : tez list) in
+let get_initial_storage () = 
+  let () = Test.reset_state 8n ([
+    1000000tez;
+    1000000tez;
+    1000000tez;
+    1000000tez;
+    1000000tez;
+    1000000tez;
+    1000000tez;
+    1000000tez;
+  ] : tez list) in
+
+  let baker = Test.nth_bootstrap_account 7 in 
+  let () = Test.set_baker baker in
 
   let owner1 = Test.nth_bootstrap_account 0 in 
   let owner2 = Test.nth_bootstrap_account 1 in 
@@ -34,7 +46,6 @@ let get_initial_storage (a, b, c : nat * nat * nat) =
   ])
   in
   
-  let token_info = (Map.empty: (string, bytes) map) in
   let token_metadata = (Big_map.literal [
     (1n, ({token_id=1n;token_info=(Map.empty : (string, bytes) map);} : FA2_NFT.TokenMetadata.data));
     (2n, ({token_id=2n;token_info=(Map.empty : (string, bytes) map);} : FA2_NFT.TokenMetadata.data));

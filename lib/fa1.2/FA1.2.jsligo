@@ -123,7 +123,7 @@ type transfer = [address, [address, nat]];
 const transfer = ([from_, to_value]:transfer, s:storage) : [list<operation>, Storage.t] => {
    let [to_, value] = to_value;
    let ledger1 = Storage.get_ledger(s);
-   let ledger2 = Ledger.decrease_token_amount_for_user(ledger1, Tezos.sender, from_, value);
+   let ledger2 = Ledger.decrease_token_amount_for_user(ledger1, (Tezos.get_sender ()), from_, value);
    let ledger = Ledger.increase_token_amount_for_user(ledger2, to_,   value);
    let s1 = Storage.set_ledger(s, ledger);
    return [(list([]) as list<operation>), s1]
@@ -133,7 +133,7 @@ const transfer = ([from_, to_value]:transfer, s:storage) : [list<operation>, Sto
 type approve = [address, nat];
 const approve = ([spender,value] : approve, s:storage) : [list<operation>, Storage.t] => {
    let ledger1 = Storage.get_ledger(s);
-   let ledger = Ledger.set_approval(ledger1, Tezos.sender, spender, value);
+   let ledger = Ledger.set_approval(ledger1, (Tezos.get_sender ()), spender, value);
    let s1 = Storage.set_ledger(s, ledger);
    return [list([]) as list<operation>, s1]
 };

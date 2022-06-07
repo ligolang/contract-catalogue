@@ -12,7 +12,7 @@ type main_fn = (FA2_NFT.parameter * FA2_NFT.storage) -> return
 
 (* 1. transfer successful *)
 let _test_atomic_tansfer_operator_success (main : main_fn) =
-  let initial_storage, owners, operators = TestHelpers.get_initial_storage (10n, 10n, 10n) in
+  let initial_storage, owners, operators = TestHelpers.get_initial_storage () in
   let owner1 = List_helper.nth_exn 0 owners in
   let owner2 = List_helper.nth_exn 1 owners in
   let owner3 = List_helper.nth_exn 2 owners in
@@ -31,11 +31,10 @@ let test_atomic_tansfer_operator_success = _test_atomic_tansfer_operator_success
 
 (* 1.1. transfer successful owner *)
 let _test_atomic_tansfer_owner_success (main : main_fn) =
-  let initial_storage, owners, operators = TestHelpers.get_initial_storage (10n, 10n, 10n) in
+  let initial_storage, owners, _ = TestHelpers.get_initial_storage () in
   let owner1 = List_helper.nth_exn 0 owners in
   let owner2 = List_helper.nth_exn 1 owners in
   let owner3 = List_helper.nth_exn 2 owners in
-  let op1    = List_helper.nth_exn 0 operators in
   let transfer_requests = ([
     ({from_=owner1; tx=([{to_=owner2;token_id=1n};] : FA2_NFT.atomic_trans list)});
   ] : FA2_NFT.transfer)
@@ -50,7 +49,7 @@ let test_atomic_tansfer_owner_success = _test_atomic_tansfer_owner_success FA2_N
 
 (* 2. transfer failure token undefined *)
 let _test_transfer_token_undefined (main : main_fn) = 
-  let initial_storage, owners, operators = TestHelpers.get_initial_storage (10n, 10n, 10n) in
+  let initial_storage, owners, operators = TestHelpers.get_initial_storage () in
   let owner1 = List_helper.nth_exn 0 owners in
   let owner2 = List_helper.nth_exn 1 owners in
   let op1    = List_helper.nth_exn 0 operators in
@@ -67,7 +66,7 @@ let test_transfer_token_undefined = _test_transfer_token_undefined FA2_NFT.main
 
 (* 3. transfer failure incorrect operator *)
 let _test_atomic_transfer_failure_not_operator (main : main_fn) = 
-  let initial_storage, owners, operators = TestHelpers.get_initial_storage (10n, 10n, 10n) in
+  let initial_storage, owners, operators = TestHelpers.get_initial_storage () in
   let owner1 = List_helper.nth_exn 0 owners in
   let owner2 = List_helper.nth_exn 1 owners in
   let op2    = List_helper.nth_exn 1 operators in
@@ -85,7 +84,7 @@ let test_atomic_transfer_failure_not_operator
 
 (* 4. self transfer *)
 let _test_atomic_tansfer_success_zero_amount_and_self_transfer (main : main_fn) =
-  let initial_storage, owners, operators = TestHelpers.get_initial_storage (10n, 10n, 10n) in
+  let initial_storage, owners, operators = TestHelpers.get_initial_storage () in
   let owner1 = List_helper.nth_exn 0 owners in
   let owner2 = List_helper.nth_exn 1 owners in
   let owner3 = List_helper.nth_exn 2 owners in
@@ -105,7 +104,7 @@ let test_atomic_tansfer_success_zero_amount_and_self_transfer =
 
 (* 5. transfer failure transitive operators *)
 let _test_transfer_failure_transitive_operators (main : main_fn) = 
-  let initial_storage, owners, operators = TestHelpers.get_initial_storage (10n, 10n, 10n) in
+  let initial_storage, owners, operators = TestHelpers.get_initial_storage () in
   let owner1 = List_helper.nth_exn 0 owners in
   let owner2 = List_helper.nth_exn 1 owners in
   let op3    = List_helper.nth_exn 2 operators in
@@ -125,7 +124,7 @@ let test_transfer_failure_transitive_operators =
 
 (* 6. empty balance of + callback with empty response *)
 let _test_empty_transfer_and_balance_of (main : main_fn) = 
-  let initial_storage, owners, operators = TestHelpers.get_initial_storage (10n, 10n, 10n) in
+  let initial_storage, _owners, _operators = TestHelpers.get_initial_storage () in
   let (callback_addr,_,_) = Test.originate Callback.main ([] : nat list) 0tez in
   let callback_contract = Test.to_contract callback_addr in
 
@@ -144,10 +143,10 @@ let test_empty_transfer_and_balance_of = _test_empty_transfer_and_balance_of FA2
 
 (* 7. balance of failure token undefined *)
 let _test_balance_of_token_undefines (main : main_fn) = 
-  let initial_storage, owners, operators = TestHelpers.get_initial_storage (10n, 5n, 10n) in
+  let initial_storage, owners, operators = TestHelpers.get_initial_storage () in
   let owner1 = List_helper.nth_exn 0 owners in
   let owner2 = List_helper.nth_exn 1 owners in
-  let op1    = List_helper.nth_exn 0 operators in
+  let _op1   = List_helper.nth_exn 0 operators in
   let (callback_addr,_,_) = Test.originate Callback.main ([] : nat list) 0tez in
   let callback_contract = Test.to_contract callback_addr in
 
@@ -168,10 +167,9 @@ let test_balance_of_token_undefines = _test_balance_of_token_undefines FA2_NFT.m
 
 (* 8. duplicate balance_of requests *)
 let _test_balance_of_requests_with_duplicates (main : main_fn) = 
-  let initial_storage, owners, operators = TestHelpers.get_initial_storage (10n, 5n, 10n) in
+  let initial_storage, owners, _ = TestHelpers.get_initial_storage () in
   let owner1 = List_helper.nth_exn 0 owners in
   let owner2 = List_helper.nth_exn 1 owners in
-  let op1    = List_helper.nth_exn 0 operators in
   let (callback_addr,_,_) = Test.originate Callback.main ([] : nat list) 0tez in
   let callback_contract = Test.to_contract callback_addr in
 
@@ -196,7 +194,7 @@ let test_balance_of_requests_with_duplicates
 
 (* 9. 0 balance if does not hold any tokens (not in ledger) *)
 let _test_balance_of_0_balance_if_address_does_not_hold_tokens (main : main_fn) = 
-    let initial_storage, owners, operators = TestHelpers.get_initial_storage (10n, 5n, 10n) in
+    let initial_storage, owners, operators = TestHelpers.get_initial_storage () in
     let owner1 = List_helper.nth_exn 0 owners in
     let owner2 = List_helper.nth_exn 1 owners in
     let op1    = List_helper.nth_exn 0 operators in
@@ -225,7 +223,7 @@ let test_balance_of_0_balance_if_address_does_not_hold_tokens =
 
 (* 10. Remove operator & do transfer - failure *)
 let _test_update_operator_remove_operator_and_transfer (main : main_fn) = 
-  let initial_storage, owners, operators = TestHelpers.get_initial_storage (10n, 10n, 10n) in
+  let initial_storage, owners, operators = TestHelpers.get_initial_storage () in
   let owner1 = List_helper.nth_exn 0 owners in
   let owner2 = List_helper.nth_exn 1 owners in
   let op1    = List_helper.nth_exn 0 operators in
@@ -254,7 +252,7 @@ let test_update_operator_remove_operator_and_transfer =
 
 (* 10.1. Remove operator & do transfer - failure *)
 let _test_update_operator_remove_operator_and_transfer1 (main : main_fn) = 
-  let initial_storage, owners, operators = TestHelpers.get_initial_storage (10n, 10n, 10n) in
+  let initial_storage, owners, operators = TestHelpers.get_initial_storage () in
   let owner4 = List_helper.nth_exn 3 owners in
   let op1    = List_helper.nth_exn 0 operators in
   let (t_addr,_,_) = Test.originate main initial_storage 0tez in
@@ -280,7 +278,7 @@ let test_update_operator_remove_operator_and_transfer1 =
 
 (* 11. Add operator & do transfer - success *)
 let _test_update_operator_add_operator_and_transfer (main : main_fn) = 
-  let initial_storage, owners, operators = TestHelpers.get_initial_storage (10n, 10n, 10n) in
+  let initial_storage, owners, operators = TestHelpers.get_initial_storage () in
   let owner1 = List_helper.nth_exn 0 owners in
   let owner2 = List_helper.nth_exn 1 owners in
   let op3    = List_helper.nth_exn 2 operators in
@@ -309,7 +307,7 @@ let test_update_operator_add_operator_and_transfer =
 
 (* 11.1. Add operator & do transfer - success *)
 let _test_update_operator_add_operator_and_transfer1 (main : main_fn) = 
-  let initial_storage, owners, operators = TestHelpers.get_initial_storage (10n, 10n, 10n) in
+  let initial_storage, owners, operators = TestHelpers.get_initial_storage () in
   let owner2 = List_helper.nth_exn 1 owners in
   let owner4 = List_helper.nth_exn 3 owners in
   let op3    = List_helper.nth_exn 2 operators in
@@ -337,7 +335,7 @@ let test_update_operator_add_operator_and_transfer1 =
   _test_update_operator_add_operator_and_transfer1 FA2_NFT.main
 
 let _test_only_sender_manage_operators (main : main_fn) = 
-  let initial_storage, owners, operators = TestHelpers.get_initial_storage (10n, 10n, 10n) in
+  let initial_storage, owners, operators = TestHelpers.get_initial_storage () in
   let owner1 = List_helper.nth_exn 0 owners in
   let owner2 = List_helper.nth_exn 1 owners in
   let op3    = List_helper.nth_exn 2 operators in

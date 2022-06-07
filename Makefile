@@ -10,7 +10,7 @@ test:
 	$(LIGO) run test ./test/fa2/single_asset.test.mligo
 	$(LIGO) run test ./test/fa2/multi_asset.test.mligo
 	$(LIGO) run test ./test/fa2/nft/nft.test.mligo
-	$(LIGO) run test ./test/fa2/nft/views.test.mligo --protocol hangzhou
+	$(LIGO) run test ./test/fa2/nft/views.test.mligo
 
 test-mutation: 
 	$(LIGO) run test ./test/fa2/nft/e2e_mutation.test.mligo

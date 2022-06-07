@@ -7,13 +7,13 @@
 
 (* Test get_balance view *)
 let test_get_balance_view = 
-  let initial_storage, owners, operators = TestHelpers.get_initial_storage (10n, 10n, 10n) in
+  let initial_storage, owners, _ = TestHelpers.get_initial_storage () in
   let owner1 = List_helper.nth_exn 0 owners in
   
   let (c_addr,_,_) = Test.originate_from_file 
     "./lib/fa2/nft/NFT.mligo" 
     "main"
-    (["get_balance"; "total_supply"; "is_operator"; "all_tokens"] : string list)
+    (["get_balance"; "total_supply"; "is_operator"; "all_tokens"; "token_metadata"] : string list)
     (Test.eval initial_storage) 0tez in
 
   let initial_storage : ViewsTestContract.storage = {
@@ -35,12 +35,12 @@ let test_get_balance_view =
 
 (* Test total_supply view *)
 let test_total_supply_view = 
-  let initial_storage, owners, operators = TestHelpers.get_initial_storage (10n, 10n, 10n) in
+  let initial_storage, _, _ = TestHelpers.get_initial_storage () in
   
   let (c_addr,_,_) = Test.originate_from_file 
     "./lib/fa2/nft/NFT.mligo" 
     "main"
-    (["get_balance"; "total_supply"; "is_operator"; "all_tokens"] : string list)
+    (["get_balance"; "total_supply"; "is_operator"; "all_tokens"; "token_metadata"] : string list)
     (Test.eval initial_storage) 0tez in
 
   let initial_storage : ViewsTestContract.storage = {
@@ -63,12 +63,12 @@ let test_total_supply_view =
 
 (* Test total_supply view - undefined token *)
 let test_total_supply_undefined_token_view = 
-  let initial_storage, owners, operators = TestHelpers.get_initial_storage (10n, 10n, 10n) in
+  let initial_storage, _, _ = TestHelpers.get_initial_storage () in
   
   let (c_addr,_,_) = Test.originate_from_file 
     "./lib/fa2/nft/NFT.mligo" 
     "main"
-    (["get_balance"; "total_supply"; "is_operator"; "all_tokens"] : string list)
+    (["get_balance"; "total_supply"; "is_operator"; "all_tokens"; "token_metadata"] : string list)
     (Test.eval initial_storage) 0tez in
 
   let initial_storage : ViewsTestContract.storage = {
@@ -88,14 +88,14 @@ let test_total_supply_undefined_token_view =
 
 (* Test is_operator view *)
 let test_is_operator_view = 
-  let initial_storage, owners, operators = TestHelpers.get_initial_storage (10n, 10n, 10n) in
+  let initial_storage, owners, operators = TestHelpers.get_initial_storage () in
   let owner1 = List_helper.nth_exn 0 owners in
   let op1    = List_helper.nth_exn 0 operators in
   
   let (c_addr,_,_) = Test.originate_from_file 
     "./lib/fa2/nft/NFT.mligo" 
     "main"
-    (["get_balance"; "total_supply"; "is_operator"; "all_tokens"] : string list)
+    (["get_balance"; "total_supply"; "is_operator"; "all_tokens"; "token_metadata"] : string list)
     (Test.eval initial_storage) 0tez in
 
   let initial_storage : ViewsTestContract.storage = {
@@ -121,14 +121,12 @@ let test_is_operator_view =
 
 (* Test all_tokens view *)
 let test_all_tokens_view = 
-  let initial_storage, owners, operators = TestHelpers.get_initial_storage (10n, 10n, 10n) in
-  let owner1 = List_helper.nth_exn 0 owners in
-  let op1    = List_helper.nth_exn 0 operators in
+  let initial_storage, _, _ = TestHelpers.get_initial_storage () in
   
   let (c_addr,_,_) = Test.originate_from_file 
     "./lib/fa2/nft/NFT.mligo" 
     "main"
-    (["get_balance"; "total_supply"; "is_operator"; "all_tokens"] : string list)
+    (["get_balance"; "total_supply"; "is_operator"; "all_tokens"; "token_metadata"] : string list)
     (Test.eval initial_storage) 0tez in
 
   let initial_storage : ViewsTestContract.storage = {

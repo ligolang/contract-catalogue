@@ -12,7 +12,7 @@ namespace Operators {
 
    // if transfer policy is Owner_or_operator_transfer
    export const assert_authorisation = ([operators, from_, token_id]: [t, address, nat]): unit => {
-      const sender_ = Tezos.sender;
+      const sender_ = (Tezos.get_sender ());
       if (sender_ != from_){
          const authorized = match ((Big_map.find_opt ([from_,sender_], operators)),
          {Some: (a : set<token_id>) => a , None : () => Set.empty});
@@ -38,7 +38,7 @@ namespace Operators {
    }
 
    const assert_update_permission = (owner : owner) : unit =>
-      assert_with_error ((owner = Tezos.sender), "The sender can only manage operators for his own token");
+      assert_with_error ((owner = (Tezos.get_sender ())), "The sender can only manage operators for his own token");
    // For an administator
    // const admin = tz1.... ;
    // assert_with_error ((Tezos.sender = admiin), "Only administrator can manage operators")

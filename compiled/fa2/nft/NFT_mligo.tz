@@ -233,15 +233,14 @@
                                  SWAP ;
                                  EXEC ;
                                  DROP ;
-                                 DIG 3 ;
-                                 DUP ;
                                  DUP 4 ;
-                                 DUP 4 ;
+                                 DUP 3 ;
+                                 DUP 3 ;
                                  PAIR ;
                                  GET ;
                                  IF_NONE
-                                   { DIG 3 ; DROP ; NONE (set nat) }
-                                   { DIG 4 ;
+                                   { DIG 2 ; DROP ; NONE (set nat) }
+                                   { DIG 3 ;
                                      PUSH bool False ;
                                      SWAP ;
                                      UPDATE ;
@@ -253,6 +252,8 @@
                                      COMPARE ;
                                      EQ ;
                                      IF { DROP ; NONE (set nat) } { SOME } } ;
+                                 DIG 3 ;
+                                 SWAP ;
                                  DIG 3 ;
                                  DIG 3 ;
                                  PAIR ;
@@ -286,28 +287,23 @@
        bool
        { UNPAIR ;
          DUP ;
-         GET 4 ;
+         CAR ;
          SWAP ;
          DUP ;
          DUG 2 ;
          GET 3 ;
-         PAIR ;
-         SWAP ;
-         CAR ;
-         DIG 2 ;
+         DIG 3 ;
          CAR ;
          CDR ;
-         DIG 2 ;
-         UNPAIR ;
-         DIG 2 ;
          SWAP ;
          DUP ;
          DUG 2 ;
-         DUP 5 ;
+         DUP 4 ;
          PAIR ;
          GET ;
          IF_NONE { EMPTY_SET nat } {} ;
-         DIG 2 ;
+         DIG 3 ;
+         GET 4 ;
          MEM ;
          SWAP ;
          DIG 2 ;

@@ -42,7 +42,7 @@ the whole transaction MUST fail.
 *)
 (** if transfer policy is Owner_or_operator_transfer *)
    let assert_authorisation (operators : t) (from_ : address) (token_id : nat) : unit = 
-      let sender_ = Tezos.sender in
+      let sender_ = (Tezos.get_sender ()) in
       if (sender_ = from_) then ()
       else 
       let authorized = match Big_map.find_opt (from_,sender_) operators with
@@ -68,7 +68,7 @@ of the FA2 contract MAY limit operator updates to a token owner (owner == SENDER
 or be limited to an administrator.
 *)
    let assert_update_permission (owner : owner) : unit =
-      assert_with_error (owner = Tezos.sender) "The sender can only manage operators for his own token"
+      assert_with_error (owner = (Tezos.get_sender ())) "The sender can only manage operators for his own token"
    (** For an administator
       let admin = tz1.... in
       assert_with_error (Tezos.sender = admiin) "Only administrator can manage operators"

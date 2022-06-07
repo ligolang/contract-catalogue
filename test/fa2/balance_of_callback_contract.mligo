@@ -12,6 +12,6 @@ type callback = [@layout:comb] {
 
 type parameter = callback list
 
-let main ((responses,s):(parameter * storage)) =
+let main ((responses,_):(parameter * storage)) =
   let balances = List.map (fun (r : callback) -> r.balance) responses in
   ([]: operation list), balances

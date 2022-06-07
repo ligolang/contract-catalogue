@@ -1,3 +1,3 @@
 # contract-catalogue
 
-LIGO Smart Contracts.
+FA2 LIGO Smart Contracts.

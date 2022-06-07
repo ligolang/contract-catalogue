@@ -170,7 +170,7 @@ let test_atomic_tansfer_success_zero_amount_and_self_transfer =
 (* 5. transfer failure transitive operators *)
 let test_transfer_failure_transitive_operators = 
   let initial_storage, owners, operators = get_initial_storage (10n, 10n, 10n) in
-  let owner1 = List_helper.nth_exn 0 owners in
+  let _owner1= List_helper.nth_exn 0 owners in
   let owner2 = List_helper.nth_exn 1 owners in
   let owner3 = List_helper.nth_exn 2 owners in
   let op2    = List_helper.nth_exn 1 operators in
@@ -191,11 +191,7 @@ let test_transfer_failure_transitive_operators =
 
 (* 6. empty balance of + callback with empty response *)
 let test_empty_transfer_and_balance_of = 
-  let initial_storage, owners, operators = get_initial_storage (10n, 10n, 10n) in
-  let owner1 = List_helper.nth_exn 0 owners in
-  let owner2 = List_helper.nth_exn 1 owners in
-  let owner3 = List_helper.nth_exn 2 owners in
-  let op1    = List_helper.nth_exn 0 operators in
+  let initial_storage, _owners, _operators = get_initial_storage (10n, 10n, 10n) in
   let (callback_addr,_,_) = Test.originate Callback.main ([] : nat list) 0tez in
   let callback_contract = Test.to_contract callback_addr in
 
@@ -216,8 +212,8 @@ let test_balance_of_requests_with_duplicates =
   let initial_storage, owners, operators = get_initial_storage (10n, 5n, 10n) in
   let owner1 = List_helper.nth_exn 0 owners in
   let owner2 = List_helper.nth_exn 1 owners in
-  let owner3 = List_helper.nth_exn 2 owners in
-  let op1    = List_helper.nth_exn 0 operators in
+  let _owner3= List_helper.nth_exn 2 owners in
+  let _op1   = List_helper.nth_exn 0 operators in
   let (callback_addr,_,_) = Test.originate Callback.main ([] : nat list) 0tez in
   let callback_contract = Test.to_contract callback_addr in
 
@@ -242,7 +238,7 @@ let test_balance_of_0_balance_if_address_does_not_hold_tokens =
   let initial_storage, owners, operators = get_initial_storage (10n, 5n, 10n) in
   let owner1 = List_helper.nth_exn 0 owners in
   let owner2 = List_helper.nth_exn 1 owners in
-  let owner3 = List_helper.nth_exn 2 owners in
+  let _owner3= List_helper.nth_exn 2 owners in
   let op1    = List_helper.nth_exn 0 operators in
   let (callback_addr,_,_) = Test.originate Callback.main ([] : nat list) 0tez in
   let callback_contract = Test.to_contract callback_addr in
