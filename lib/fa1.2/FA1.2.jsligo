@@ -1,14 +1,14 @@
 /* Errors */
-namespace Errors {
+export namespace Errors {
   export let notEnoughBalance   = "NotEnoughBalance";
   export let notEnoughAllowance = "NotEnoughAllowance";
   /* Extra error, see: https://docs.google.com/document/d/1YLPtQxZu1UAvO9cZ1O2RPXBbT0mooh4DYKjA_jp-RLM/edit */
   export let vulnerable_operation = "Switching allowances from N to M is a vulnerability";
 };
 
-namespace Allowance {
-  type spender        = address;
-  type allowed_amount = nat;
+export namespace Allowance {
+  export type spender        = address;
+  export type allowed_amount = nat;
   export type t = map<spender, allowed_amount>;
 
   export let get_allowed_amount = (a:t, spender:spender) : nat => {
@@ -28,10 +28,10 @@ namespace Allowance {
 };
 
 
-namespace Ledger {
-   type owner      = address;
-   type spender    = address;
-   type amount_    = nat;
+export namespace Ledger {
+   export type owner      = address;
+   export type spender    = address;
+   export type amount_    = nat;
    export type t = big_map<owner, [amount_, Allowance.t]>;
 
    export let get_for_user = (ledger:t, owner: owner) : [amount_,Allowance.t] => {
@@ -75,20 +75,20 @@ namespace Ledger {
    };
 };
 
-namespace TokenMetadata {
+export namespace TokenMetadata {
    /**
       This should be initialized at origination, conforming to either
       TZIP-12 : https://gitlab.com/tezos/tzip/-/blob/master/proposals/tzip-12/tzip-12.md#token-metadata
       or TZIP-16 : https://gitlab.com/tezos/tzip/-/blob/master/proposals/tzip-12/tzip-12.md#contract-metadata-tzip-016
    */
-   type data = {
+   export type data = {
        token_id : nat,
        token_info : map<string, bytes>
     };
    export type t = data;
 };
 
-namespace Storage {
+export namespace Storage {
    export type t = {
       ledger : Ledger.t,
       token_metadata : TokenMetadata.t,
@@ -115,12 +115,12 @@ namespace Storage {
 
 };
 
-type storage = Storage.t;
+export type storage = Storage.t;
 
 
 /** transfer entrypoint */
-type transfer = [address, [address, nat]];
-const transfer = ([from_, to_value]:transfer, s:storage) : [list<operation>, Storage.t] => {
+export type transfer = [address, [address, nat]];
+export const transfer = ([from_, to_value]:transfer, s:storage) : [list<operation>, Storage.t] => {
    let [to_, value] = to_value;
    let ledger1 = Storage.get_ledger(s);
    let ledger2 = Ledger.decrease_token_amount_for_user(ledger1, (Tezos.get_sender ()), from_, value);
@@ -130,8 +130,8 @@ const transfer = ([from_, to_value]:transfer, s:storage) : [list<operation>, Sto
 };
 
 /** approve */
-type approve = [address, nat];
-const approve = ([spender,value] : approve, s:storage) : [list<operation>, Storage.t] => {
+export type approve = [address, nat];
+export const approve = ([spender,value] : approve, s:storage) : [list<operation>, Storage.t] => {
    let ledger1 = Storage.get_ledger(s);
    let ledger = Ledger.set_approval(ledger1, (Tezos.get_sender ()), spender, value);
    let s1 = Storage.set_ledger(s, ledger);
@@ -139,8 +139,8 @@ const approve = ([spender,value] : approve, s:storage) : [list<operation>, Stora
 };
 
 /** getBalance entrypoint */
-type getAllowance = [[address, address], contract<nat>];
-const getAllowance = ([owner_spender,callback]: getAllowance, s: storage) : [list<operation>, Storage.t] => {
+export type getAllowance = [[address, address], contract<nat>];
+export const getAllowance = ([owner_spender,callback]: getAllowance, s: storage) : [list<operation>, Storage.t] => {
    let [owner,spender] = owner_spender;
    let a = Storage.get_allowances_for_owner(s, owner);
    let allowed_amount = Allowance.get_allowed_amount(a, spender);
@@ -149,28 +149,28 @@ const getAllowance = ([owner_spender,callback]: getAllowance, s: storage) : [lis
 };
 
 /** getBalance entrypoint */
-type getBalance = [address, contract<nat>];
-const getBalance = ([owner,callback]: getBalance, s: storage) : [list<operation>, Storage.t] => {
+export type getBalance = [address, contract<nat>];
+export const getBalance = ([owner,callback]: getBalance, s: storage) : [list<operation>, Storage.t] => {
    let balance_ = Storage.get_amount_for_owner(s, owner);
    let operation = Tezos.transaction(balance_, 0 as tez, callback);
    return [list([operation]) as list<operation>, s]
 };
 
 /** getTotalSupply entrypoint */
-type getTotalSupply = [unit, contract<nat>];
-const getTotalSupply = ([_,callback] : getTotalSupply, s:storage) : [list<operation>, Storage.t] => {
+export type getTotalSupply = [unit, contract<nat>];
+export const getTotalSupply = ([_,callback] : getTotalSupply, s:storage) : [list<operation>, Storage.t] => {
    let operation = Tezos.transaction(s.totalSupply, 0 as tez, callback);
    return [list([operation]) as list<operation>, s]
 };
 
-type parameter = 
+export type parameter = 
   ["Transfer", transfer] 
 | ["Approve", approve] 
 | ["GetAllowance", getAllowance] 
 | ["GetBalance", getBalance] 
 | ["GetTotalSupply", getTotalSupply];
 
-let main = ([p,s]:[parameter, storage]) : [list<operation>, Storage.t] => {
+export let main = ([p,s]:[parameter, storage]) : [list<operation>, Storage.t] => {
     return match(p, {
         Transfer:       (p : transfer) => transfer(p, s),
         Approve:        (p : approve) => approve(p, s),
