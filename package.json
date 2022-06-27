@@ -17,8 +17,8 @@
     "cameligo",
     "nft"
   ],
-  "author": "ligo team",
-  "license": "ISC",
+  "author": "ligoLANG",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/ligolang/contract-catalogue/issues"
   },
