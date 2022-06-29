@@ -28,4 +28,4 @@ let test_mutation =
         let () = Test.log mutation in 
         ()
       ) ms in
-    failwith "Some mutation also passes the tests! ^^"
+    Test.failwith "Some mutation also passes the tests! ^^"
