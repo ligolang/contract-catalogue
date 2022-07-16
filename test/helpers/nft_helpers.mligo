@@ -74,20 +74,20 @@ let assert_balances
   let ledger = storage.ledger in
   let () = match (Big_map.find_opt token_id_1 ledger) with
     Some amt -> assert (amt = owner1)
-  | None -> failwith "incorret address" 
+  | None -> Test.failwith "incorret address" 
   in
   let () = match (Big_map.find_opt token_id_2 ledger) with
     Some amt ->  assert (amt = owner2)
-  | None -> failwith "incorret address" 
+  | None -> Test.failwith "incorret address" 
   in
   let () = match (Big_map.find_opt token_id_3 ledger) with
     Some amt -> assert (amt = owner3)
-  | None -> failwith "incorret address" 
+  | None -> Test.failwith "incorret address" 
   in
   ()
 
 let assert_error (result : test_exec_result) (error : FA2_NFT.Errors.t) =
   match result with
-    Success _ -> failwith "This test should fail"
+    Success _ -> Test.failwith "This test should fail"
   | Fail (Rejected (err, _))  -> assert (Test.michelson_equal err (Test.eval error))
-  | Fail _ -> failwith "invalid test failure"
+  | Fail _ -> Test.failwith "invalid test failure"
