@@ -1,5 +1,5 @@
 {
-  "name": "ligo-fa",
+  "name": "@ligo/fa",
   "version": "1.0.4",
   "description": "A FA2 contract with nft, single asset & multi asset contracts",
   "directories": {
@@ -17,7 +17,7 @@
     "jsligo",
     "cameligo",
     "nft",
-    "tezos-ligo" 
+    "tezos-ligo"
   ],
   "author": "ligoLANG <https://ligolang.org/>",
   "license": "MIT",
