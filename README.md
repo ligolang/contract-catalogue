@@ -14,14 +14,14 @@ It provides 3 types of asset contracts:
    Multi Asset Token where there are many tokens (available in different amounts)
    and they can belong to multiple addresses (m:n)   
 
-# Development
+## Development
 To compile the contracts to [Michelson](https://tezos.gitlab.io/active/michelson.html)
 , run
 ```
 make compile
 ``` 
 
-# Tests
+## Tests
 A makefile is provided to launch tests.
 ```
 $ make test
@@ -29,7 +29,7 @@ $ make test
 The tests are available in [./test/fa2](./test/fa2) directory, there is also an
 example of [mutation testing](./test/fa2/nft/e2e_mutation.test.mligo) 
 
-# Deploy
+## Deploy
 A TypeScript program for deployment is provided to originate the smart contract. 
 This deployment script relies on .env file which provides the RPC node url and 
 the deployer public and private key. (example [.env](./deploy/fa2/nft/.env.example) 
@@ -38,7 +38,7 @@ file)
 $ make test
 ```
 
-# Usage
+## Usage
 1. To install this package, run `ligo install ligo-fa`.
 2. In order originate the FA2 contracts from another contract you can use the 
    `CREATE_CONTRACT` Michelcon instruction like this
