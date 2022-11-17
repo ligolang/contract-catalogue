@@ -1,6 +1,6 @@
 {
   "name": "@ligo/fa",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "A FA2 contract with nft, single asset & multi asset contracts",
   "directories": {
     "lib": "lib",
