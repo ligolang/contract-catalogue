@@ -122,7 +122,7 @@ module Storage = struct
    type t = {
       ledger : Ledger.t;
       operators : Operators.t;
-      token_ids : token_id list;
+      token_ids : token_id set;
       token_metadata : TokenMetadata.t;
       metadata : Metadata.t;
    }
@@ -251,7 +251,7 @@ let main ((p,s):(parameter * storage)) = match p with
       let () = Storage.assert_token_exist s token_id in
       1n
 
-[@view] let all_tokens : (unit * storage) -> nat list =
+[@view] let all_tokens : (unit * storage) -> nat set =
    fun ((_, s) : (unit * storage)) -> s.token_ids
 
 [@view] let is_operator : (operator * storage) -> bool =

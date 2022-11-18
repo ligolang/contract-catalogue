@@ -127,7 +127,7 @@ namespace Storage {
    export type t = {
       ledger : Ledger.t,
       operators : Operators.t,
-      token_ids : list<token_id>,
+      token_ids : set<token_id>,
       token_metadata : TokenMetadata.t,
       metadata : Metadata.t
    };
@@ -278,7 +278,7 @@ const total_supply = ([token_id, s] : [nat , storage]) : nat => {
 };
 
 // @view
-const all_tokens = ([_, s] : [unit , storage]) : list<nat> => s.token_ids;
+const all_tokens = ([_, s] : [unit , storage]) : set<nat> => s.token_ids;
 
 // @view
 const is_operator = ([op, s] : [operator , storage]) : bool =>
