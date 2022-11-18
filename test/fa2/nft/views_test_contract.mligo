@@ -3,7 +3,7 @@ type storage = {
     get_balance   : nat option;
     total_supply  : nat option;
     is_operator   : bool option;
-    all_tokens    : nat list option;
+    all_tokens    : nat set option;
 }
 
 type operator_request = [@layout:comb] {
@@ -31,7 +31,7 @@ let is_operator ((p, s) : (operator_request * storage)) =
     {s with is_operator = is_operator}
 
 let all_tokens (s : storage) =
-    let all_tokens : nat list option = Tezos.call_view "all_tokens" () s.main_contract in
+    let all_tokens : nat set option = Tezos.call_view "all_tokens" () s.main_contract in
     {s with all_tokens = all_tokens}
 
 let main ((p,s):(parameter * storage)) =

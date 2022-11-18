@@ -21,7 +21,7 @@ let test_get_balance_view =
     get_balance   = (None : nat option);
     total_supply  = (None : nat option);
     is_operator   = (None : bool option);
-    all_tokens    = (None : nat list option);
+    all_tokens    = (None : nat set option);
   } in
 
   let (t_addr,_,_) = Test.originate ViewsTestContract.main initial_storage 0tez in
@@ -48,7 +48,7 @@ let test_total_supply_view =
     get_balance   = (None : nat option);
     total_supply  = (None : nat option);
     is_operator   = (None : bool option);
-    all_tokens    = (None : nat list option);
+    all_tokens    = (None : nat set option);
   } in
 
   let (t_addr,_,_) = Test.originate ViewsTestContract.main initial_storage 0tez in
@@ -76,7 +76,7 @@ let test_total_supply_undefined_token_view =
     get_balance   = (None : nat option);
     total_supply  = (None : nat option);
     is_operator   = (None : bool option);
-    all_tokens    = (None : nat list option);
+    all_tokens    = (None : nat set option);
   } in
 
   let (t_addr,_,_) = Test.originate ViewsTestContract.main initial_storage 0tez in
@@ -103,7 +103,7 @@ let test_is_operator_view =
     get_balance   = (None : nat option);
     total_supply  = (None : nat option);
     is_operator   = (None : bool option);
-    all_tokens    = (None : nat list option);
+    all_tokens    = (None : nat set option);
   } in
 
   let (t_addr,_,_) = Test.originate ViewsTestContract.main initial_storage 0tez in
@@ -134,7 +134,7 @@ let test_all_tokens_view =
     get_balance   = (None : nat option);
     total_supply  = (None : nat option);
     is_operator   = (None : bool option);
-    all_tokens    = (None : nat list option);
+    all_tokens    = (None : nat set option);
   } in
 
   let (t_addr,_,_) = Test.originate ViewsTestContract.main initial_storage 0tez in
@@ -144,4 +144,5 @@ let test_all_tokens_view =
   in
   let storage = Test.get_storage t_addr in
   let all_tokens = storage.all_tokens in
-  assert (all_tokens = Some [1n; 2n; 3n])
+  let expected_tokens = Set.literal [1n; 2n; 3n] in
+  assert (all_tokens = Some expected_tokens)
