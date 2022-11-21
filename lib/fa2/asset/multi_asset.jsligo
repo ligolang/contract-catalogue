@@ -131,11 +131,14 @@ let moves : register =
 
 namespace Storage {
    type token_id = nat;
+   type owner    = address;
    export type t = {
       ledger : Ledger.t,
       operators : Operators.t,
       token_metadata : TokenMetadata.t,
-      metadata : Metadata.t
+      metadata : Metadata.t,
+      owner_token_ids : set<[owner,token_id]>,
+      token_ids : set<nat>
    };
 
    export const assert_token_exist = ([s, token_id]: [t, nat]) : unit => {
@@ -187,6 +190,11 @@ const transfer = ([t, s]: [transfer, storage]): [list<operation>, storage] => {
       ledger
    };
    const ledger = List.fold_left (process_single_transfer, s.ledger, t);
+      //refresh set of owner,token_ids
+   let s = List.fold_left((s :storage, tf : transfer_from ) => 
+                           List.fold_left ((s : storage, at : atomic_trans) => {...s , owner_token_ids : Set.add([at.to_ , at.token_id],s.owner_token_ids) }
+                          ,s,tf.txs)
+            ,s,t);
    const s = Storage.set_ledger (s, ledger);
    [list ([]),s]
 }
@@ -263,3 +271,11 @@ const main = ([p, s]: [parameter, storage]) : [list<operation>, storage] => matc
 ,  Balance_of       : (p : balance_of      ) => balance_of (p, s)
 ,  Update_operators : (p : update_operator ) => update_ops (p, s)
 });
+
+//@view 
+const all_owner_token_ids = (unit , storage) : set<[address,nat]> =>
+   (_ : unit, s:storage) => s.owner_token_ids
+
+//@view
+const all_token_ids = (unit , storage) : set<nat> =>
+   (_ : unit, s : storage) => s.token_ids

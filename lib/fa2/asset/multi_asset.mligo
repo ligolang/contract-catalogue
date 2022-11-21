@@ -120,11 +120,14 @@ end
 
 module Storage = struct
    type token_id = nat
+   type owner    = address
    type t = {
       ledger : Ledger.t;
       operators : Operators.t;
       token_metadata : TokenMetadata.t;
-      metadata : Metadata.t
+      metadata : Metadata.t;
+      owner_token_ids : (owner * token_id) set;
+      token_ids : nat set;
    }
 
    let assert_token_exist (s:t) (token_id : nat) : unit  =
@@ -167,12 +170,19 @@ let transfer : transfer -> storage -> operation list * storage =
       let ledger = Ledger.increase_token_amount_for_user ledger to_   token_id amount_ in
       ledger
    in
-   let process_single_transfer (ledger, t:Ledger.t * transfer_from ) =
+   let process_single_transfer (ledger, t:Ledger.t * transfer_from) =
       let {from_;txs} = t in
       let ledger     = List.fold_left (process_atomic_transfer from_) ledger txs in
       ledger
    in
    let ledger = List.fold_left process_single_transfer s.ledger t in
+   //refresh set of owner,token_ids
+   let s = List.fold_left 
+            (fun (s , tf :storage * transfer_from ) -> 
+                           List.fold_left 
+                           (fun (s , at : storage * atomic_trans) -> {s with owner_token_ids = Set.add (at.to_ , at.token_id) s.owner_token_ids })
+                           s tf.txs)
+            s t in
    let s = Storage.set_ledger s ledger in
    ([]: operation list),s
 
@@ -240,3 +250,10 @@ let main ((p,s):(parameter * storage)) = match p with
    Transfer         p -> transfer   p s
 |  Balance_of       p -> balance_of p s
 |  Update_operators p -> update_ops p s
+
+
+[@view] let all_owner_token_ids : (unit * storage) -> (address * nat) set =
+   fun ((_, s) : (unit * storage)) -> s.owner_token_ids
+
+[@view] let all_token_ids : (unit * storage) -> nat set =
+   fun ((_, s) : (unit * storage)) -> s.token_ids
