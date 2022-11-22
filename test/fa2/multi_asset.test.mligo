@@ -56,10 +56,13 @@ let get_initial_storage (a, b, c : nat * nat * nat) =
     (3n, ({token_id=3n;token_info=(Map.empty : (string, bytes) map);} : FA2_multi_asset.TokenMetadata.data));
   ] : FA2_multi_asset.TokenMetadata.t) in
 
+  let metadata = FA2_multi_asset.Metadata.init() in
+
   let initial_storage = {
     ledger         = ledger;
     token_metadata = token_metadata;
     operators      = operators;
+    metadata       = metadata;
   } in
 
   initial_storage, owners, ops
@@ -98,7 +101,7 @@ let test_atomic_tansfer_success =
   let owner3 = List_helper.nth_exn 2 owners in
   let op1    = List_helper.nth_exn 0 operators in
   let transfer_requests = ([
-    ({from_=owner1; tx=([{to_=owner2;amount=2n;token_id=2n};] : FA2_multi_asset.atomic_trans list)});
+    ({from_=owner1; txs=([{to_=owner2;amount=2n;token_id=2n};] : FA2_multi_asset.atomic_trans list)});
   ] : FA2_multi_asset.transfer)
   in
   let () = Test.set_source op1 in 
@@ -116,8 +119,8 @@ let test_transfer_token_undefined =
   let owner3 = List_helper.nth_exn 2 owners in
   let op1    = List_helper.nth_exn 0 operators in
   let transfer_requests = ([
-    ({from_=owner1; tx=([{to_=owner2;amount=2n;token_id=1n};{to_=owner3;amount=3n;token_id=2n}] : FA2_multi_asset.atomic_trans list)});
-    ({from_=owner2; tx=([{to_=owner3;amount=2n;token_id=0n};{to_=owner1;amount=3n;token_id=2n}] : FA2_multi_asset.atomic_trans list)});
+    ({from_=owner1; txs=([{to_=owner2;amount=2n;token_id=1n};{to_=owner3;amount=3n;token_id=2n}] : FA2_multi_asset.atomic_trans list)});
+    ({from_=owner2; txs=([{to_=owner3;amount=2n;token_id=0n};{to_=owner1;amount=3n;token_id=2n}] : FA2_multi_asset.atomic_trans list)});
   ] : FA2_multi_asset.transfer)
   in
   let () = Test.set_source op1 in 
@@ -136,7 +139,7 @@ let test_atomic_transfer_failure_not_operator =
   let owner2 = List_helper.nth_exn 1 owners in
   let op3    = List_helper.nth_exn 2 operators in
   let transfer_requests = ([
-    ({from_=owner1; tx=([{to_=owner2;amount=2n;token_id=2n};] : FA2_multi_asset.atomic_trans list)});
+    ({from_=owner1; txs=([{to_=owner2;amount=2n;token_id=2n};] : FA2_multi_asset.atomic_trans list)});
   ] : FA2_multi_asset.transfer)
   in
   let () = Test.set_source op3 in 
@@ -155,7 +158,7 @@ let test_atomic_transfer_failure_not_suffient_balance =
   let owner2 = List_helper.nth_exn 1 owners in
   let op1    = List_helper.nth_exn 0 operators in
   let transfer_requests = ([
-    ({from_=owner1; tx=([{to_=owner2;amount=12n;token_id=2n};] : FA2_multi_asset.atomic_trans list)});
+    ({from_=owner1; txs=([{to_=owner2;amount=12n;token_id=2n};] : FA2_multi_asset.atomic_trans list)});
   ] : FA2_multi_asset.transfer)
   in
   let () = Test.set_source op1 in 
@@ -175,8 +178,8 @@ let test_atomic_tansfer_success_zero_amount_and_self_transfer =
   let owner3 = List_helper.nth_exn 2 owners in
   let op1    = List_helper.nth_exn 0 operators in
   let transfer_requests = ([
-    ({from_=owner1; tx=([{to_=owner2;amount=0n;token_id=1n};{to_=owner3;amount=0n;token_id=1n}] : FA2_multi_asset.atomic_trans list)});
-    ({from_=owner2; tx=([{to_=owner2;amount=2n;token_id=2n};] : FA2_multi_asset.atomic_trans list)});
+    ({from_=owner1; txs=([{to_=owner2;amount=0n;token_id=1n};{to_=owner3;amount=0n;token_id=1n}] : FA2_multi_asset.atomic_trans list)});
+    ({from_=owner2; txs=([{to_=owner2;amount=2n;token_id=2n};] : FA2_multi_asset.atomic_trans list)});
   ] : FA2_multi_asset.transfer)
   in
   let () = Test.set_source op1 in 
@@ -193,7 +196,7 @@ let test_transfer_failure_transitive_operators =
   let owner3 = List_helper.nth_exn 2 owners in
   let op3    = List_helper.nth_exn 2 operators in
   let transfer_requests = ([
-    ({from_=owner3; tx=([{to_=owner2;amount=2n;token_id=2n};] : FA2_multi_asset.atomic_trans list)});
+    ({from_=owner3; txs=([{to_=owner2;amount=2n;token_id=2n};] : FA2_multi_asset.atomic_trans list)});
   ] : FA2_multi_asset.transfer)
   in
   let () = Test.set_source op3 in 
@@ -328,7 +331,7 @@ let test_update_operator_remove_operator_and_transfer =
 
   let () = Test.set_source op1 in
   let transfer_requests = ([
-    ({from_=owner1; tx=([{to_=owner2;amount=2n;token_id=2n};] : FA2_multi_asset.atomic_trans list)});
+    ({from_=owner1; txs=([{to_=owner2;amount=2n;token_id=2n};] : FA2_multi_asset.atomic_trans list)});
   ] : FA2_multi_asset.transfer)
   in
   let result = Test.transfer_to_contract contr (Transfer transfer_requests) 0tez in
@@ -359,7 +362,7 @@ let test_update_operator_add_operator_and_transfer =
 
   let () = Test.set_source op3 in
   let transfer_requests = ([
-    ({from_=owner1; tx=([{to_=owner2;amount=2n;token_id=2n};] : FA2_multi_asset.atomic_trans list)});
+    ({from_=owner1; txs=([{to_=owner2;amount=2n;token_id=2n};] : FA2_multi_asset.atomic_trans list)});
   ] : FA2_multi_asset.transfer)
   in
   let _ = Test.transfer_to_contract_exn contr (Transfer transfer_requests) 0tez in
