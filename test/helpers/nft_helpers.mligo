@@ -54,11 +54,15 @@ let get_initial_storage () =
     (5n, ({token_id=3n;token_info=(Map.empty : (string, bytes) map);} : FA2_NFT.TokenMetadata.data));
   ] : FA2_NFT.TokenMetadata.t) in
 
+  let metadata = FA2_NFT.Metadata.init() in
+  let token_ids = Set.literal [1n; 2n; 3n] in
+
   let initial_storage = {
     ledger         = ledger;
     token_metadata = token_metadata;
     operators      = operators;
-    token_ids      = [1n; 2n; 3n];
+    token_ids      = token_ids;
+    metadata       = metadata;
   } in
 
   initial_storage, owners, ops

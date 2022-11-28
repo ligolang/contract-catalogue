@@ -18,7 +18,7 @@ let _test_atomic_tansfer_operator_success (main : main_fn) =
   let owner3 = List_helper.nth_exn 2 owners in
   let op1    = List_helper.nth_exn 0 operators in
   let transfer_requests = ([
-    ({from_=owner1; tx=([{to_=owner2;token_id=1n};] : FA2_NFT.atomic_trans list)});
+    ({from_=owner1; txs=([{to_=owner2;token_id=1n};] : FA2_NFT.atomic_trans list)});
   ] : FA2_NFT.transfer)
   in
   let () = Test.set_source op1 in 
@@ -36,7 +36,7 @@ let _test_atomic_tansfer_owner_success (main : main_fn) =
   let owner2 = List_helper.nth_exn 1 owners in
   let owner3 = List_helper.nth_exn 2 owners in
   let transfer_requests = ([
-    ({from_=owner1; tx=([{to_=owner2;token_id=1n};] : FA2_NFT.atomic_trans list)});
+    ({from_=owner1; txs=([{to_=owner2;token_id=1n};] : FA2_NFT.atomic_trans list)});
   ] : FA2_NFT.transfer)
   in
   let () = Test.set_source owner1 in 
@@ -54,7 +54,7 @@ let _test_transfer_token_undefined (main : main_fn) =
   let owner2 = List_helper.nth_exn 1 owners in
   let op1    = List_helper.nth_exn 0 operators in
   let transfer_requests = ([
-    ({from_=owner1; tx=([{to_=owner2;token_id=15n};] : FA2_NFT.atomic_trans list)});
+    ({from_=owner1; txs=([{to_=owner2;token_id=15n};] : FA2_NFT.atomic_trans list)});
   ] : FA2_NFT.transfer)
   in
   let () = Test.set_source op1 in 
@@ -71,7 +71,7 @@ let _test_atomic_transfer_failure_not_operator (main : main_fn) =
   let owner2 = List_helper.nth_exn 1 owners in
   let op2    = List_helper.nth_exn 1 operators in
   let transfer_requests = ([
-    ({from_=owner1; tx=([{to_=owner2;token_id=1n};] : FA2_NFT.atomic_trans list)});
+    ({from_=owner1; txs=([{to_=owner2;token_id=1n};] : FA2_NFT.atomic_trans list)});
   ] : FA2_NFT.transfer)
   in
   let () = Test.set_source op2 in 
@@ -90,7 +90,7 @@ let _test_atomic_tansfer_success_zero_amount_and_self_transfer (main : main_fn) 
   let owner3 = List_helper.nth_exn 2 owners in
   let op1    = List_helper.nth_exn 0 operators in
   let transfer_requests = ([
-    ({from_=owner2; tx=([{to_=owner2;token_id=2n};] : FA2_NFT.atomic_trans list)});
+    ({from_=owner2; txs=([{to_=owner2;token_id=2n};] : FA2_NFT.atomic_trans list)});
   ] : FA2_NFT.transfer)
   in
   let () = Test.set_source op1 in 
@@ -109,7 +109,7 @@ let _test_transfer_failure_transitive_operators (main : main_fn) =
   let owner2 = List_helper.nth_exn 1 owners in
   let op3    = List_helper.nth_exn 2 operators in
   let transfer_requests = ([
-    ({from_=owner1; tx=([{to_=owner2;token_id=1n};] : FA2_NFT.atomic_trans list)});
+    ({from_=owner1; txs=([{to_=owner2;token_id=1n};] : FA2_NFT.atomic_trans list)});
   ] : FA2_NFT.transfer)
   in
   let () = Test.set_source op3 in 
@@ -242,7 +242,7 @@ let _test_update_operator_remove_operator_and_transfer (main : main_fn) =
 
   let () = Test.set_source op1 in
   let transfer_requests = ([
-    ({from_=owner1; tx=([{to_=owner2;token_id=1n};] : FA2_NFT.atomic_trans list)});
+    ({from_=owner1; txs=([{to_=owner2;token_id=1n};] : FA2_NFT.atomic_trans list)});
   ] : FA2_NFT.transfer)
   in
   let result = Test.transfer_to_contract contr (Transfer transfer_requests) 0tez in
@@ -297,7 +297,7 @@ let _test_update_operator_add_operator_and_transfer (main : main_fn) =
 
   let () = Test.set_source op3 in
   let transfer_requests = ([
-    ({from_=owner1; tx=([{to_=owner2;token_id=1n};] : FA2_NFT.atomic_trans list)});
+    ({from_=owner1; txs=([{to_=owner2;token_id=1n};] : FA2_NFT.atomic_trans list)});
   ] : FA2_NFT.transfer)
   in
   let _ = Test.transfer_to_contract_exn contr (Transfer transfer_requests) 0tez in
@@ -326,7 +326,7 @@ let _test_update_operator_add_operator_and_transfer1 (main : main_fn) =
 
   let () = Test.set_source op3 in
   let transfer_requests = ([
-    ({from_=owner4; tx=([{to_=owner2;token_id=4n};] : FA2_NFT.atomic_trans list)});
+    ({from_=owner4; txs=([{to_=owner2;token_id=4n};] : FA2_NFT.atomic_trans list)});
   ] : FA2_NFT.transfer)
   in
   let _ = Test.transfer_to_contract_exn contr (Transfer transfer_requests) 0tez in
