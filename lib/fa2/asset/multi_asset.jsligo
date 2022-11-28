@@ -100,26 +100,23 @@ export namespace TokenMetadata {
    export type data = {token_id:nat,token_info:map<string,bytes>};
    export type t = big_map <nat, data>;
 
-   const data1 = Map.literal [
-      ("name", [%bytes {| "FA2 multi asset 1" |}]);
-      ("symbol", [%bytes {| "FMA1" |}]);
-      ("decimals", [%bytes {| "3" |}]);
-   ]
+   const data1 = Map.literal(list([
+      ["name", bytes `FA2 multi asset 1`],
+      ["symbol", bytes `FMA1`],
+      ["decimals", bytes `3`]
+   ]));
 
-   const data3 = Map.literal (list ([
-      ["name", [%bytes {| "FA2 multi asset 3" |}]],
-      ["symbol", [%bytes {| "FMA3" |}]],
-      ["decimals", [%bytes {| "3" |}]],
-   ]))
-let moves : register =
-  Map.literal (list([
-    ["tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address, [1,2]],
-    ["tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, [0,3]]]));
+   const data3 = Map.literal (list([
+      ["name", bytes `FA2 multi asset 3`],
+      ["symbol", bytes `FMA3`],
+      ["decimals", bytes `3`]
+   ]));
 
-   export const init () : t = Big_map.literal (list ([
-      [1n, {token_id:1n,token_info:data1}],
-      [3n, {token_id:3n,token_info:data3}],
-   )]);
+   export const init = () : t => 
+      Big_map.literal(list ([
+      [1 as nat, {token_id:1 as nat,token_info:data1}],
+      [3 as nat, {token_id:3 as nat,token_info:data3}]
+   ]));
 
    export const get_token_metadata = ([token_id, tm] : [nat, t]) : data =>
       match (Big_map.find_opt (token_id, tm),
@@ -192,7 +189,7 @@ const transfer = ([t, s]: [transfer, storage]): [list<operation>, storage] => {
    const ledger = List.fold_left (process_single_transfer, s.ledger, t);
       //refresh set of owner,token_ids
    let s = List.fold_left((s :storage, tf : transfer_from ) => 
-                           List.fold_left ((s : storage, at : atomic_trans) => {...s , owner_token_ids : Set.add([at.to_ , at.token_id],s.owner_token_ids) }
+                           List.fold_left ((s : storage, at : atomic_trans) => ({...s , owner_token_ids : Set.add([at.to_ , at.token_id],s.owner_token_ids) })
                           ,s,tf.txs)
             ,s,t);
    const s = Storage.set_ledger (s, ledger);
@@ -273,9 +270,7 @@ const main = ([p, s]: [parameter, storage]) : [list<operation>, storage] => matc
 });
 
 //@view 
-const all_owner_token_ids = (unit , storage) : set<[address,nat]> =>
-   (_ : unit, s:storage) => s.owner_token_ids
+const all_owner_token_ids = (_ : unit, s:storage) : set<[address,nat]> => s.owner_token_ids;
 
 //@view
-const all_token_ids = (unit , storage) : set<nat> =>
-   (_ : unit, s : storage) => s.token_ids
+const all_token_ids = (_ : unit, s : storage) : set<nat> => s.token_ids;
