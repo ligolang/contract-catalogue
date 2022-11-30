@@ -99,20 +99,20 @@ export namespace TokenMetadata {
    export type data = {token_id:nat,token_info:map<string,bytes>};
    export type t = big_map <nat, data>;
 
-   const data1 = Map.literal(list ([
-      ["name", bytes `FA2 NFT 1`],
-      ["decimals", bytes `3`]
+   const data1 = Map.literal (list ([
+      ["name", [%bytes {| "FA2 NFT 1" |}]],
+      ["decimals", [%bytes {| "3" |}]],
    ]));
 
    const data3 = Map.literal (list ([
-      ["name", bytes `FA2 NFT 3`],
-      ["decimals", bytes `3`]
+      ["name", [%bytes {| "FA2 NFT 3" |}]],
+      ["decimals", [%bytes {| "3" |}]],
    ]));
 
-   export const init = () : t => Big_map.literal (list ([
-      [1 as nat, {token_id:1 as nat,token_info:data1}],
-      [3 as nat, {token_id:3 as nat,token_info:data3}]
-   ]));
+   export const init () : t = Big_map.literal (list ([
+      [1n, {token_id:1n,token_info:data1}],
+      [3n, {token_id:3n,token_info:data3}],
+   )]);
 
    export const get_token_metadata = ([token_id, tm] : [nat, t]) : data =>
       match (Big_map.find_opt (token_id, tm),
@@ -286,4 +286,4 @@ const is_operator = ([op, s] : [operator , storage]) : bool =>
 
 // @view
 const token_metadata = ([p, s] : [nat, storage]) : TokenMetadata.data =>
-   TokenMetadata.get_token_metadata(p, s.token_metadata);
+   TokenMetadata.get_token_metadata(p, s.token_metadata)

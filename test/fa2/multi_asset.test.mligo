@@ -58,17 +58,11 @@ let get_initial_storage (a, b, c : nat * nat * nat) =
 
   let metadata = FA2_multi_asset.Metadata.init() in
 
-  let owner_token_ids : (address * nat) set = Set.empty in
-
-  let token_ids : nat set = Set.empty in
-
   let initial_storage = {
     ledger         = ledger;
     token_metadata = token_metadata;
     operators      = operators;
     metadata       = metadata;
-    owner_token_ids= owner_token_ids;
-    token_ids      = token_ids;
   } in
 
   initial_storage, owners, ops

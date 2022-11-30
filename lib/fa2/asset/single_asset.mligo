@@ -113,13 +113,11 @@ end
 
 module Storage = struct
    type token_id = nat
-   type owner    = address
    type t = {
       ledger : Ledger.t;
       operators : Operators.t;
       token_metadata : TokenMetadata.t;
-      metadata : Metadata.t;
-      owners : owner set;
+      metadata : Metadata.t
    }
 
    let get_amount_for_owner (s:t) (owner : address) =
