@@ -160,6 +160,7 @@ export type atomic_trans =
 {
    to_      : address,
    token_id : nat,
+   amount   : nat,
 };
 
 type transfer_from = {
@@ -174,11 +175,14 @@ const transfer = ([t, s]: [transfer, storage]): [list<operation>, storage] => {
    const process_atomic_transfer = (from_ : address)
    : (ledger: Ledger.t, t: atomic_trans) => Ledger.t => {
      return (ledger: Ledger.t, t: atomic_trans) : Ledger.t => {
-        const {to_,token_id} = t;
-        Storage.assert_token_exist (s, token_id);
-        Operators.assert_authorisation (s.operators, from_, token_id);
-        const ledger = Ledger.transfer_token_from_user_to_user (ledger, token_id, from_, to_);
-        ledger
+        const {to_,token_id,amount} = t;
+        if(amount != (1 as nat)) {return failwith(Errors.wrong_amount);}
+        else{
+         Storage.assert_token_exist (s, token_id);
+         Operators.assert_authorisation (s.operators, from_, token_id);
+         const ledger = Ledger.transfer_token_from_user_to_user (ledger, token_id, from_, to_);
+         return ledger;
+        }
      };
    };
    const process_single_transfer = ([ledger, t]: [Ledger.t, transfer_from]) : Ledger.t => {
