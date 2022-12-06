@@ -21,6 +21,7 @@ test-mutation:
 	$(LIGO) run test ./test/fa2/nft/e2e_mutation.test.mligo
 
 compile:
+	@if [ ! -d ./compiled ]; then mkdir -p ./compiled/fa2/nft/ ; fi
 	$(LIGO) compile contract lib/fa2/nft/NFT.mligo > compiled/fa2/nft/NFT_mligo.tz
 	$(LIGO) compile contract lib/fa2/nft/NFT.mligo $(json) > compiled/fa2/nft/NFT_mligo.json
 

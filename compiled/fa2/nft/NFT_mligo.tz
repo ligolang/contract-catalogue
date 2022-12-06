@@ -1,4 +1,0 @@
-ligo: command `compile' ambiguous and could be one of `compile-contract',
-      `compile-expression', `compile-parameter' or `compile-storage'
-Usage: ligo COMMAND ...
-Try `ligo --help' for more information.
