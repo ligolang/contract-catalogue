@@ -66,6 +66,7 @@ let get_initial_storage (a, b, c : nat * nat * nat) =
       metadata       = metadata;
       token_metadata = token_metadata;
       operators      = operators;
+      owners         = Set.literal [owner1; owner2; owner3];
   } in
 
   initial_storage, owners, ops
