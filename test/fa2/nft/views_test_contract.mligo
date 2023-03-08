@@ -34,7 +34,7 @@ let all_tokens (s : storage) =
     let all_tokens : nat set option = Tezos.call_view "all_tokens" () s.main_contract in
     {s with all_tokens = all_tokens}
 
-let main ((p,s):(parameter * storage)) =
+let main (p : parameter) (s : storage) =
     let s = match p with
        Get_balance  p -> get_balance (p, s)
     |  Total_supply p -> total_supply (p, s)

@@ -246,10 +246,11 @@ let update_ops : update_operators -> storage -> operation list * storage =
 
 
 type parameter = [@layout:comb] | Transfer of transfer | Balance_of of balance_of | Update_operators of update_operators
-let main ((p,s):(parameter * storage)) = match p with
-   Transfer         p -> transfer   p s
-|  Balance_of       p -> balance_of p s
-|  Update_operators p -> update_ops p s
+let main (p : parameter) (s : storage) = 
+  match p with
+     Transfer         p -> transfer   p s
+  |  Balance_of       p -> balance_of p s
+  |  Update_operators p -> update_ops p s
 
 
 [@view] let all_owner_token_ids : (unit * storage) -> (address * nat) set =
