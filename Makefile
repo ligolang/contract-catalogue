@@ -16,6 +16,9 @@ test:
 	$(LIGO) run test ./test/fa2/multi_asset.test.mligo
 	$(LIGO) run test ./test/fa2/nft/nft.test.mligo
 	$(LIGO) run test ./test/fa2/nft/views.test.mligo
+	$(LIGO) run test ./test/generic-fa2/single_asset.test.mligo
+	$(LIGO) run test ./test/generic-fa2/single_asset.extended.test.mligo
+	$(LIGO) run test ./test/generic-fa2/multi_asset.test.mligo
 
 test-mutation: 
 	$(LIGO) run test ./test/fa2/nft/e2e_mutation.test.mligo
