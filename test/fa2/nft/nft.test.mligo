@@ -6,7 +6,7 @@
 (* Tests for FA2 multi asset contract *)
 
 type return = operation list * FA2_NFT.storage
-type main_fn = (FA2_NFT.parameter * FA2_NFT.storage) -> return
+type main_fn = FA2_NFT.parameter -> FA2_NFT.storage -> return
 
 (* Transfer *)
 
