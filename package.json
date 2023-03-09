@@ -1,6 +1,6 @@
 {
   "name": "@ligo/fa",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A FA2 contract with nft, single asset & multi asset contracts",
   "directories": {
     "lib": "lib",
@@ -10,7 +10,7 @@
     "type": "git",
     "url": "git+ssh://git@github.com/ligolang/contract-catalogue.git"
   },
-  "main": "lib/fa2/main.mligo",
+  "main": "lib/main.mligo",
   "keywords": [
     "ligo",
     "tezos",
