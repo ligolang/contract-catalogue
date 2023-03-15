@@ -138,7 +138,7 @@ let _test_empty_transfer_and_balance_of (main : main_fn) =
   let _ = Test.transfer_to_contract_exn contr (Balance_of balance_of_requests) 0tez in
 
   let callback_storage = Test.get_storage callback_addr in
-  assert (callback_storage = ([] : nat list))
+  Test.assert (callback_storage = ([] : nat list))
 let test_empty_transfer_and_balance_of = _test_empty_transfer_and_balance_of FA2_NFT.main
 
 (* 7. balance of failure token undefined *)
@@ -188,7 +188,7 @@ let _test_balance_of_requests_with_duplicates (main : main_fn) =
   let _ = Test.transfer_to_contract_exn contr (Balance_of balance_of_requests) 0tez in
 
   let callback_storage = Test.get_storage callback_addr in
-  assert (callback_storage = ([1n; 1n; 1n; 0n]))
+  Test.assert (callback_storage = ([1n; 1n; 1n; 0n]))
 let test_balance_of_requests_with_duplicates 
   = _test_balance_of_requests_with_duplicates FA2_NFT.main
 
@@ -215,7 +215,7 @@ let _test_balance_of_0_balance_if_address_does_not_hold_tokens (main : main_fn) 
     let _ = Test.transfer_to_contract_exn contr (Balance_of balance_of_requests) 0tez in
 
     let callback_storage = Test.get_storage callback_addr in
-    assert (callback_storage = ([1n; 1n; 0n]))
+    Test.assert (callback_storage = ([1n; 1n; 0n]))
 let test_balance_of_0_balance_if_address_does_not_hold_tokens = 
   _test_balance_of_0_balance_if_address_does_not_hold_tokens FA2_NFT.main
 
@@ -271,7 +271,7 @@ let _test_update_operator_remove_operator_and_transfer1 (main : main_fn) =
   let storage = Test.get_storage t_addr in
   let operator_tokens = Big_map.find_opt (owner4,op1) storage.operators in
   let operator_tokens = Option.unopt operator_tokens in
-  assert (operator_tokens = Set.literal [5n])
+  Test.assert (operator_tokens = Set.literal [5n])
 let test_update_operator_remove_operator_and_transfer1 = 
   _test_update_operator_remove_operator_and_transfer1 FA2_NFT.main
 
