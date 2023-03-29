@@ -13,6 +13,7 @@ help:
 .PHONY: test
 test:
 	$(LIGO) run test ./test/fa2/single_asset.test.mligo
+	$(LIGO) run test ./test/fa2/single_asset_jsligo.test.mligo
 	$(LIGO) run test ./test/fa2/multi_asset.test.mligo
 	$(LIGO) run test ./test/fa2/nft/nft.test.mligo
 	$(LIGO) run test ./test/fa2/nft/views.test.mligo
