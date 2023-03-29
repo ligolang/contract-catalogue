@@ -261,12 +261,16 @@ const update_ops = ([updates, s]: [update_operators, storage]): [list<operation>
 
 export type parameter =
 // @layout:comb
-| ["Transfer", transfer] | ["Balance_of", balance_of] | ["Update_operators", update_operators]
+| ["Transfer", transfer] 
+| ["Balance_of", balance_of] 
+| ["Update_operators", update_operators]
+;
 
-const main = (p: parameter, s: storage) : [list<operation>, storage] => match (p,
-{  Transfer         : (p : transfer        ) => transfer   ([p, s])
-,  Balance_of       : (p : balance_of      ) => balance_of ([p, s])
-,  Update_operators : (p : update_operator ) => update_ops ([p, s])
+const main = (p: parameter, s: storage) : [list<operation>, storage] => 
+match (p, {  
+   Transfer         : (p : transfer        ) => transfer   ([p, s]),  
+   Balance_of       : (p : balance_of      ) => balance_of ([p, s]),  
+   Update_operators : (p : update_operator ) => update_ops ([p, s])
 });
 
 //@view 
