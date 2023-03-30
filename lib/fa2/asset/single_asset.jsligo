@@ -181,6 +181,7 @@ const transfer = ([t, s]: [transfer, storage]) : [list<operation>,  storage] => 
    const process_atomic_transfer = (from_: address) : (ledger: [Ledger.t, atomic_trans]) => Ledger.t => {
       return ([ledger, t]: [Ledger.t, atomic_trans]) : Ledger.t => {
       const {to_,token_id,amount} = t;
+      ignore(token_id);
       const _     = Operators.assert_authorisation(s.operators, from_);
       let ledger = Ledger.decrease_token_amount_for_user(ledger, from_, amount);
       return Ledger.increase_token_amount_for_user(ledger, to_,  amount);
@@ -223,6 +224,7 @@ const balance_of = ([b, s] : [balance_of, storage]): [list<operation>, storage] 
    const {requests,callback} = b;
    const get_balance_info = (request : request) : callback => {
       const {owner,token_id} = request;
+      ignore(token_id);
       const balance_ = Storage.get_amount_for_owner(s, owner);
       return {request:request,balance:balance_};
    };
