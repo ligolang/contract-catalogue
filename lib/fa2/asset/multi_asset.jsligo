@@ -54,8 +54,8 @@ namespace Operators {
       else {
          assert_update_permission (owner);
          const auth_tokens : option<set<token_id>> = match (Big_map.find_opt ([owner,operator], operators),
-         {Some : (ts : set<token_id>) => {
-            const ts = Set.remove (token_id, ts);
+         {Some : (toks : set<token_id>) => {
+            const ts = Set.remove (token_id, toks);
             if (Set.cardinal (ts) == (0 as nat)) { return None ()} else { return Some (ts)};
           },
           None : () => None ()
@@ -81,15 +81,13 @@ namespace Ledger {
        let balance_ = get_for_user ([ledger, from_, token_id]);
        assert_with_error ((balance_ >= amount_), Errors.ins_balance);
        balance_ = abs(balance_ - amount_);
-       const ledger = set_for_user([ledger, from_, token_id, balance_]);
-       return ledger;
+       return set_for_user([ledger, from_, token_id, balance_]);
    };
 
    const increase_token_amount_for_user = ([ledger,to_,token_id,amount_]: [t,owner,token_id,amount_]) : t => {
        let balance_ = get_for_user ([ledger, to_, token_id]);
        balance_ = balance_ + amount_;
-       const ledger = set_for_user([ledger, to_, token_id, balance_]);
-       return ledger;
+       return set_for_user([ledger, to_, token_id, balance_]);
    };
 };
 
@@ -172,28 +170,28 @@ const transfer = ([t, s]: [transfer, storage]): [list<operation>, storage] => {
    // This function process the "txs" list. Since all transfer share the same "from_" address, we use a se
    const process_atomic_transfer = (from_ : address)
    : (ledger: [Ledger.t, atomic_trans]) => Ledger.t => {
-     return ([ledger, t]: [Ledger.t, atomic_trans]) : Ledger.t => {
+     return ([l, t]: [Ledger.t, atomic_trans]) : Ledger.t => {
         const {to_,token_id,amount} = t;
         Storage.assert_token_exist ([s, token_id]);
         Operators.assert_authorisation ([s.operators, from_, token_id]);
-        let ledger = Ledger.decrease_token_amount_for_user ([ledger, from_, token_id, amount]);
+        let ledger = Ledger.decrease_token_amount_for_user ([l, from_, token_id, amount]);
         ledger = Ledger.increase_token_amount_for_user ([ledger, to_, token_id, amount]);
         return ledger;
      };
    };
-   const process_single_transfer = ([ledger, t]: [Ledger.t, transfer_from]) : Ledger.t => {
+   const process_single_transfer = ([l, t]: [Ledger.t, transfer_from]) : Ledger.t => {
       const {from_,txs} = t;
-      const ledger     = List.fold_left (process_atomic_transfer (from_), ledger, txs);
+      const ledger     = List.fold_left (process_atomic_transfer (from_), l, txs);
       return ledger
    };
    const ledger = List.fold_left (process_single_transfer, s.ledger, t);
       //refresh set of owner,token_ids
-   let s = List.fold_left(([s, tf] : [storage, transfer_from] ) => 
+   let store = List.fold_left(([s, tf] : [storage, transfer_from] ) => 
                            List.fold_left (([s, at] : [storage, atomic_trans]) => ({...s , owner_token_ids : Set.add([at.to_ , at.token_id],s.owner_token_ids) })
                           ,s,tf.txs)
             ,s,t);
-   const s = Storage.set_ledger ([s, ledger]);
-   return [list ([]),s]
+   store = Storage.set_ledger ([s, ledger]);
+   return [list ([]),store]
 }
 
 export type request = {
@@ -248,8 +246,8 @@ const update_ops = ([updates, s]: [update_operators, storage]): [list<operation>
    });
    let operators = Storage.get_operators (s);
    operators = List.fold_left (update_operator, operators, updates);
-   const s = Storage.set_operators ([s, operators]);
-   return [list([]),s]
+   const store = Storage.set_operators ([s, operators]);
+   return [list([]),store]
 };
 
 // If transfer_policy is  No_transfer or Owner_transfer
@@ -270,7 +268,7 @@ const main = (p: parameter, s: storage) : [list<operation>, storage] =>
 match (p, {  
    Transfer         : (p : transfer        ) => transfer   ([p, s]),  
    Balance_of       : (p : balance_of      ) => balance_of ([p, s]),  
-   Update_operators : (p : update_operator ) => update_ops ([p, s])
+   Update_operators : (p : update_operators) => update_ops ([p, s])
 });
 
 //@view 

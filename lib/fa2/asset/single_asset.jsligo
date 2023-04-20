@@ -64,8 +64,8 @@ namespace Operators {
          const _ = assert_update_permission(owner);
          const auths = match(Big_map.find_opt(owner, operators),{
             None : () => None(), 
-            Some : (os) => {
-               const os = Set.remove(operator,os);
+            Some : (ops) => {
+               let os = Set.remove(operator,ops);
                if (Set.size(os) == (0 as nat)) return None(); 
                else return Some(os);
                }
@@ -183,8 +183,8 @@ const transfer = ([t, s]: [transfer, storage]) : [list<operation>,  storage] => 
       const {to_,token_id,amount} = t;
       ignore(token_id);
       const _     = Operators.assert_authorisation(s.operators, from_);
-      let ledger = Ledger.decrease_token_amount_for_user(ledger, from_, amount);
-      return Ledger.increase_token_amount_for_user(ledger, to_,  amount);
+      let l = Ledger.decrease_token_amount_for_user(ledger, from_, amount);
+      return Ledger.increase_token_amount_for_user(l, to_,  amount);
       };
    };
    
@@ -194,8 +194,8 @@ const transfer = ([t, s]: [transfer, storage]) : [list<operation>,  storage] => 
   };
    
    const ledger = List.fold_left(process_single_transfer, s.ledger, t);
-   const s = Storage.set_ledger(s, ledger);
-   return [list([]),s];
+   const store = Storage.set_ledger(s, ledger);
+   return [list([]),store];
 };
 
 /** balance_of entrypoint
@@ -297,8 +297,8 @@ const update_ops = ([updates, s]: [update_operators, storage]): [list<operation>
    });
   
    const operators = List.fold_left(update_operator, Storage.get_operators(s), updates);
-   const s = Storage.set_operators(s, operators);
-   return [list([]),s];
+   const store = Storage.set_operators(s, operators);
+   return [list([]),store];
 };
 
 /** If transfer_policy is  No_transfer or Owner_transfer
