@@ -49,7 +49,7 @@ $ make test
                UNPAIR ;
                UNPAIR ;
                CREATE_CONTRACT 
-   #include "ligo-fa/compiled/fa2/nft/NFT_mligo.tz"  
+   #include "@ligo/fa/compiled/fa2/nft/NFT_mligo.tz"
                ;
                PAIR } |})] in
    ...
