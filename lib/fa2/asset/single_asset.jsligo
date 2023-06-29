@@ -80,7 +80,7 @@ namespace Ledger {
    type amount_ = nat;
    export type t =  big_map<owner, amount_>;
 
-   const get_for_user = (ledger:t,owner: owner) : amount_ => 
+   export const get_for_user = (ledger:t,owner: owner) : amount_ => 
       match(Big_map.find_opt(owner, ledger), {
         Some : (tokens)  => tokens,
         None : ()        => 0 as nat
@@ -90,14 +90,14 @@ namespace Ledger {
    const update_for_user = (ledger:t,owner: owner,amount_ : amount_) : t =>
       Big_map.update(owner,Some(amount_),ledger);
 
-   const decrease_token_amount_for_user = (ledger : t,from_ : owner,amount_ : amount_) : t => {
+   export const decrease_token_amount_for_user = (ledger : t,from_ : owner,amount_ : amount_) : t => {
       let tokens = get_for_user(ledger, from_);
       const _ = assert_with_error(tokens >= amount_,Errors.ins_balance);
       tokens = abs(tokens - amount_);
       return update_for_user(ledger, from_, tokens);
    };
 
-   const increase_token_amount_for_user = (ledger : t,to_   : owner,amount_ : amount_) : t => {
+   export const increase_token_amount_for_user = (ledger : t,to_   : owner,amount_ : amount_) : t => {
       let tokens = get_for_user(ledger,to_);
       tokens = tokens + amount_;
       return update_for_user(ledger, to_, tokens);

@@ -71,20 +71,20 @@ namespace Ledger {
    type amount_ = nat;
    export type t = big_map<[owner, token_id], amount_>;
 
-   const get_for_user = ([ledger,owner,token_id]: [t,owner,token_id]) : nat =>
+   export const get_for_user = ([ledger,owner,token_id]: [t,owner,token_id]) : nat =>
       match ((Big_map.find_opt ([owner,token_id], ledger)), {Some: (a: amount_) => a, None: () => 0 as nat});
 
    const set_for_user = ([ledger,owner,token_id,amount_]: [t,owner,token_id,amount_]) : t =>
       Big_map.update ([owner,token_id], Some(amount_), ledger);
 
-   const decrease_token_amount_for_user = ([ledger,from_,token_id,amount_]: [t,owner,token_id,amount_]) : t => {
+   export const decrease_token_amount_for_user = ([ledger,from_,token_id,amount_]: [t,owner,token_id,amount_]) : t => {
        let balance_ = get_for_user ([ledger, from_, token_id]);
        assert_with_error ((balance_ >= amount_), Errors.ins_balance);
        balance_ = abs(balance_ - amount_);
        return set_for_user([ledger, from_, token_id, balance_]);
    };
 
-   const increase_token_amount_for_user = ([ledger,to_,token_id,amount_]: [t,owner,token_id,amount_]) : t => {
+   export const increase_token_amount_for_user = ([ledger,to_,token_id,amount_]: [t,owner,token_id,amount_]) : t => {
        let balance_ = get_for_user ([ledger, to_, token_id]);
        balance_ = balance_ + amount_;
        return set_for_user([ledger, to_, token_id, balance_]);
