@@ -5,6 +5,8 @@
 
 #import "../common/errors.mligo" "Errors"
 
+type token_id = nat
+
 module Address = struct
    type t = address
    [@no_mutation] let equal (a : t) (b : t) = a = b
@@ -13,7 +15,6 @@ end
 module Operators = struct
    type owner    = Address.t
    type operator = Address.t
-   type token_id = nat
    type t = ((owner * operator), token_id set) big_map
 
 (** if transfer policy is Owner_or_operator_transfer *)
@@ -72,7 +73,6 @@ module Operators = struct
 end
 
 module Ledger = struct
-   type token_id = nat
    type owner = Address.t
    type t = (token_id,owner) big_map
 
@@ -118,7 +118,6 @@ end
 #import "../common/metadata.mligo" "Metadata"
 
 module Storage = struct
-   type token_id = nat
    type t = {
       ledger : Ledger.t;
       operators : Operators.t;

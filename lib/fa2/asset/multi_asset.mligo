@@ -5,10 +5,11 @@
 
 #import "../common/errors.mligo" "Errors"
 
+type token_id = nat
+
 module Operators = struct
    type owner    = address
    type operator = address
-   type token_id = nat
    type t = ((owner * operator), token_id set) big_map
 
 (** if transfer policy is Owner_or_operator_transfer *)
@@ -62,7 +63,6 @@ end
 
 module Ledger = struct
    type owner    = address
-   type token_id = nat
    type amount_  = nat
    type t = ((owner * token_id), amount_) big_map
 
@@ -119,7 +119,6 @@ end
 #import "../common/metadata.mligo" "Metadata"
 
 module Storage = struct
-   type token_id = nat
    type owner    = address
    type t = {
       ledger : Ledger.t;
