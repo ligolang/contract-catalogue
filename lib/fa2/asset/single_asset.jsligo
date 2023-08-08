@@ -4,233 +4,242 @@
 */
 
 #import "../common/errors.mligo" "Errors"
+export type token_id = nat;
 
 namespace Operators {
-   type owner    = address;
+   type owner = address;
    type operator = address;
-   type token_id = nat;
-   export type t = big_map<owner,set<operator>>;
+   export type t = big_map<owner, set<operator>>;
+   /** if transfer policy is Owner_or_operator_transfer */
 
-
-/** if transfer policy is Owner_or_operator_transfer */
-   export const assert_authorisation = (operators : t, from_ : address) : unit => {
+   export const assert_authorisation = (operators: t, from_: address): unit => {
       const sender_ = Tezos.get_sender();
-      if (sender_ == from_) return unit;
-      else {
-         const authorized = match(Big_map.find_opt(from_, operators), {
-            Some : (a) => a ,
-            None : ()=> Set.empty
-            });
-         if (Set.mem(sender_, authorized)) return unit;
-         else failwith(Errors.not_operator); 
+      if (sender_ == from_) return unit else {
+         const authorized =
+            match(
+               Big_map.find_opt(from_, operators),
+               { Some: (a) => a, None: () => Set.empty }
+            );
+         if (Set.mem(sender_, authorized)) return unit else failwith(
+            Errors.not_operator
+         )
       }
    };
-/** if transfer policy is Owner_transfer
+   /** if transfer policy is Owner_transfer
    let assert_authorisation (operators : t) (from_ : address) : unit =
       let sender_ = Tezos.sender in
       if (sender_ = from_) then ()
       else failwith Errors.not_owner
 */
-
-/** if transfer policy is No_transfer
+   /** if transfer policy is No_transfer
    let assert_authorisation (operators : t) (from_ : address) : unit =
       failwith Errors.no_owner
 */
 
-   const assert_update_permission = (owner : owner) : unit => {
-      return assert_with_error(owner == Tezos.get_sender(),"The sender can only manage operators for his own token");
+   const assert_update_permission = (owner: owner): unit => {
+      return assert_with_error(
+         owner == Tezos.get_sender(),
+         "The sender can only manage operators for his own token"
+      )
    };
    /** For an administator
       let admin = tz1.... in
       assert_with_error (Tezos.sender = admiin) "Only administrator can manage operators"
    */
 
-   export const add_operator = (operators : t, owner : owner, operator : operator) : t => {
-      if(owner == operator) return operators; 
-      else {
+   export const add_operator = (operators: t, owner: owner, operator: operator)
+      : t => {
+      if (owner == operator) return operators else {
          const _ = assert_update_permission(owner);
-         let auths = match(Big_map.find_opt(owner, operators), {
-            Some : (os) => os, 
-            None : () => Set.empty
-            });
-         auths = Set.add(operator,auths);
-         return Big_map.update(owner,Some(auths), operators);
-         }
+         let auths =
+            match(
+               Big_map.find_opt(owner, operators),
+               { Some: (os) => os, None: () => Set.empty }
+            );
+         auths = Set.add(operator, auths);
+         return Big_map.update(owner, Some(auths), operators)
+      }
    };
-
-   export const remove_operator = (operators : t,owner : owner,operator : operator) : t => {
-      if(owner == operator) return operators;
-      else {
+   export const remove_operator = (
+      operators: t,
+      owner: owner,
+      operator: operator
+   ): t => {
+      if (owner == operator) return operators else {
          const _ = assert_update_permission(owner);
-         const auths = match(Big_map.find_opt(owner, operators),{
-            None : () => None(), 
-            Some : (ops) => {
-               let os = Set.remove(operator,ops);
-               if (Set.size(os) == (0 as nat)) return None(); 
-               else return Some(os);
+         const auths =
+            match(
+               Big_map.find_opt(owner, operators),
+               {
+                  None: () => None(),
+                  Some: (ops) => {
+                     let os = Set.remove(operator, ops);
+                     if (Set.size(os) == (0 as nat)) return None() else return Some(
+                        os
+                     )
+                  }
                }
-            });
-         return Big_map.update(owner, auths, operators);
-         }
-   };
+            );
+         return Big_map.update(owner, auths, operators)
+      }
+   }
 };
 
 namespace Ledger {
-   type owner  = address;
+   type owner = address;
    type amount_ = nat;
-   export type t =  big_map<owner, amount_>;
-
-   export const get_for_user = (ledger:t,owner: owner) : amount_ => 
-      match(Big_map.find_opt(owner, ledger), {
-        Some : (tokens)  => tokens,
-        None : ()        => 0 as nat
-      }
+   export type t = big_map<owner, amount_>;
+   export const get_for_user = (ledger: t, owner: owner): amount_ =>
+      match(
+         Big_map.find_opt(owner, ledger),
+         { Some: (tokens) => tokens, None: () => 0 as nat }
       );
-
-   const update_for_user = (ledger:t,owner: owner,amount_ : amount_) : t =>
-      Big_map.update(owner,Some(amount_),ledger);
-
-   export const decrease_token_amount_for_user = (ledger : t,from_ : owner,amount_ : amount_) : t => {
+   const update_for_user = (ledger: t, owner: owner, amount_: amount_): t =>
+      Big_map.update(owner, Some(amount_), ledger);
+   export const decrease_token_amount_for_user = (
+      ledger: t,
+      from_: owner,
+      amount_: amount_
+   ): t => {
       let tokens = get_for_user(ledger, from_);
-      const _ = assert_with_error(tokens >= amount_,Errors.ins_balance);
+      const _ = assert_with_error(tokens >= amount_, Errors.ins_balance);
       tokens = abs(tokens - amount_);
-      return update_for_user(ledger, from_, tokens);
+      return update_for_user(ledger, from_, tokens)
    };
-
-   export const increase_token_amount_for_user = (ledger : t,to_   : owner,amount_ : amount_) : t => {
-      let tokens = get_for_user(ledger,to_);
+   export const increase_token_amount_for_user = (
+      ledger: t,
+      to_: owner,
+      amount_: amount_
+   ): t => {
+      let tokens = get_for_user(ledger, to_);
       tokens = tokens + amount_;
-      return update_for_user(ledger, to_, tokens);
-   };
-
+      return update_for_user(ledger, to_, tokens)
+   }
 };
 
-export namespace TokenMetadata  {
+export namespace TokenMetadata {
    /**
       This should be initialized at origination, conforming to either
       TZIP-12 : https://gitlab.com/tezos/tzip/-/blob/master/proposals/tzip-12/tzip-12.md#token-metadata
       or TZIP-16 : https://gitlab.com/tezos/tzip/-/blob/master/proposals/tzip-12/tzip-12.md#contract-metadata-tzip-016
    */
    /* with TZIP-12 */
+
    export type data = {
-      token_id:nat,
-      token_info:map<string,bytes>
+      token_id: nat,
+      token_info: map<string, bytes>
    };
-   export type t = big_map<nat,data>;
-
-
-   const data0 = Map.literal(list([
-      ["name", (bytes `"FA2 single-asset"`)],
-      ["symbol", (bytes `"FA2S"`)],
-      ["decimals", (bytes `3`)]
-   ]));
-
-
-   export const init = () : t => Big_map.literal(list([
-      [0 as nat, {token_id : 0 as nat,token_info:data0}]
-   ]));
-
+   export type t = big_map<nat, data>;
+   const data0 =
+      Map.literal(
+         list(
+            [
+               ["name", (bytes `"FA2 single-asset"`)],
+               ["symbol", (bytes `"FA2S"`)],
+               ["decimals", (bytes `3`)]
+            ]
+         )
+      );
+   export const init = (): t =>
+      Big_map.literal(
+         list([[0 as nat, { token_id: 0 as nat, token_info: data0 }]])
+      )
 };
 
 #import "../common/metadata.mligo" "Metadata"
-
-namespace Storage  {
-   type token_id = nat;
-   type owner    = address;
+namespace Storage {
+   type owner = address;
    export type t = {
-      ledger : Ledger.t;
-      operators : Operators.t;
-      token_metadata : TokenMetadata.t;
-      metadata : Metadata.t;
-      owners :  set<owner>;
+      ledger: Ledger.t;
+      operators: Operators.t;
+      token_metadata: TokenMetadata.t;
+      metadata: Metadata.t;
+      owners: set<owner>
    };
-
-   export const get_amount_for_owner = (s:t,owner : address) =>
+   export const get_amount_for_owner = (s: t, owner: address) =>
       Ledger.get_for_user(s.ledger, owner);
-
-   export const set_ledger = (s:t,ledger:Ledger.t) => {...s, ledger : ledger};
-
-   export const get_operators = (s:t) => s.operators;
-
-   export const set_operators = (s:t,operators:Operators.t) => {...s,operators : operators};
-
+   export const set_ledger = (s: t, ledger: Ledger.t) =>
+      { ...s, ledger: ledger };
+   export const get_operators = (s: t) => s.operators;
+   export const set_operators = (s: t, operators: Operators.t) =>
+      { ...s, operators: operators }
 };
-
 
 export type storage = Storage.t;
 
 /** transfert entrypoint*/
-export type atomic_trans = 
-// @layout:comb
+
+export type atomic_trans =
+// @layout comb
 {
-   to_      : address;
-   token_id : nat;
-   amount   : nat;
+   to_: address;
+   token_id: nat;
+   amount: nat
 };
 
 type transfer_from = {
-   from_ : address;
-   txs   :  list<atomic_trans>;
+   from_: address;
+   txs: list<atomic_trans>
 };
 
-export type transfer =  list<transfer_from>;
+export type transfer = list<transfer_from>;
 
-const transfer = ([t, s]: [transfer, storage]) : [list<operation>,  storage] => {
-
+const transfer = ([t, s]: [transfer, storage]): [list<operation>, storage] => {
    /* This function process the "txs" list. Since all transfer share the same "from_" address, we use a se */
-   const process_atomic_transfer = (from_: address) : (ledger: [Ledger.t, atomic_trans]) => Ledger.t => {
-      return ([ledger, t]: [Ledger.t, atomic_trans]) : Ledger.t => {
-      const {to_,token_id,amount} = t;
-      ignore(token_id);
-      const _     = Operators.assert_authorisation(s.operators, from_);
-      let l = Ledger.decrease_token_amount_for_user(ledger, from_, amount);
-      return Ledger.increase_token_amount_for_user(l, to_,  amount);
-      };
+
+   const process_atomic_transfer = (from_: address)
+      : (ledger: [Ledger.t, atomic_trans]) => Ledger.t => {
+      return ([ledger, t]: [Ledger.t, atomic_trans]): Ledger.t => {
+         const { to_, token_id, amount } = t;
+         ignore(token_id);
+         const _ = Operators.assert_authorisation(s.operators, from_);
+         let l = Ledger.decrease_token_amount_for_user(ledger, from_, amount);
+         return Ledger.increase_token_amount_for_user(l, to_, amount)
+      }
    };
-   
-   const process_single_transfer = ([ledger, t]: [Ledger.t, transfer_from]) : Ledger.t => {
-      const {from_,txs} = t;
-      return List.fold_left(process_atomic_transfer(from_), ledger, txs);
-  };
-   
+   const process_single_transfer = ([ledger, t]: [Ledger.t, transfer_from])
+      : Ledger.t => {
+      const { from_, txs } = t;
+      return List.fold_left(process_atomic_transfer(from_), ledger, txs)
+   };
    const ledger = List.fold_left(process_single_transfer, s.ledger, t);
    const store = Storage.set_ledger(s, ledger);
-   return [list([]),store];
+   return [list([]), store]
 };
 
 /** balance_of entrypoint
 */
+
 export type request = {
-   owner    : address;
-   token_id : nat;
+   owner: address;
+   token_id: nat
 };
 
-
-type callback = 
-// @layout:comb
+type callback =
+// @layout comb
 {
-   request : request;
-   balance : nat;
+   request;
+   balance: nat
 };
 
-export type balance_of = 
-// @layout:comb
+export type balance_of =
+// @layout comb
 {
-   requests :  list<request>;
-   callback :  contract<list<callback>> ;
+   requests: list<request>;
+   callback: contract<list<callback>>
 };
 
-const balance_of = ([b, s] : [balance_of, storage]): [list<operation>, storage] => {
-   const {requests,callback} = b;
-   const get_balance_info = (request : request) : callback => {
-      const {owner,token_id} = request;
+const balance_of = ([b, s]: [balance_of, storage]): [list<operation>, storage] => {
+   const { requests, callback } = b;
+   const get_balance_info = (request: request): callback => {
+      const { owner, token_id } = request;
       ignore(token_id);
       const balance_ = Storage.get_amount_for_owner(s, owner);
-      return {request:request,balance:balance_};
+      return { request: request, balance: balance_ }
    };
-   const callback_param = List.map(get_balance_info,requests);
+   const callback_param = List.map(get_balance_info, requests);
    const operation = Tezos.transaction(callback_param, (0 as tez), callback);
-   return [list([operation]),s];
+   return [list([operation]), s]
 };
 
 /** update operators entrypoint */
@@ -255,20 +264,18 @@ const balance_of = ([b, s] : [balance_of, storage]): [list<operation>, storage] 
 )
 */
 
-export type operator = 
-//@layout:comb 
+export type operator =
+// @layout comb
 {
-   owner    : address;
-   operator : address;
-   token_id : nat;
-}
+   owner: address;
+   operator: address;
+   token_id: nat
+};
 
-export type unit_update      = 
-| ["Add_operator", operator]
-| ["Remove_operator", operator]
-;
+export type unit_update =
+   ["Add_operator", operator] | ["Remove_operator", operator];
 
-export type update_operators =  list<unit_update>;
+export type update_operators = list<unit_update>;
 
 /**
 Add or Remove token operators for the specified token owners and token IDs.
@@ -288,17 +295,32 @@ operator of A, C cannot transfer tokens that are owned by A, on behalf of B.
 
 
 */
-const update_ops = ([updates, s]: [update_operators, storage]): [list<operation>, storage] => {
-   
-   const update_operator = ([operators,update] : [Operators.t, unit_update]) : Operators.t => 
-   match(update, {
-      Add_operator    : (operator) => Operators.add_operator(operators, operator.owner, operator.operator),
-      Remove_operator : (operator) => Operators.remove_operator(operators, operator.owner, operator.operator)
-   });
-  
-   const operators = List.fold_left(update_operator, Storage.get_operators(s), updates);
+
+const update_ops = ([updates, s]: [update_operators, storage])
+   : [list<operation>, storage] => {
+   const update_operator = ([operators, update]: [Operators.t, unit_update])
+      : Operators.t =>
+      match(
+         update,
+         {
+            Add_operator: (operator) =>
+               Operators.add_operator(
+                  operators,
+                  operator.owner,
+                  operator.operator
+               ),
+            Remove_operator: (operator) =>
+               Operators.remove_operator(
+                  operators,
+                  operator.owner,
+                  operator.operator
+               )
+         }
+      );
+   const operators =
+      List.fold_left(update_operator, Storage.get_operators(s), updates);
    const store = Storage.set_operators(s, operators);
-   return [list([]),store];
+   return [list([]), store]
 };
 
 /** If transfer_policy is  No_transfer or Owner_transfer
@@ -308,17 +330,18 @@ let update_ops : update_operators -> storage -> operation list * storage =
    ([]: operation list),s
 */
 
+export type parameter =
+   // @layout comb
+   | ["Transfer", transfer]
+   | ["Balance_of", balance_of]
+   | ["Update_operators", update_operators];
 
-export type parameter = 
-//@layout:comb 
-| ["Transfer" , transfer] 
-| ["Balance_of" ,balance_of] 
-| ["Update_operators" , update_operators]
-;
-
-const main = (p : parameter, s : storage) => 
-  match(p, {
-    Transfer         : (p) => transfer   ([p, s]),
-    Balance_of       : (p) => balance_of ([p, s]),
-    Update_operators : (p) => update_ops ([p, s])
-});
+const main = (p: parameter, s: storage) =>
+   match(
+      p,
+      {
+         Transfer: (p) => transfer([p, s]),
+         Balance_of: (p) => balance_of([p, s]),
+         Update_operators: (p) => update_ops([p, s])
+      }
+   );
