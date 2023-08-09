@@ -1,13 +1,9 @@
-/**
-   This file implement the TZIP-12 protocol (a.k.a FA2) for single asset on Tezos
-   copyright Marigold
-*/
-
 #import "../common/errors.mligo" "Errors"
 export type token_id = nat;
 
+export type owner = address;
+
 namespace Operators {
-   type owner = address;
    type operator = address;
    export type t = big_map<owner, set<operator>>;
    /** if transfer policy is Owner_or_operator_transfer */
@@ -86,7 +82,6 @@ namespace Operators {
 };
 
 namespace Ledger {
-   type owner = address;
    type amount_ = nat;
    export type t = big_map<owner, amount_>;
    export const get_for_user = (ledger: t, owner: owner): amount_ =>
@@ -148,7 +143,6 @@ export namespace TokenMetadata {
 
 #import "../common/metadata.mligo" "Metadata"
 namespace Storage {
-   type owner = address;
    export type t = {
       ledger: Ledger.t;
       operators: Operators.t;

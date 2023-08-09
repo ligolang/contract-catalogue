@@ -1,12 +1,9 @@
-// This file implement the TZIP-12 protocol (a.k.a FA2) for NFT on Tezos
-// copyright Wulfman Corporation 2021
-
-// Errors
 #import "../common/errors.mligo" "Errors"
 export type token_id = nat;
 
+export type owner = address;
+
 namespace Operators {
-   type owner = address;
    type operator = address;
    export type t = big_map<[owner, operator], set<token_id>>;
    // if transfer policy is Owner_or_operator_transfer
@@ -117,7 +114,6 @@ namespace Operators {
 };
 
 namespace Ledger {
-   type owner = address;
    export type t = big_map<token_id, owner>;
    export const is_owner_of = (ledger: t, token_id: token_id, owner: address)
       : bool => {
