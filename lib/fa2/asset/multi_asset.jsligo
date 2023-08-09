@@ -4,9 +4,10 @@
 // Errors
 #import "../common/errors.mligo" "Errors"
 export type token_id = nat;
+export type owner = address;
 
 namespace Operators {
-   type owner = address;
+   
    type operator = address;
    export type t = big_map<[owner, operator], set<token_id>>;
    // if transfer policy is Owner_or_operator_transfer
@@ -89,7 +90,6 @@ namespace Operators {
 };
 
 namespace Ledger {
-   type owner = address;
    type amount_ = nat;
    export type t = big_map<[owner, token_id], amount_>;
    export const get_for_user = ([ledger, owner, token_id]: [t, owner, token_id])
@@ -170,7 +170,6 @@ export namespace TokenMetadata {
 
 #import "../common/metadata.mligo" "Metadata"
 namespace Storage {
-   type owner = address;
    export type t = {
       ledger: Ledger.t,
       operators: Operators.t,
