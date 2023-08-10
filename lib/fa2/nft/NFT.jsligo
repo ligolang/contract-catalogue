@@ -230,6 +230,7 @@ const transfer = ([t, s]: [transfer, storage]): [list<operation>, storage] => {
       : (p: [Ledger.t, atomic_trans]) => Ledger.t => {
       return ([ledger, t]: [Ledger.t, atomic_trans]): Ledger.t => {
          const { to_, token_id, amount } = t;
+         ignore(amount);
          Storage.assert_token_exist(s, token_id);
          Operators.assert_authorisation(s.operators, from_, token_id);
          return Ledger.transfer_token_from_user_to_user(
