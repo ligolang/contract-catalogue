@@ -164,13 +164,11 @@ type transfer = transfer_from list
 let transfer (t:transfer) (s:storage) : operation list * storage =
    (* This function process the "txs" list. Since all transfer share the same "from_" address, we use a se *)
    let process_atomic_transfer (from_:Address.t) (ledger, t:Ledger.t * atomic_trans) =
-      let {to_;token_id;amount} = t in
-      if amount <> 1n then failwith Errors.wrong_amount
-      else 
-         let ()     = Storage.assert_token_exist s token_id in
-         let ()     = Operators.assert_authorisation s.operators from_ token_id in
-         let ledger = Ledger.transfer_token_from_user_to_user ledger token_id from_ to_ in
-         ledger
+      let {to_;token_id;amount = _} = t in
+      let ()     = Storage.assert_token_exist s token_id in
+      let ()     = Operators.assert_authorisation s.operators from_ token_id in
+      let ledger = Ledger.transfer_token_from_user_to_user ledger token_id from_ to_ in
+      ledger
    in
    let process_single_transfer (ledger, t:Ledger.t * transfer_from ) =
       let {from_;txs} = t in

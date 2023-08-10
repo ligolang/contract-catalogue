@@ -1,6 +1,6 @@
 #import "../../../lib/fa2/nft/NFT.mligo" "FA2_NFT"
 #import "./nft.test.mligo" "Test_FA2_NFT"
-
+ 
 let originate_and_test_e2e (main : Test_FA2_NFT.main_fn) =
   let () = Test_FA2_NFT._test_atomic_tansfer_operator_success main in
   let () = Test_FA2_NFT._test_atomic_tansfer_owner_success main in

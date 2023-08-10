@@ -223,27 +223,22 @@ type transfer_from = {
 
 export type transfer = list<transfer_from>;
 
-const transfer = ([t,s] : [transfer,storage]): [list<operation>, storage] => {
+const transfer = ([t, s]: [transfer, storage]): [list<operation>, storage] => {
    // This function process the "txs" list. Since all transfer share the same "from_" address, we use a se
 
    const process_atomic_transfer = (from_: address)
       : (p: [Ledger.t, atomic_trans]) => Ledger.t => {
       return ([ledger, t]: [Ledger.t, atomic_trans]): Ledger.t => {
          const { to_, token_id, amount } = t;
-         if (amount != (1 as nat)) {
-            return failwith(Errors.wrong_amount)
-         } else {
-            Storage.assert_token_exist(s, token_id);
-            Operators.assert_authorisation(s.operators, from_, token_id);
-            const ledger =
-               Ledger.transfer_token_from_user_to_user(
-                  ledger,
-                  token_id,
-                  from_,
-                  to_
-               );
-            return ledger
-         }
+         ignore(amount);
+         Storage.assert_token_exist(s, token_id);
+         Operators.assert_authorisation(s.operators, from_, token_id);
+         return Ledger.transfer_token_from_user_to_user(
+            ledger,
+            token_id,
+            from_,
+            to_
+         )
       }
    };
    const process_single_transfer = ([ledger, t]: [Ledger.t, transfer_from])
@@ -277,7 +272,7 @@ export type balance_of =
 
 // Balance_of entrypoint
 
-const balance_of = ([b,s]: [balance_of,storage]): [list<operation>, storage] => {
+const balance_of = ([b, s]: [balance_of, storage]): [list<operation>, storage] => {
    const { requests, callback } = b;
    const get_balance_info = (request: request): callback => {
       const { owner, token_id } = request;
@@ -306,7 +301,7 @@ export type unit_update =
 
 export type update_operators = list<unit_update>;
 
-const update_ops = ([updates,s]: [update_operators, storage])
+const update_ops = ([updates, s]: [update_operators, storage])
    : [list<operation>, storage] => {
    const update_operator = ([operators, update]: [Operators.t, unit_update])
       : Operators.t =>
