@@ -70,7 +70,7 @@ namespace Operators {
                   when(None()): None();
                   when(Some(ops)):do  {
                      let os = Set.remove(operator, ops);
-                     if (Set.size(os) == (0 as nat)) return None() else return Some(
+                     if (Set.size(os) == 0n) return None() else return Some(
                         os
                      )
                   }
@@ -230,7 +230,7 @@ export type balance_of =
       return { request: request, balance: balance_ }
    };
    const callback_param = List.map(get_balance_info, requests);
-   const operation = Tezos.transaction(callback_param, (0 as tez), callback);
+   const operation = Tezos.transaction(callback_param, 0tez, callback);
    return [list([operation]), s]
 };
 

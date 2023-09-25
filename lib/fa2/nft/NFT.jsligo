@@ -96,7 +96,7 @@ namespace Operators {
                {
                   when(Some(ts)): do {
                      const toks = Set.remove(token_id, ts);
-                     if (Set.cardinal(toks) == (0 as nat)) {
+                     if (Set.cardinal(toks) == 0n) {
                         return None()
                      } else {
                         return Some(toks)
@@ -192,9 +192,9 @@ namespace Storage {
    export const get_balance = (s: t, owner: address, token_id: nat): nat => {
       assert_token_exist(s, token_id);
       if (is_owner_of(s, owner, token_id)) {
-         return (1 as nat)
+         return 1n
       } else {
-         return (0 as nat)
+         return 0n
       }
    }
 };
@@ -275,7 +275,7 @@ export type balance_of =
       return ({ request: request, balance: balance_ })
    };
    const callback_param = List.map(get_balance_info, requests);
-   const operation = Tezos.transaction(callback_param, (0 as tez), callback);
+   const operation = Tezos.transaction(callback_param, 0tez, callback);
    return [list([operation]), s]
 };
 
@@ -336,7 +336,7 @@ const get_balance = (p : [address, nat], s : storage): nat => {
 @view
 const total_supply = (token_id : nat, s : storage): nat => {
    Storage.assert_token_exist(s, token_id);
-   return (1 as nat)
+   return 1n
 };
 
 @view

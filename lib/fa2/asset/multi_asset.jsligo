@@ -73,7 +73,7 @@ namespace Operators {
                {
                   when(Some(toks)): do {
                      const ts = Set.remove(token_id, toks);
-                     if (Set.cardinal(ts) == (0 as nat)) {
+                     if (Set.cardinal(ts) == 0n) {
                         return None()
                      } else {
                         return Some(ts)
@@ -284,7 +284,7 @@ export type balance_of =
       return ({ request: request, balance: balance_ })
    };
    const callback_param = List.map(get_balance_info, requests);
-   const operation = Tezos.transaction(callback_param, (0 as tez), callback);
+   const operation = Tezos.transaction(callback_param, 0tez, callback);
    return [list([operation]), s]
 };
 
