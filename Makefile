@@ -1,4 +1,4 @@
-LIGO?=docker run --rm -v "$(PWD)":"$(PWD)" -w "$(PWD)" ligolang/ligo:next
+LIGO?=ligo
 
 json=--michelson-format json
 tsc=npx tsc

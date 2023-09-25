@@ -149,7 +149,7 @@ type transfer_from = {
 }
 type transfer = transfer_from list
 
-let transfer : transfer -> storage -> operation list * storage =
+[@entry] let transfer : transfer -> storage -> operation list * storage =
    fun (t:transfer) (s:storage) ->
    (* This function process the "txs" list. Since all transfer share the same "from_" address, we use a se *)
    let process_atomic_transfer (from_:address) (ledger, t:Ledger.t * atomic_trans) =
@@ -185,7 +185,7 @@ type balance_of = [@layout:comb] {
    callback : callback list contract;
 }
 
-let balance_of : balance_of -> storage -> operation list * storage =
+[@entry] let balance_of : balance_of -> storage -> operation list * storage =
    fun (b: balance_of) (s: storage) ->
    let {requests;callback} = b in
    let get_balance_info (request : request) : callback =
@@ -244,7 +244,7 @@ operator of A, C cannot transfer tokens that are owned by A, on behalf of B.
 
 
 *)
-let update_ops : update_operators -> storage -> operation list * storage =
+[@entry] let update_operators : update_operators -> storage -> operation list * storage =
    fun (updates: update_operators) (s: storage) ->
    let update_operator (operators,update : Operators.t * unit_update) = match update with
       Add_operator    {owner=owner;operator=operator;token_id=_token_id} -> Operators.add_operator    operators owner operator
@@ -261,11 +261,3 @@ let update_ops : update_operators -> storage -> operation list * storage =
    let () = failwith Errors.not_supported in
    ([]: operation list),s
 *)
-
-
-type parameter = [@layout:comb] | Transfer of transfer | Balance_of of balance_of | Update_operators of update_operators
-let main (p : parameter) (s : storage) = 
-  match p with
-     Transfer         p -> transfer   p s
-  |  Balance_of       p -> balance_of p s
-  |  Update_operators p -> update_ops p s

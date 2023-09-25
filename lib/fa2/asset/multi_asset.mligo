@@ -156,8 +156,7 @@ type transfer_from = {
 }
 type transfer = transfer_from list
 
-let transfer : transfer -> storage -> operation list * storage =
-   fun (t:transfer) (s:storage) ->
+[@entry] let transfer (t : transfer) (s : storage) : operation list * storage =
    (* This function process the "txs" list. Since all transfer share the same "from_" address, we use a se *)
    let process_atomic_transfer (from_:address) (ledger, t:Ledger.t * atomic_trans) =
       let {to_;token_id;amount=amount_} = t in
@@ -174,9 +173,9 @@ let transfer : transfer -> storage -> operation list * storage =
    in
    let ledger = List.fold_left process_single_transfer s.ledger t in
    //refresh set of owner,token_ids
-   let s = List.fold_left 
-            (fun (s , tf :storage * transfer_from ) -> 
-                           List.fold_left 
+   let s = List.fold_left
+            (fun (s , tf :storage * transfer_from ) ->
+                           List.fold_left
                            (fun (s , at : storage * atomic_trans) -> {s with owner_token_ids = Set.add (at.to_ , at.token_id) s.owner_token_ids })
                            s tf.txs)
             s t in
@@ -200,8 +199,7 @@ type balance_of = [@layout:comb] {
    callback : callback list contract;
 }
 
-let balance_of : balance_of -> storage -> operation list * storage =
-   fun (b: balance_of) (s: storage) ->
+[@entry] let balance_of (b : balance_of) (s : storage) : operation list * storage =
    let {requests;callback} = b in
    let get_balance_info (request : request) : callback =
       let {owner;token_id} = request in
@@ -223,8 +221,7 @@ type operator = [@layout:comb] {
 type unit_update      = Add_operator of operator | Remove_operator of operator
 type update_operators = unit_update list
 
-let update_ops : update_operators -> storage -> operation list * storage =
-   fun (updates: update_operators) (s: storage) ->
+[@entry] let update_operators (updates: update_operators) (s : storage) : operation list * storage =
    let update_operator (operators,update : Operators.t * unit_update) = match update with
       Add_operator    {owner=owner;operator=operator;token_id=token_id} -> Operators.add_operator    operators owner operator token_id
    |  Remove_operator {owner=owner;operator=operator;token_id=token_id} -> Operators.remove_operator operators owner operator token_id
@@ -241,17 +238,8 @@ let update_ops : update_operators -> storage -> operation list * storage =
    ([]: operation list),s
 *)
 
+[@view] let all_owner_token_ids (() : unit) (s : storage) : (address * nat) set =
+   s.owner_token_ids
 
-type parameter = [@layout:comb] | Transfer of transfer | Balance_of of balance_of | Update_operators of update_operators
-let main (p : parameter) (s : storage) = 
-  match p with
-     Transfer         p -> transfer   p s
-  |  Balance_of       p -> balance_of p s
-  |  Update_operators p -> update_ops p s
-
-
-[@view] let all_owner_token_ids : (unit * storage) -> (address * nat) set =
-   fun ((_, s) : (unit * storage)) -> s.owner_token_ids
-
-[@view] let all_token_ids : (unit * storage) -> nat set =
-   fun ((_, s) : (unit * storage)) -> s.token_ids
+[@view] let all_token_ids (() : unit) (s : storage) : nat set =
+   s.token_ids

@@ -13,9 +13,9 @@ namespace Operators {
       if (sender_ == from_) return unit else {
          const authorized =
             match(
-               Big_map.find_opt(from_, operators),
-               { Some: (a) => a, None: () => Set.empty }
-            );
+               Big_map.find_opt(from_, operators))
+               { when(Some(a)): a; when(None()): Set.empty; }
+            ;
          if (Set.mem(sender_, authorized)) return unit else failwith(
             Errors.not_operator
          )
@@ -49,9 +49,9 @@ namespace Operators {
          const _ = assert_update_permission(owner);
          let auths =
             match(
-               Big_map.find_opt(owner, operators),
-               { Some: (os) => os, None: () => Set.empty }
-            );
+               Big_map.find_opt(owner, operators))
+               { when(Some(os)): os; when(None()): Set.empty; }
+            ;
          auths = Set.add(operator, auths);
          return Big_map.update(owner, Some(auths), operators)
       }
@@ -65,17 +65,16 @@ namespace Operators {
          const _ = assert_update_permission(owner);
          const auths =
             match(
-               Big_map.find_opt(owner, operators),
+               Big_map.find_opt(owner, operators))
                {
-                  None: () => None(),
-                  Some: (ops) => {
+                  when(None()): None();
+                  when(Some(ops)):do  {
                      let os = Set.remove(operator, ops);
                      if (Set.size(os) == (0 as nat)) return None() else return Some(
                         os
                      )
                   }
-               }
-            );
+               };
          return Big_map.update(owner, auths, operators)
       }
    }
@@ -86,9 +85,9 @@ namespace Ledger {
    export type t = big_map<owner, amount_>;
    export const get_for_user = (ledger: t, owner: owner): amount_ =>
       match(
-         Big_map.find_opt(owner, ledger),
-         { Some: (tokens) => tokens, None: () => 0 as nat }
-      );
+         Big_map.find_opt(owner, ledger))
+         { when(Some(tokens)): tokens; when(None()): 0 as nat; }
+      ;
    const update_for_user = (ledger: t, owner: owner, amount_: amount_): t =>
       Big_map.update(owner, Some(amount_), ledger);
    export const decrease_token_amount_for_user = (
@@ -153,10 +152,10 @@ namespace Storage {
    export const get_amount_for_owner = (s: t, owner: address) =>
       Ledger.get_for_user(s.ledger, owner);
    export const set_ledger = (s: t, ledger: Ledger.t) =>
-      { ...s, ledger: ledger };
+      ({ ...s, ledger: ledger });
    export const get_operators = (s: t) => s.operators;
    export const set_operators = (s: t, operators: Operators.t) =>
-      { ...s, operators: operators }
+      ({ ...s, operators: operators })
 };
 
 export type storage = Storage.t;
@@ -178,19 +177,18 @@ type transfer_from = {
 
 export type transfer = list<transfer_from>;
 
-const transfer = ([t, s]: [transfer, storage]): [list<operation>, storage] => {
+@entry const transfer = (t : transfer, s: storage): [list<operation>, storage] => {
    /* This function process the "txs" list. Since all transfer share the same "from_" address, we use a se */
 
-   const process_atomic_transfer = (from_: address)
-      : (ledger: [Ledger.t, atomic_trans]) => Ledger.t => {
-      return ([ledger, t]: [Ledger.t, atomic_trans]): Ledger.t => {
+   const process_atomic_transfer = (from_: address) =>
+      ([ledger, t]: [Ledger.t, atomic_trans]): Ledger.t => {
          const { to_, token_id, amount } = t;
          ignore(token_id);
          const _ = Operators.assert_authorisation(s.operators, from_);
          let l = Ledger.decrease_token_amount_for_user(ledger, from_, amount);
          return Ledger.increase_token_amount_for_user(l, to_, amount)
-      }
-   };
+      };
+
    const process_single_transfer = ([ledger, t]: [Ledger.t, transfer_from])
       : Ledger.t => {
       const { from_, txs } = t;
@@ -223,7 +221,7 @@ export type balance_of =
    callback: contract<list<callback>>
 };
 
-const balance_of = ([b, s]: [balance_of, storage]): [list<operation>, storage] => {
+@entry const balance_of = (b : balance_of, s : storage): [list<operation>, storage] => {
    const { requests, callback } = b;
    const get_balance_info = (request: request): callback => {
       const { owner, token_id } = request;
@@ -290,27 +288,25 @@ operator of A, C cannot transfer tokens that are owned by A, on behalf of B.
 
 */
 
-const update_ops = ([updates, s]: [update_operators, storage])
+@entry const update_operators = (updates: update_operators, s: storage)
    : [list<operation>, storage] => {
    const update_operator = ([operators, update]: [Operators.t, unit_update])
       : Operators.t =>
-      match(
-         update,
+      match(update)
          {
-            Add_operator: (operator) =>
+            when(Add_operator(operator)):
                Operators.add_operator(
                   operators,
                   operator.owner,
                   operator.operator
-               ),
-            Remove_operator: (operator) =>
+               );
+            when(Remove_operator(operator)):
                Operators.remove_operator(
                   operators,
                   operator.owner,
                   operator.operator
-               )
-         }
-      );
+               );
+         };
    const operators =
       List.fold_left(update_operator, Storage.get_operators(s), updates);
    const store = Storage.set_operators(s, operators);
@@ -323,19 +319,3 @@ let update_ops : update_operators -> storage -> operation list * storage =
    let () = failwith Errors.not_supported in
    ([]: operation list),s
 */
-
-export type parameter =
-   // @layout comb
-   | ["Transfer", transfer]
-   | ["Balance_of", balance_of]
-   | ["Update_operators", update_operators];
-
-const main = (p: parameter, s: storage) =>
-   match(
-      p,
-      {
-         Transfer: (p) => transfer([p, s]),
-         Balance_of: (p) => balance_of([p, s]),
-         Update_operators: (p) => update_ops([p, s])
-      }
-   );

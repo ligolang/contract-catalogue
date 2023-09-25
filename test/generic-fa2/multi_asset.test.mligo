@@ -1,6 +1,10 @@
 #import "./multi_asset.instance.mligo" "MultiAsset"
 #import "../helpers/list.mligo" "List_helper"
 
+type ext = MultiAsset.extension
+type storage = MultiAsset.storage
+type extended_storage = ext storage
+
 let get_initial_storage (a, b, c : nat * nat * nat) =
   let () = Test.reset_state 6n ([] : tez list) in
 
@@ -41,7 +45,7 @@ let get_initial_storage (a, b, c : nat * nat * nat) =
     MultiAsset.FA2.TokenMetadata.data));
   ] : MultiAsset.FA2.TokenMetadata.t) in
 
-  let initial_storage = {
+  let initial_storage : extended_storage = {
     metadata = Big_map.literal [
         ("", Bytes.pack("tezos-storage:contents"));
         ("contents", ("": bytes))
