@@ -1,6 +1,6 @@
 #import "../../lib/fa2/nft/NFT.mligo" "FA2_NFT"
 
-let get_initial_storage () = 
+let get_initial_storage () =
   let () = Test.reset_state 8n ([
     1000000tez;
     1000000tez;
@@ -12,13 +12,13 @@ let get_initial_storage () =
     1000000tez;
   ] : tez list) in
 
-  let baker = Test.nth_bootstrap_account 7 in 
+  let baker = Test.nth_bootstrap_account 7 in
   let () = Test.set_baker baker in
 
-  let owner1 = Test.nth_bootstrap_account 0 in 
-  let owner2 = Test.nth_bootstrap_account 1 in 
-  let owner3 = Test.nth_bootstrap_account 2 in 
-  let owner4 = Test.nth_bootstrap_account 6 in 
+  let owner1 = Test.nth_bootstrap_account 0 in
+  let owner2 = Test.nth_bootstrap_account 1 in
+  let owner3 = Test.nth_bootstrap_account 2 in
+  let owner4 = Test.nth_bootstrap_account 6 in
 
   let owners = [owner1; owner2; owner3; owner4] in
 
@@ -45,7 +45,7 @@ let get_initial_storage () =
     ((owner4, op1), Set.literal [4n; 5n]);
   ])
   in
-  
+
   let token_metadata = (Big_map.literal [
     (1n, ({token_id=1n;token_info=(Map.empty : (string, bytes) map);} : FA2_NFT.TokenMetadata.data));
     (2n, ({token_id=2n;token_info=(Map.empty : (string, bytes) map);} : FA2_NFT.TokenMetadata.data));
@@ -57,7 +57,7 @@ let get_initial_storage () =
   let metadata = FA2_NFT.Metadata.init() in
   let token_ids = Set.literal [1n; 2n; 3n] in
 
-  let initial_storage = {
+  let initial_storage : FA2_NFT.storage = {
     ledger         = ledger;
     token_metadata = token_metadata;
     operators      = operators;
@@ -68,9 +68,9 @@ let get_initial_storage () =
   initial_storage, owners, ops
 
 
-let assert_balances 
-  (contract_address : (FA2_NFT.parameter, FA2_NFT.storage) typed_address ) 
-  (a, b, c : (address * nat) * (address * nat) * (address * nat)) = 
+let assert_balances
+  (contract_address : (FA2_NFT parameter_of, FA2_NFT.storage) typed_address )
+  (a, b, c : (address * nat) * (address * nat) * (address * nat)) =
   let (owner1, token_id_1) = a in
   let (owner2, token_id_2) = b in
   let (owner3, token_id_3) = c in
@@ -78,15 +78,15 @@ let assert_balances
   let ledger = storage.ledger in
   let () = match (Big_map.find_opt token_id_1 ledger) with
     Some amt -> assert (amt = owner1)
-  | None -> Test.failwith "incorret address" 
+  | None -> Test.failwith "incorret address"
   in
   let () = match (Big_map.find_opt token_id_2 ledger) with
     Some amt ->  assert (amt = owner2)
-  | None -> Test.failwith "incorret address" 
+  | None -> Test.failwith "incorret address"
   in
   let () = match (Big_map.find_opt token_id_3 ledger) with
     Some amt -> assert (amt = owner3)
-  | None -> Test.failwith "incorret address" 
+  | None -> Test.failwith "incorret address"
   in
   ()
 

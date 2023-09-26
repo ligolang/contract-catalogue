@@ -1,35 +1,70 @@
-LIGO?=docker run --rm -v "$(PWD)":"$(PWD)" -w "$(PWD)" ligolang/ligo:next
+SHELL := /bin/bash
 
-json=--michelson-format json
-tsc=npx tsc
+ligo_compiler?=docker run --rm -v "$(PWD)":"$(PWD)" -w "$(PWD)" ligolang/ligo:0.57.0
+# ^ Override this variable when you run make command by make <COMMAND> ligo_compiler=<LIGO_EXECUTABLE>
+# ^ Otherwise use default one (you'll need docker)
+PROTOCOL_OPT?=
+
+project_root=--project-root .
+# ^ required when using packages
 
 help:
-	@echo  'Usage:'
-	@echo  '  compile         - Remove generated Michelson files, recompile smart contracts and lauch all tests'
-	@echo  '  test            - Run integration tests (written in LIGO)'
-	@echo  ''
+	@grep -E '^[ a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
+	awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
 
+compile = $(ligo_compiler) compile contract $(project_root) ./lib/$(1) -o ./compiled/$(2) $(3) $(PROTOCOL_OPT)
+# ^ compile contract to michelson or micheline
+
+test = $(ligo_compiler) run test $(project_root) ./test/$(1) $(PROTOCOL_OPT)
+# ^ run given test file
+
+compile: ## compile contracts
+	@if [ ! -d ./compiled ]; then mkdir ./compiled ; fi
+	@echo "Compiling contracts..."
+	@$(call compile,fa2/nft/NFT.mligo,fa2/nft/NFT_mligo.tz)
+	@$(call compile,fa2/nft/NFT.mligo,fa2/nft/NFT_mligo.json,--michelson-format json)
+	@echo "Compiled contracts!"
+clean: ## clean up
+	@rm -rf compiled
+
+deploy: deploy_deps deploy.js
+
+deploy.js:
+	@if [ ! -f ./deploy/metadata.json ]; then cp deploy/metadata.json.dist deploy/metadata.json ; fi
+	@echo "Running deploy script\n"
+	@cd deploy && npm start
+
+deploy_deps:
+	@echo "Installing deploy script dependencies"
+	@cd deploy && npm install
+	@echo ""
+
+install: ## install dependencies
+	@$(ligo_compiler) install
 
 .PHONY: test
-test:
-	$(LIGO) run test ./test/fa2/single_asset.test.mligo
-	$(LIGO) run test ./test/fa2/single_asset_jsligo.test.mligo
-	$(LIGO) run test ./test/fa2/multi_asset.test.mligo
-	$(LIGO) run test ./test/fa2/nft/nft.test.mligo
-	$(LIGO) run test ./test/fa2/nft/views.test.mligo
-	$(LIGO) run test ./test/fa2/multi_asset_jsligo.test.mligo
-	$(LIGO) run test ./test/fa2/nft/nft_jsligo.test.mligo
-	$(LIGO) run test ./test/generic-fa2/single_asset.test.mligo
-	$(LIGO) run test ./test/generic-fa2/single_asset.extended.test.mligo
-	$(LIGO) run test ./test/generic-fa2/multi_asset.test.mligo
+test: ## run tests (SUITE=permit make test)
+ifndef SUITE
+	@$(call test,fa2/single_asset.test.mligo)
+	@$(call test,fa2/single_asset_jsligo.test.mligo)
+	@$(call test,fa2/multi_asset.test.mligo)
+	@$(call test,fa2/nft/nft.test.mligo)
+	@$(call test,fa2/nft/views.test.mligo)
+	@$(call test,fa2/multi_asset_jsligo.test.mligo)
+	@$(call test,fa2/nft/nft_jsligo.test.mligo)
+	@$(call test,generic-fa2/single_asset.test.mligo)
+	@$(call test,generic-fa2/single_asset.extended.test.mligo)
+	@$(call test,generic-fa2/multi_asset.test.mligo)
+##  @$(call test,fa2/nft/e2e_mutation.test.mligo)
+else
+	@$(call test,$(SUITE).test.mligo)
+endif
 
-test-mutation: 
-	$(LIGO) run test ./test/fa2/nft/e2e_mutation.test.mligo
+lint: ## lint code
+	@npx eslint ./scripts --ext .ts
 
-compile:
-	@if [ ! -d ./compiled ]; then mkdir -p ./compiled/fa2/nft/ ; fi
-	$(LIGO) compile contract lib/fa2/nft/NFT.mligo > compiled/fa2/nft/NFT_mligo.tz
-	$(LIGO) compile contract lib/fa2/nft/NFT.mligo $(json) > compiled/fa2/nft/NFT_mligo.json
+sandbox-start: ## start sandbox
+	@./scripts/run-sandbox
 
-deploy: 
-	cd deploy/fa2/nft && $(tsc) deploy.ts --esModuleInterop --resolveJsonModule && node deploy.js
+sandbox-stop: ## stop sandbox
+	@docker stop sandbox

@@ -38,10 +38,10 @@ let get_initial_storage (a, b, c : nat * nat * nat) =
   let token_info = (Map.empty: (string, bytes) map) in
   let token_metadata = Big_map.literal ([
     (0n, { token_id   = 0n; token_info = token_info; })
-  ]) 
+  ])
   in
 
-  let initial_storage = {
+  let initial_storage : extended_storage = {
       metadata = Big_map.literal [
         ("", Bytes.pack("tezos-storage:contents"));
         ("contents", ("": bytes))
