@@ -3,14 +3,8 @@
 type storage = FA2.storage
 type extension = string
 type extended_storage = extension storage
+type 'p ret = 'p -> extended_storage -> operation list * extended_storage 
 
-type parameter = [@layout:comb]
-    | Transfer of FA2.transfer
-    | Balance_of of FA2.balance_of
-    | Update_operators of FA2.update_operators
-
-let main (p : parameter) (s : extended_storage): operation list * extended_storage 
- = match p with
-      Transfer         p -> FA2.transfer   p s
-   |  Balance_of       p -> FA2.balance_of p s
-   |  Update_operators p -> FA2.update_ops p s
+[@entry] let transfer : FA2.transfer ret = FA2.transfer
+[@entry] let balance_of : FA2.balance_of ret = FA2.balance_of
+[@entry] let update_operators : FA2.update_operators ret = FA2.update_operators

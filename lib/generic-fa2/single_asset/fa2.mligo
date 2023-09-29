@@ -118,7 +118,7 @@ operator of A, C cannot transfer tokens that are owned by A, on behalf of B.
 
 
 *)
-let update_ops (type a) (updates: update_operators) (s: a storage) : operation list * a storage =
+let update_operators (type a) (updates: update_operators) (s: a storage) : operation list * a storage =
    let update_operator (operators,update : Operators.t * unit_update) = match update with
       Add_operator    {owner=owner;operator=operator;token_id=_token_id} -> Operators.add_operator    operators owner operator
    |  Remove_operator {owner=owner;operator=operator;token_id=_token_id} -> Operators.remove_operator operators owner operator
@@ -129,7 +129,7 @@ let update_ops (type a) (updates: update_operators) (s: a storage) : operation l
    ([]: operation list),s
 
 (** If transfer_policy is  No_transfer or Owner_transfer
-let update_ops : update_operators -> storage -> operation list * storage =
+let update_operators : update_operators -> storage -> operation list * storage =
    fun (updates: update_operators) (s: storage) ->
    let () = failwith Errors.not_supported in
    ([]: operation list),s
