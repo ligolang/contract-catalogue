@@ -1,0 +1,19 @@
+/**
+   This file implement the TZIP-16 protocol (Contract Metadata) for Tezos
+	defined here : https://gitlab.com/tezos/tzip/-/blob/master/proposals/tzip-16/tzip-16.md
+*/
+/*  TZIP-016 : JSON nomenclature
+{
+	"name":"",                            (* A single string, free format.It is recommended to have “name” strings help identifying the purpose of the contract. *)
+	"description":"",                     (* A single string, free format.Preferably a set of proper natural language paragraphs. *)
+	"version":"",                         (* A single string, free format. It is recommended to have version strings which attempt at uniquely identifying the exact Michelson contract, or at least its behavior, as a precision w.r.t the name field.  Of course, none of that can be enforced. *)
+	"license":{"name":"", "details":""},  (* An extensible object { "name": <string> , "details" : <string> }, "details" being optional. It is recommended to use de facto standard short names when possible, see the Debian guidelines for instance. *)
+	"authors":[],                         (* A list of strings. Each author should obey the "Print Name <'contact'>", where the 'contact' string is either an email address, or a web URI. *)
+	"homepage":"",                        (* A single string, representing a “web” URL (e.g. HTTPS). The homepage is for human-consumption, it may be the location of the source of the contract, how to submit issue tickets, or just a more elaborate description. *)
+	"source":{"tools":[], "location":""}, (* An object { "tools": [<string>], "location": <string> } describing the source code which was transformed or generated the Michelson code of the contract. "tools" is an informal list of compilers/code-generators/libraries/post-processors used to generate the originated code, if possible with version information. The goal is to attempt to provide enough information for interested parties to reproduce the Michelson from its source, or at least to inspect it. *)
+	"interfaces":[],                      (* A list of strings. Each string should allow the consumer of the metadata to know which interfaces and behaviors the contract claims to obey (other than the obvious TZIP-016). In the case of standards defined as TZIPs in the present repository, the string should obey the pattern "TZIP-<number><extras>" where <extras> is additional information prefixed with a space character. Example: an FA2 contract would (at least) have an "interfaces" field containing ["TZIP-012"] or ["TZIP-012 git 6544de32"]. *)
+	"errors":[],                          (* A list of “error translation” objects, which allow one to interpret error values output by the contract using the FAILWITH instruction. The interpretation is a larger data-structure, for instance, to provide to a wallet-user with a more understandable error message to act on (usually a string or bytes natural language text value). They are either:  *)
+	"views":[]                            (* A list of off-chain-view objects, defined in the following section. *)
+} */
+
+export type metadata = big_map<string, bytes>;

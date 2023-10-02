@@ -1,0 +1,277 @@
+#import "../common/errors.mligo" "Errors"
+
+#import "../common/tzip12.datatypes.jsligo" "TZIP12"
+
+#import "../common/tzip12.interfaces.jsligo" "TZIP12Interface"
+
+#import "../common/tzip16.datatypes.jsligo" "TZIP16"
+
+export namespace NFT implements TZIP12Interface.FA2{
+   export type Ledger = big_map<nat, address>;
+   type operator = address;
+   export type Operators = big_map<[address, operator], set<nat>>;
+   export type storage = {
+      ledger: Ledger,
+      operators: Operators,
+      token_ids: set<nat>,
+      token_metadata: TZIP12.tokenMetadata,
+      metadata: TZIP16.metadata
+   };
+   type ret = [list<operation>, storage];
+   // export namespace Operators {
+   // if transfer policy is Owner_or_operator_transfer
+
+   export const assert_authorisation = (
+      operators: Operators,
+      from_: address,
+      token_id: nat
+   ): unit => {
+      const sender_ = (Tezos.get_sender());
+      if (sender_ != from_) {
+         const authorized =
+            match((Big_map.find_opt([from_, sender_], operators))) {
+               when (Some(a)):
+                  a
+               when (None()):
+                  Set.empty
+            };
+         if (! (Set.mem(token_id, authorized))) {
+            return failwith(Errors.not_operator)
+         }
+      } else {
+         return unit
+      }
+   };
+   // For an administator
+   // const admin = tz1.... ;
+   // assert_with_error ((Tezos.sender = admiin), "Only administrator can manage operators")
+
+   const assert_update_permission = (owner: address): unit => {
+      return assert_with_error(
+         (owner == (Tezos.get_sender())),
+         "The sender can only manage operators for his own token"
+      )
+   }
+   export const add_operator = (
+      operators: Operators,
+      owner: address,
+      operator: operator,
+      token_id: nat
+   ): Operators => {
+      if (owner == operator) {
+         return operators
+      // assert_authorisation always allow the owner so this case is not relevant
+
+      } else {
+         assert_update_permission(owner);
+         let auth_tokens =
+            match(Big_map.find_opt([owner, operator], operators)) {
+               when (Some(ts)):
+                  ts
+               when (None()):
+                  Set.empty
+            };
+         auth_tokens = Set.add(token_id, auth_tokens);
+         return Big_map.update([owner, operator], Some(auth_tokens), operators)
+      }
+   };
+   export const remove_operator = (
+      operators: Operators,
+      owner: address,
+      operator: operator,
+      token_id: nat
+   ): Operators => {
+      if (owner == operator) {
+         return operators
+      // assert_authorisation always allow the owner so this case is not relevant
+
+      } else {
+         assert_update_permission(owner);
+         const auth_tokens: option<set<nat>> =
+            match(Big_map.find_opt([owner, operator], operators)) {
+               when (Some(ts)):
+                  do {
+                     const toks = Set.remove(token_id, ts);
+                     if (Set.cardinal(toks) == 0n) {
+                        return None()
+                     } else {
+                        return Some(toks)
+                     }
+                  }
+               when (None()):
+                  None()
+            };
+         return Big_map.update([owner, operator], auth_tokens, operators)
+      }
+   }
+   // export namespace Ledger {
+
+   export const is_owner_of = (ledger: Ledger, token_id: nat, owner: address): bool => {
+      // We already sanitized token_id, a failwith here indicated a patological storage
+
+      const current_owner = Option.unopt(Big_map.find_opt(token_id, ledger));
+      return (current_owner == owner)
+   };
+   const assert_owner_of = (ledger: Ledger, token_id: nat, owner: address): unit =>
+      assert_with_error(
+         is_owner_of(ledger, token_id, owner),
+         Errors.ins_balance
+      );
+   export const transfer_token_from_user_to_user = (
+      ledger: Ledger,
+      token_id: nat,
+      from_: address,
+      to_: address
+   ): Ledger => {
+      assert_owner_of(ledger, token_id, from_);
+      return Big_map.update(token_id, Some(to_), ledger)
+   }
+   /*
+   // export namespace TokenMetadata {
+   // This should be initialized at origination, conforming to either
+   // TZIP-12 : https://gitlab.com/tezos/tzip/-/blob/master/proposals/tzip-12/tzip-12.md#token-metadata
+   // or TZIP-16 : https://gitlab.com/tezos/tzip/-/blob/master/proposals/tzip-12/tzip-12.md#contract-metadata-tzip-016
+
+   export type data = { token_id: nat, token_info: map<string, bytes> };
+   export type Ledger = big_map<nat, data>;
+   const data1 =
+      Map.literal(list([["name", bytes `FA2 NFT 1`], ["decimals", bytes `3`]]));
+   const data3 =
+      Map.literal(list([["name", bytes `FA2 NFT 3`], ["decimals", bytes `3`]]));
+   export const init = (): t =>
+      Big_map.literal(
+         list(
+            [
+               [1 as nat, { token_id: 1 as nat, token_info: data1 }],
+               [3 as nat, { token_id: 3 as nat, token_info: data3 }]
+            ]
+         )
+      );
+   export const get_token_metadata = (token_id: nat, tm: Ledger): data =>
+      match(Big_map.find_opt(token_id, tm)) {
+         when (Some(data)):
+            data
+         when (None()):
+            failwith(Errors.undefined_token)
+      }
+   // export namespace Storage {
+*/
+
+   export const assert_token_exist = (s: storage, token_id: nat): unit => {
+      const _ =
+         Option.unopt_with_error(
+            Big_map.find_opt(token_id, s.token_metadata),
+            Errors.undefined_token
+         )
+   };
+   export const set_ledger = (s: storage, ledger: Ledger): storage =>
+      ({ ...s, ledger: ledger });
+   export const get_operators = (s: storage): Operators => s.operators;
+   export const set_operators = (s: storage, operators: Operators): storage =>
+      ({ ...s, operators: operators });
+   @entry
+   const transfer = (t: TZIP12.transfer, s: storage): ret => {
+      // This function process the "txs" list. Since all transfer share the same "from_" address, we use a se
+
+      const process_atomic_transfer = (from_: address) =>
+         ([ledger, t]: [Ledger, TZIP12.atomic_trans]): Ledger => {
+            const { to_, token_id, amount } = t;
+            ignore(amount);
+            assert_token_exist(s, token_id);
+            assert_authorisation(s.operators, from_, token_id);
+            return transfer_token_from_user_to_user(
+               ledger,
+               token_id,
+               from_,
+               to_
+            )
+         };
+      const process_single_transfer = (
+         [ledger, t]: [Ledger, TZIP12.transfer_from]
+      ): Ledger => {
+         const { from_, txs } = t;
+         return List.fold_left(process_atomic_transfer(from_), ledger, txs)
+      };
+      const ledger = List.fold_left(process_single_transfer, s.ledger, t);
+      const store = set_ledger(s, ledger);
+      return [list([]), store]
+   };
+   @entry
+   const balance_of = (b: TZIP12.balance_of, s: storage): ret => {
+      const { requests, callback } = b;
+      const get_balance_info = (request: TZIP12.request): TZIP12.callback => {
+         const { owner, token_id } = request;
+         assert_token_exist(s, token_id);
+         let balance_ = 0 as nat;
+         if (is_owner_of(s.ledger, token_id, owner)) balance_ = 1 as nat;
+         return ({ request: request, balance: balance_ })
+      };
+      const callback_param = List.map(get_balance_info, requests);
+      const operation =
+         Tezos.transaction(Main(callback_param), 0mutez, callback);
+      return [list([operation]), s]
+   };
+   @entry
+   const update_operators = (updates: TZIP12.update_operators, s: storage): ret => {
+      const update_operator = (
+         [operators, update]: [Operators, TZIP12.unit_update]
+      ): Operators =>
+         match(update) {
+            when (Add_operator(operator)):
+               add_operator(
+                  operators,
+                  operator.owner,
+                  operator.operator,
+                  operator.token_id
+               )
+            when (Remove_operator(operator)):
+               remove_operator(
+                  operators,
+                  operator.owner,
+                  operator.operator,
+                  operator.token_id
+               )
+         };
+      let operators = get_operators(s);
+      operators = List.fold_left(update_operator, operators, updates);
+      const store = set_operators(s, operators);
+      return [list([]), store]
+   };
+   @view
+   const get_balance = (p: [address, nat], s: storage): nat => {
+      const [owner, token_id] = p;
+      assert_token_exist(s, token_id);
+      if (is_owner_of(s.ledger, token_id, owner)) {
+         return 1n
+      } else {
+         return 0n
+      }
+   };
+   @view
+   const total_supply = (token_id: nat, s: storage): nat => {
+      assert_token_exist(s, token_id);
+      return 1n
+   };
+   @view
+   const all_tokens = (_: unit, s: storage): set<nat> => s.token_ids;
+   @view
+   const is_operator = (op: TZIP12.operator, s: storage): bool => {
+      const authorized =
+         match(Big_map.find_opt([op.owner, op.operator], s.operators)) {
+            when (Some(a)):
+               a
+            when (None()):
+               Set.empty
+         };
+      return (Set.mem(op.token_id, authorized) || op.owner == op.operator)
+   };
+   @view
+   const token_metadata = (p: nat, s: storage): TZIP12.tokenMetadataData => {
+      return match(Big_map.find_opt(p, s.token_metadata)) {
+         when (Some(data)):
+            data
+         when (None()):
+            failwith(Errors.undefined_token)
+      }
+   }
+}

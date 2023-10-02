@@ -1,0 +1,23 @@
+#import "tzip12.datatypes.jsligo" "TZIP12Datatypes"
+
+export interface FA2 {
+  type storage;
+  type ret = [list<operation>, storage];
+  @entry
+  const transfer: (p: TZIP12Datatypes.transfer, s: storage) => ret;
+  @entry
+  const balance_of: (p: TZIP12Datatypes.balance_of, s: storage) => ret;
+  @entry
+  const update_operators: (p: TZIP12Datatypes.update_operators, s: storage) => ret;
+  @view
+  const get_balance: (p: [address, nat], s: storage) => nat;
+  @view
+  const total_supply: (token_id: nat, s: storage) => nat;
+  @view
+  const all_tokens: (_: unit, s: storage) => set<nat>;
+  @view
+  const is_operator: (op: TZIP12Datatypes.operator, s: storage) => bool;
+  @view
+  const token_metadata: (p: nat, s: storage) => TZIP12Datatypes.
+  tokenMetadataData;
+};
