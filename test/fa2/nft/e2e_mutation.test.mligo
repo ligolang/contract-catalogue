@@ -1,4 +1,4 @@
-#import "../../../lib/fa2/nft/NFT.mligo" "FA2_NFT"
+#import "../../../lib/fa2/nft/nft.impl.mligo" "FA2_NFT"
 #import "./nft.test.mligo" "Test_FA2_NFT"
  
 let originate_and_test_e2e (main : Test_FA2_NFT.main_fn) =
