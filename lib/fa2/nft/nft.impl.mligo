@@ -157,7 +157,7 @@ module NFT  = struct
       let () = assert_token_exist s token_id in
       1n
 
-[@view] let all_tokens (() : unit) (s : storage) : nat set = failwith Errors.not_available
+[@view] let all_tokens (() : unit) (_s : storage) : nat set = failwith Errors.not_available
 
 [@view] let is_operator (op : TZIP12.operator) (s : storage) : bool =
  let authorized = match Big_map.find_opt (op.owner, op.operator) s.operators with

@@ -71,7 +71,7 @@ let get_initial_storage () =
 
 }|}]);
 ] in
-  let token_ids = Set.literal [1n; 2n; 3n] in
+  
 
   let initial_storage : FA2_NFT.NFT.storage = {
     ledger         = ledger;
