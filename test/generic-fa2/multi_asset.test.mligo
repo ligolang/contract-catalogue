@@ -59,7 +59,7 @@ let get_initial_storage (a, b, c : nat * nat * nat) =
   initial_storage, owners, ops
 
 let assert_balances
-  (contract_address : (MultiAsset.parameter, MultiAsset.extended_storage) typed_address )
+  (contract_address : (MultiAsset parameter_of, MultiAsset.extended_storage) typed_address )
   (a, b, c : (address * nat * nat) * (address * nat * nat) * (address * nat * nat)) =
   let (owner1, token_id_1, balance1) = a in
   let (owner2, token_id_2, balance2) = b in
@@ -91,8 +91,7 @@ let test_atomic_tansfer_success =
   ] : MultiAsset.FA2.transfer)
   in
   let () = Test.set_source op1 in
-  let (t_addr,_,_) = Test.originate MultiAsset.main initial_storage 0tez in
-  let contr = Test.to_contract t_addr in
-  let _ = Test.transfer_to_contract_exn contr (Transfer transfer_requests) 0tez in
-  let () = assert_balances t_addr ((owner1, 2n, 8n), (owner2, 2n, 12n), (owner3, 3n, 10n)) in
+  let orig = Test.originate (contract_of MultiAsset) initial_storage 0tez in
+  let _ = Test.transfer_exn orig.addr (Transfer transfer_requests) 0tez in
+  let () = assert_balances orig.addr ((owner1, 2n, 8n), (owner2, 2n, 12n), (owner3, 3n, 10n)) in
   ()

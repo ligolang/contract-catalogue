@@ -189,9 +189,11 @@ type callback = [@layout:comb] {
    balance : nat;
 }
 
+type callback_param = | Main of callback list
+
 type balance_of = [@layout:comb] {
    requests : request list;
-   callback : callback list contract;
+   callback : callback_param contract;
 }
 
 (** Balance_of entrypoint *)
@@ -203,7 +205,7 @@ type balance_of = [@layout:comb] {
       {request=request;balance=balance_}
    in
    let callback_param = List.map get_balance_info requests in
-   let operation = Tezos.transaction callback_param 0tez callback in
+   let operation = Tezos.transaction (Main callback_param) 0tez callback in
    ([operation]: operation list),s
 
 (** Update_operators entrypoint *)

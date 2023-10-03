@@ -180,9 +180,11 @@ type callback = [@layout:comb] {
    balance : nat;
 }
 
+type callback_param = | Main of callback list
+
 type balance_of = [@layout:comb] {
    requests : request list;
-   callback : callback list contract;
+   callback : callback_param contract;
 }
 
 [@entry] let balance_of : balance_of -> storage -> operation list * storage =
@@ -194,7 +196,7 @@ type balance_of = [@layout:comb] {
       {request=request;balance=balance_}
    in
    let callback_param = List.map get_balance_info requests in
-   let operation = Tezos.transaction callback_param 0tez callback in
+   let operation = Tezos.transaction (Main callback_param) 0tez callback in
    ([operation]: operation list),s
 
 (** update operators entrypoint *)
@@ -256,7 +258,7 @@ operator of A, C cannot transfer tokens that are owned by A, on behalf of B.
    ([]: operation list),s
 
 (** If transfer_policy is  No_transfer or Owner_transfer
-let update_ops : update_operators -> storage -> operation list * storage =
+let update_operators : update_operators -> storage -> operation list * storage =
    fun (updates: update_operators) (s: storage) ->
    let () = failwith Errors.not_supported in
    ([]: operation list),s

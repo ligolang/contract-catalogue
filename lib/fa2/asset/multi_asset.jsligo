@@ -270,11 +270,13 @@ type callback = // @layout comb
    balance: nat
 };
 
+export type callback_param = ["Main",list<callback>]
+
 export type balance_of = // @layout comb
 
    {
    requests: list<request>,
-   callback: contract<list<callback>>
+   callback: contract<callback_param>
 };
 
 // Balance_of entrypoint
@@ -289,7 +291,7 @@ const balance_of = (b: balance_of, s: storage): [list<operation>, storage] => {
       return ({ request: request, balance: balance_ })
    };
    const callback_param = List.map(get_balance_info, requests);
-   const operation = Tezos.transaction(callback_param, 0mutez, callback);
+   const operation = Tezos.transaction(Main(callback_param), 0mutez, callback);
    return [list([operation]), s]
 };
 

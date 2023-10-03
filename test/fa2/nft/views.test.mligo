@@ -5,29 +5,31 @@
 
 (* Tests for views *)
 
+type orig_nft = (FA2_NFT parameter_of, FA2_NFT.storage) origination_result
+
 (* Test get_balance view *)
 let test_get_balance_view =
   let initial_storage, owners, _ = TestHelpers.get_initial_storage () in
   let owner1 = List_helper.nth_exn 0 owners in
 
-  let (c_addr,_,_) = Test.originate_from_file
+  let orig : orig_nft = Test.originate_from_file
     "../../../lib/fa2/nft/NFT.mligo"
-    (Test.eval initial_storage) 0tez in
+    initial_storage 0tez in
 
   let initial_storage : ViewsTestContract.storage = {
-    main_contract = c_addr;
+    main_contract = Test.to_address orig.addr;
     get_balance   = (None : nat option);
     total_supply  = (None : nat option);
     is_operator   = (None : bool option);
     all_tokens    = (None : nat set option);
   } in
 
-  let (t_addr,_,_) = Test.originate ViewsTestContract.main initial_storage 0tez in
-  let contr = Test.to_contract t_addr in
-  let _ = Test.transfer_to_contract_exn contr
-    (Get_balance (owner1,1n) : ViewsTestContract.parameter) 0tez
+  let orig_v = Test.originate (contract_of ViewsTestContract) initial_storage 0tez in
+  
+  let _ = Test.transfer_exn orig_v.addr
+    (Get_balance (owner1,1n) : ViewsTestContract parameter_of) 0tez
   in
-  let storage = Test.get_storage t_addr in
+  let storage = Test.get_storage orig_v.addr in
   let get_balance = storage.get_balance in
   assert (get_balance = Some 1n)
 
@@ -35,24 +37,24 @@ let test_get_balance_view =
 let test_total_supply_view =
   let initial_storage, _, _ = TestHelpers.get_initial_storage () in
 
-  let (c_addr,_,_) = Test.originate_from_file
+  let orig : orig_nft = Test.originate_from_file
     "../../../lib/fa2/nft/NFT.mligo"
-    (Test.eval initial_storage) 0tez in
+    initial_storage 0tez in
 
   let initial_storage : ViewsTestContract.storage = {
-    main_contract = c_addr;
+    main_contract = Test.to_address orig.addr;
     get_balance   = (None : nat option);
     total_supply  = (None : nat option);
     is_operator   = (None : bool option);
     all_tokens    = (None : nat set option);
   } in
 
-  let (t_addr,_,_) = Test.originate ViewsTestContract.main initial_storage 0tez in
-  let contr = Test.to_contract t_addr in
-  let _ = Test.transfer_to_contract_exn contr
-    (Total_supply 2n : ViewsTestContract.parameter) 0tez
+  let orig_v = Test.originate (contract_of ViewsTestContract) initial_storage 0tez in
+  
+  let _ = Test.transfer_exn orig_v.addr
+    (Total_supply 2n : ViewsTestContract parameter_of) 0tez
   in
-  let storage = Test.get_storage t_addr in
+  let storage = Test.get_storage orig_v.addr in
   let total_supply = storage.total_supply in
   assert (total_supply = Some 1n)
 
@@ -61,22 +63,22 @@ let test_total_supply_view =
 let test_total_supply_undefined_token_view =
   let initial_storage, _, _ = TestHelpers.get_initial_storage () in
 
-  let (c_addr,_,_) = Test.originate_from_file
+  let orig : orig_nft = Test.originate_from_file
     "../../../lib/fa2/nft/NFT.mligo"
-    (Test.eval initial_storage) 0tez in
+    initial_storage 0tez in
 
   let initial_storage : ViewsTestContract.storage = {
-    main_contract = c_addr;
+    main_contract = Test.to_address orig.addr;
     get_balance   = (None : nat option);
     total_supply  = (None : nat option);
     is_operator   = (None : bool option);
     all_tokens    = (None : nat set option);
   } in
 
-  let (t_addr,_,_) = Test.originate ViewsTestContract.main initial_storage 0tez in
-  let contr = Test.to_contract t_addr in
-  let result = Test.transfer_to_contract contr
-    (Total_supply 15n : ViewsTestContract.parameter) 0tez
+  let orig_v = Test.originate (contract_of ViewsTestContract) initial_storage 0tez in
+  
+  let result = Test.transfer orig_v.addr
+    (Total_supply 15n : ViewsTestContract parameter_of) 0tez
   in
   TestHelpers.assert_error result FA2_NFT.Errors.undefined_token
 
@@ -86,28 +88,28 @@ let test_is_operator_view =
   let owner1 = List_helper.nth_exn 0 owners in
   let op1    = List_helper.nth_exn 0 operators in
 
-  let (c_addr,_,_) = Test.originate_from_file
+  let orig : orig_nft = Test.originate_from_file
     "../../../lib/fa2/nft/NFT.mligo"
-    (Test.eval initial_storage) 0tez in
+    initial_storage 0tez in
 
   let initial_storage : ViewsTestContract.storage = {
-    main_contract = c_addr;
+    main_contract = Test.to_address orig.addr;
     get_balance   = (None : nat option);
     total_supply  = (None : nat option);
     is_operator   = (None : bool option);
     all_tokens    = (None : nat set option);
   } in
 
-  let (t_addr,_,_) = Test.originate ViewsTestContract.main initial_storage 0tez in
-  let contr = Test.to_contract t_addr in
-  let _ = Test.transfer_to_contract_exn contr
+  let orig_v = Test.originate (contract_of ViewsTestContract) initial_storage 0tez in
+  
+  let _ = Test.transfer_exn orig_v.addr
     (Is_operator {
       owner    = owner1;
       operator = op1;
       token_id = 1n;
-    } : ViewsTestContract.parameter) 0tez
+    } : ViewsTestContract parameter_of) 0tez
   in
-  let storage = Test.get_storage t_addr in
+  let storage = Test.get_storage orig_v.addr in
   let is_operator = storage.is_operator in
   assert (is_operator = Some true)
 
@@ -115,24 +117,24 @@ let test_is_operator_view =
 let test_all_tokens_view =
   let initial_storage, _, _ = TestHelpers.get_initial_storage () in
 
-  let (c_addr,_,_) = Test.originate_from_file
+  let orig : orig_nft = Test.originate_from_file
     "../../../lib/fa2/nft/NFT.mligo"
-    (Test.eval initial_storage) 0tez in
+    initial_storage 0tez in
 
   let initial_storage : ViewsTestContract.storage = {
-    main_contract = c_addr;
+    main_contract = Test.to_address orig.addr;
     get_balance   = (None : nat option);
     total_supply  = (None : nat option);
     is_operator   = (None : bool option);
     all_tokens    = (None : nat set option);
   } in
 
-  let (t_addr,_,_) = Test.originate ViewsTestContract.main initial_storage 0tez in
-  let contr = Test.to_contract t_addr in
-  let _ = Test.transfer_to_contract_exn contr
-    (All_tokens: ViewsTestContract.parameter) 0tez
+  let orig_v = Test.originate (contract_of ViewsTestContract) initial_storage 0tez in
+  
+  let _ = Test.transfer_exn orig_v.addr
+    (All_tokens: ViewsTestContract parameter_of) 0tez
   in
-  let storage = Test.get_storage t_addr in
+  let storage = Test.get_storage orig_v.addr in
   let all_tokens = storage.all_tokens in
   let expected_tokens = Set.literal [1n; 2n; 3n] in
   assert (all_tokens = Some expected_tokens)
