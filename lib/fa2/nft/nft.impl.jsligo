@@ -13,7 +13,6 @@ export namespace NFT implements TZIP12Interface.FA2{
    export type storage = {
       ledger: Ledger,
       operators: Operators,
-      token_ids: set<nat>,
       token_metadata: TZIP12.tokenMetadata,
       metadata: TZIP16.metadata
    };
@@ -253,7 +252,8 @@ export namespace NFT implements TZIP12Interface.FA2{
       return 1n
    };
    @view
-   const all_tokens = (_: unit, s: storage): set<nat> => s.token_ids;
+   const all_tokens = (_: unit, _s: storage): set<nat> =>
+      failwith(Errors.not_available);
    @view
    const is_operator = (op: TZIP12.operator, s: storage): bool => {
       const authorized =

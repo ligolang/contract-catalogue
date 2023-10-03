@@ -14,3 +14,4 @@ type t = string
 
 
 [@no_mutation] let only_sender_manage_operators = "The sender can only manage operators for his own token"
+[@no_mutation] let not_available   = "Feature not available. Maybe use an indexer instead"
