@@ -17,8 +17,7 @@ export namespace SingleAsset implements TZIP12Interface.FA2{
       metadata: TZIP16.metadata
    };
    type ret = [list<operation>, storage];
-   //export namespace operators {
-   /** if transfer policy is Owner_or_operator_transfer */
+   // operators 
 
    export const assert_authorisation = (operators: operators, from_: address): unit => {
       const sender_ = Tezos.get_sender();
@@ -79,7 +78,7 @@ export namespace SingleAsset implements TZIP12Interface.FA2{
          return Big_map.update(owner, auths, operators)
       }
    }
-   //export namespace ledger {
+   // ledger 
 
    export const get_for_user = (ledger: ledger, owner: address): nat =>
       match(Big_map.find_opt(owner, ledger)) {
@@ -109,8 +108,7 @@ export namespace SingleAsset implements TZIP12Interface.FA2{
       tokens = tokens + amount_;
       return update_for_user(ledger, to_, tokens)
    }
-   //};
-   //export namespace Storage {
+   // Storage 
 
    export const get_amount_for_owner = (s: storage, owner: address) =>
       get_for_user(s.ledger, owner);

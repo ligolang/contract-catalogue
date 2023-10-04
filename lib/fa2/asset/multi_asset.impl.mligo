@@ -18,7 +18,7 @@ module MultiAsset  = struct
    }
    type ret = operation list * storage
 
-//module Operators = struct
+// Operators 
 
 (** if transfer policy is Owner_or_operator_transfer *)
    let assert_authorisation (operators : operators) (from_ : address) (token_id : nat) : unit =
@@ -59,7 +59,7 @@ module MultiAsset  = struct
          Big_map.update (owner,operator) auth_tokens operators
 
 
-//module Ledger = struct
+// Ledger 
    
     
 
@@ -85,7 +85,7 @@ module MultiAsset  = struct
 
 
 
-//module Storage = struct
+// Storage 
    
 
    let assert_token_exist (s:storage) (token_id : nat) : unit  =
@@ -97,9 +97,6 @@ module MultiAsset  = struct
 
    let get_operators (s:storage) = s.operators
    let set_operators (s:storage) (operators:operators) = {s with operators = operators}
-//end
-
-
 
 
 [@entry] let transfer (t : TZIP12.transfer) (s : storage) : operation list * storage =

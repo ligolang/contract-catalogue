@@ -17,8 +17,7 @@ export namespace NFT implements TZIP12Interface.FA2{
       metadata: TZIP16.metadata
    };
    type ret = [list<operation>, storage];
-   // export namespace operators {
-   // if transfer policy is Owner_or_operator_transfer
+   //  operators 
 
    export const assert_authorisation = (
       operators: operators,
@@ -41,10 +40,6 @@ export namespace NFT implements TZIP12Interface.FA2{
          return unit
       }
    };
-   // For an administator
-   // const admin = tz1.... ;
-   // assert_with_error ((Tezos.sender = admiin), "Only administrator can manage operators")
-
    const assert_update_permission = (owner: address): unit => {
       return assert_with_error(
          (owner == (Tezos.get_sender())),
@@ -103,11 +98,9 @@ export namespace NFT implements TZIP12Interface.FA2{
          return Big_map.update([owner, operator], auth_tokens, operators)
       }
    }
-   // export namespace ledger {
+   //  ledger 
 
    export const is_owner_of = (ledger: ledger, token_id: nat, owner: address): bool => {
-      // We already sanitized token_id, a failwith here indicated a patological storage
-
       const current_owner = Option.unopt(Big_map.find_opt(token_id, ledger));
       return (current_owner == owner)
    };
@@ -139,8 +132,6 @@ export namespace NFT implements TZIP12Interface.FA2{
       ({ ...s, operators: operators });
    @entry
    const transfer = (t: TZIP12.transfer, s: storage): ret => {
-      // This function process the "txs" list. Since all transfer share the same "from_" address, we use a se
-
       const process_atomic_transfer = (from_: address) =>
          ([ledger, t]: [ledger, TZIP12.atomic_trans]): ledger => {
             const { to_, token_id, amount } = t;

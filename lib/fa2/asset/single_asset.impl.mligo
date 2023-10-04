@@ -18,7 +18,7 @@ module SingleAsset  = struct
    }
    type ret = operation list * storage
 
-//module Operators = struct
+// Operators 
 
 
 (** if transfer policy is Owner_or_operator_transfer *)
@@ -60,7 +60,7 @@ module SingleAsset  = struct
          Big_map.update owner auths operators
 
 
-//module Ledger = struct
+// Ledger 
 
    let get_for_user    (ledger:ledger) (owner: address) : nat =
       match Big_map.find_opt owner ledger with
@@ -83,11 +83,7 @@ module SingleAsset  = struct
       let ledger = update_for_user ledger to_ tokens in
       ledger
 
-
-
-
-//module Storage = struct
-
+// Storage
 
    let assert_token_exist (s:storage) (token_id : nat) : unit  =
       let _ = Option.unopt_with_error (Big_map.find_opt token_id s.token_metadata)

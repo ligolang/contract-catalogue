@@ -17,8 +17,7 @@ export namespace MultiAsset implements TZIP12Interface.FA2{
       metadata: TZIP16.metadata
    };
    type ret = [list<operation>, storage];
-   //export namespace operators {
-   // if transfer policy is Owner_or_operator_transfer
+   //operators
 
    export const assert_authorisation = (
       [operators, from_, token_id]: [operators, address, nat]
@@ -42,10 +41,6 @@ export namespace MultiAsset implements TZIP12Interface.FA2{
          (owner == (Tezos.get_sender())),
          "The sender can only manage operators for his own token"
       );
-   // For an administator
-   // const admin = tz1.... ;
-   // assert_with_error ((Tezos.sender = admiin), "Only administrator can manage operators")
-
    export const add_operator = (
       [operators, owner, operator, token_id]: [
          operators,
@@ -100,7 +95,7 @@ export namespace MultiAsset implements TZIP12Interface.FA2{
          return Big_map.update([owner, operator], auth_tokens, operators)
       }
    }
-   //export namespace ledger {
+   // ledger 
 
    export const get_for_user = (
       [ledger, owner, token_id]: [ledger, address, nat]
@@ -130,7 +125,7 @@ export namespace MultiAsset implements TZIP12Interface.FA2{
       balance_ = balance_ + amount_;
       return set_for_user([ledger, to_, token_id, balance_])
    }
-   //export namespace Storage {
+   // storage 
 
    export const assert_token_exist = (s: storage, token_id: nat): unit => {
       const _ =
@@ -146,8 +141,6 @@ export namespace MultiAsset implements TZIP12Interface.FA2{
       ({ ...s, operators: operators })
    @entry
    const transfer = (t: TZIP12.transfer, s: storage): [list<operation>, storage] => {
-      // This function process the "txs" list. Since all transfer share the same "from_" address, we use a se
-
       const process_atomic_transfer = (from_: address) =>
          ([l, t]: [ledger, TZIP12.atomic_trans]): ledger => {
             const { to_, token_id, amount } = t;
@@ -165,12 +158,8 @@ export namespace MultiAsset implements TZIP12Interface.FA2{
          return ledger
       };
       const ledger = List.fold_left(process_single_transfer, s.ledger, t);
-      //refresh set of owner,token_ids
-
       return [list([]), set_ledger([s, ledger])]
    };
-   // Balance_of entrypoint
-
    @entry
    const balance_of = (b: TZIP12.balance_of, s: storage): [
       list<operation>,
@@ -188,8 +177,6 @@ export namespace MultiAsset implements TZIP12Interface.FA2{
          Tezos.transaction(Main(callback_param), 0mutez, callback);
       return [list([operation]), s]
    };
-   // Update_operators entrypoint
-
    @entry
    const update_operators = (updates: TZIP12.update_operators, s: storage): [
       list<operation>,
