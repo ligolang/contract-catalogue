@@ -1,3 +1,5 @@
+#import "../common/assertions.jsligo" "Assertions"
+
 #import "../common/errors.mligo" "Errors"
 
 #import "../common/tzip12.datatypes.jsligo" "TZIP12"
@@ -21,7 +23,6 @@ module SingleAsset  = struct
 // Operators 
 
 
-(** if transfer policy is Owner_or_operator_transfer *)
    let assert_authorisation (operators : operators) (from_ : address) : unit =
       let sender_ = (Tezos.get_sender ()) in
       if (sender_ = from_) then ()
@@ -32,17 +33,12 @@ module SingleAsset  = struct
       else failwith Errors.not_operator
 
 
-   let assert_update_permission (owner : address) : unit =
-      assert_with_error (owner = (Tezos.get_sender ())) "The sender can only manage operators for his own token"
-   (** For an administator
-      let admin = tz1.... in
-      assert_with_error (Tezos.sender = admiin) "Only administrator can manage operators"
-   *)
+  
 
    let add_operator (operators : operators) (owner : address) (operator : operator) : operators =
       if owner = operator then operators (* assert_authorisation always allow the owner so this case is not relevant *)
       else
-         let () = assert_update_permission owner in
+         let () = Assertions.assert_update_permission owner in
          let auths = match Big_map.find_opt owner operators with
             Some (os) -> os | None -> Set.empty in
          let auths  = Set.add operator auths in
@@ -51,7 +47,7 @@ module SingleAsset  = struct
    let remove_operator (operators : operators) (owner : address) (operator : operator) : operators =
       if owner = operator then operators (* assert_authorisation always allow the owner so this case is not relevant *)
       else
-         let () = assert_update_permission owner in
+         let () = Assertions.assert_update_permission owner in
          let auths = match Big_map.find_opt owner operators with
          None -> None | Some (os) ->
             let os = Set.remove operator os in
@@ -85,11 +81,7 @@ module SingleAsset  = struct
 
 // Storage
 
-   let assert_token_exist (s:storage) (token_id : nat) : unit  =
-      let _ = Option.unopt_with_error (Big_map.find_opt token_id s.token_metadata)
-         Errors.undefined_token in
-      ()
-
+ 
   
    let get_amount_for_owner (s:storage) (owner : address) =
       get_for_user s.ledger owner
@@ -167,7 +159,7 @@ operator of A, C cannot transfer tokens that are owned by A, on behalf of B.
   let get_balance (p: (address * nat)) (s: storage) : nat =  
   
   let (owner , token_id) = p in
-  let () = assert_token_exist s token_id in
+  let () = Assertions.assert_token_exist s.token_metadata token_id in
   match Big_map.find_opt owner s.ledger with None -> 0n | Some(n) -> n
 
   [@view]

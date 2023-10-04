@@ -1,3 +1,5 @@
+#import "../common/assertions.jsligo" "Assertions"
+
 #import "../common/errors.mligo" "Errors"
 
 #import "../common/tzip12.datatypes.jsligo" "TZIP12"
@@ -34,19 +36,13 @@ export namespace SingleAsset implements TZIP12Interface.FA2{
          )
       }
    };
-   const assert_update_permission = (owner: address): unit => {
-      return assert_with_error(
-         owner == Tezos.get_sender(),
-         "The sender can only manage operators for his own token"
-      )
-   };
    export const add_operator = (
       operators: operators,
       owner: address,
       operator: operator
    ): operators => {
       if (owner == operator) return operators else {
-         const _ = assert_update_permission(owner);
+         const _ = Assertions.assert_update_permission(owner);
          let auths =
             match(Big_map.find_opt(owner, operators)) {
                when (Some(os)):
@@ -64,7 +60,7 @@ export namespace SingleAsset implements TZIP12Interface.FA2{
       operator: operator
    ): operators => {
       if (owner == operator) return operators else {
-         const _ = assert_update_permission(owner);
+         const _ = Assertions.assert_update_permission(owner);
          const auths =
             match(Big_map.find_opt(owner, operators)) {
                when (None()):
@@ -199,17 +195,10 @@ operator of A, C cannot transfer tokens that are owned by A, on behalf of B.
       const store = set_operators(s, operators);
       return [list([]), store]
    };
-   export const assert_token_exist = (s: storage, token_id: nat): unit => {
-      const _ =
-         Option.unopt_with_error(
-            Big_map.find_opt(token_id, s.token_metadata),
-            Errors.undefined_token
-         )
-   };
    @view
    const get_balance = (p: [address, nat], s: storage): nat => {
       const [owner, token_id] = p;
-      assert_token_exist(s, token_id);
+      Assertions.assert_token_exist(s.token_metadata, token_id);
       return match(Big_map.find_opt(owner, s.ledger)) {
          when (None()):
             0n

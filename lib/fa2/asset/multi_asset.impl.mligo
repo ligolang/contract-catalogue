@@ -1,3 +1,5 @@
+#import "../common/assertions.jsligo" "Assertions"
+
 #import "../common/errors.mligo" "Errors"
 
 #import "../common/tzip12.datatypes.jsligo" "TZIP12"
@@ -20,7 +22,6 @@ module MultiAsset  = struct
 
 // Operators 
 
-(** if transfer policy is Owner_or_operator_transfer *)
    let assert_authorisation (operators : operators) (from_ : address) (token_id : nat) : unit =
       let sender_ = (Tezos.get_sender ()) in
       if (sender_ = from_) then ()
@@ -31,17 +32,12 @@ module MultiAsset  = struct
       else failwith Errors.not_operator
 
 
-   let assert_update_permission (owner : address) : unit =
-      assert_with_error (owner = (Tezos.get_sender ())) "The sender can only manage operators for his own token"
-   (** For an administator
-      let admin = tz1.... in
-      assert_with_error (Tezos.sender = admiin) "Only administrator can manage operators"
-   *)
+ 
 
    let add_operator (operators : operators) (owner : address) (operator : operator) (token_id : nat) : operators =
       if owner = operator then operators (* assert_authorisation always allow the owner so this case is not relevant *)
       else
-         let () = assert_update_permission owner in
+         let () = Assertions.assert_update_permission owner in
          let auth_tokens = match Big_map.find_opt (owner,operator) operators with
             Some (ts) -> ts | None -> Set.empty in
          let auth_tokens  = Set.add token_id auth_tokens in
@@ -50,7 +46,7 @@ module MultiAsset  = struct
    let remove_operator (operators : operators) (owner : address) (operator : operator) (token_id : nat) : operators =
       if owner = operator then operators (* assert_authorisation always allow the owner so this case is not relevant *)
       else
-         let () = assert_update_permission owner in
+         let () = Assertions.assert_update_permission owner in
          let auth_tokens = match Big_map.find_opt (owner,operator) operators with
          None -> None | Some (ts) ->
             let ts = Set.remove token_id ts in

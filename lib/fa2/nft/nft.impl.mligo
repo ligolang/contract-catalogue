@@ -1,3 +1,5 @@
+#import "../common/assertions.jsligo" "Assertions"
+
 #import "../common/errors.mligo" "Errors"
 
 #import "../common/tzip12.datatypes.jsligo" "TZIP12"
@@ -21,7 +23,6 @@ module NFT  = struct
 
 //module Operators = struct
 
-(** if transfer policy is Owner_or_operator_transfer *)
    let assert_authorisation (operators : operators) (from_ : address) (token_id : nat) : unit =
       let sender_ = (Tezos.get_sender ()) in
       if (sender_ = from_) then ()
@@ -37,17 +38,12 @@ module NFT  = struct
          Some (a) -> a | None -> Set.empty in
       (owner = operator || Set.mem token_id authorized)
 
-   let assert_update_permission (owner : address) : unit =
-      assert_with_error (owner = Tezos.get_sender ()) Errors.only_sender_manage_operators
-   (** For an administator
-      let admin = tz1.... in
-      assert_with_error (Tezos.sender = admiin) "Only administrator can manage operators"
-   *)
+  
 
    let add_operator (operators : operators) (owner : address) (operator : operator) (token_id : nat) : operators =
       if owner = operator then operators (* assert_authorisation always allow the owner so this case is not relevant *)
       else
-         let () = assert_update_permission owner in
+         let () = Assertions.assert_update_permission owner in
          let auth_tokens = match Big_map.find_opt (owner,operator) operators with
             Some (ts) -> ts | None -> Set.empty in
          let auth_tokens  = Set.add token_id auth_tokens in
@@ -56,7 +52,7 @@ module NFT  = struct
    let remove_operator (operators : operators) (owner : address) (operator : operator) (token_id : nat) :operators =
       if owner = operator then operators (* assert_authorisation always allow the owner so this case is not relevant *)
       else
-         let () = assert_update_permission owner in
+         let () = Assertions.assert_update_permission owner in
          let auth_tokens = match Big_map.find_opt (owner,operator) operators with
          None -> None | Some (ts) ->
             let ts = Set.remove token_id ts in
@@ -70,7 +66,6 @@ module NFT  = struct
 
 
    let is_owner_of (ledger:ledger) (token_id : nat) (owner: address) : bool =
-      (** We already sanitized token_id, a failwith here indicated a patological storage *)
       let current_owner = Option.unopt (Big_map.find_opt token_id ledger) in
       current_owner = owner
 
@@ -88,10 +83,6 @@ module NFT  = struct
    let is_owner_of (s:storage) (owner : address) (token_id : nat) : bool =
       is_owner_of s.ledger token_id owner
 
-   let assert_token_exist (s:storage) (token_id : nat) : unit  =
-      let _ = Option.unopt_with_error (Big_map.find_opt token_id s.token_metadata)
-         Errors.undefined_token in
-      ()
 
    let set_ledger (s:storage) (ledger:ledger) = {s with ledger = ledger}
 
@@ -99,7 +90,7 @@ module NFT  = struct
    let set_operators (s:storage) (operators:operators) = {s with operators = operators}
 
    let get_balance (s : storage) (owner : address) (token_id : nat) : nat =
-      let ()       = assert_token_exist s token_id in
+      let ()       = Assertions.assert_token_exist s.token_metadata token_id in
       if is_owner_of s owner token_id then 1n else 0n
 
 
@@ -108,7 +99,7 @@ module NFT  = struct
    (* This function process the "txs" list. Since all transfer share the same "from_" address, we use a se *)
    let process_atomic_transfer (from_:address) (ledger, t:ledger * TZIP12.atomic_trans) =
       let {to_;token_id;amount = _} = t in
-      let ()     = assert_token_exist s token_id in
+      let ()     = Assertions.assert_token_exist s.token_metadata token_id in
       let ()     = assert_authorisation s.operators from_ token_id in
       let ledger = transfer_token_from_user_to_user ledger token_id from_ to_ in
       ledger
@@ -124,7 +115,6 @@ module NFT  = struct
 
 
 
-(** Balance_of entrypoint *)
 [@entry] let balance_of (b: TZIP12.balance_of) (s: storage) : operation list * storage =
    let {requests;callback} = b in
    let get_balance_info (request : TZIP12.request) : TZIP12.callback =
@@ -154,7 +144,7 @@ module NFT  = struct
       balance_
 
 [@view] let total_supply (token_id :nat) (s : storage) =
-      let () = assert_token_exist s token_id in
+      let () = Assertions.assert_token_exist s.token_metadata token_id in
       1n
 
 [@view] let all_tokens (() : unit) (_s : storage) : nat set = failwith Errors.not_available

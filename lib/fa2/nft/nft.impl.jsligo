@@ -1,6 +1,6 @@
-#import "../common/errors.mligo" "Errors"
-
 #import "../common/assertions.jsligo" "Assertions"
+
+#import "../common/errors.mligo" "Errors"
 
 #import "../common/tzip12.datatypes.jsligo" "TZIP12"
 
@@ -20,6 +20,12 @@ export namespace NFT implements TZIP12Interface.FA2{
    };
    type ret = [list<operation>, storage];
    //  operators 
+   /**
+* Check if the intented transfer is sent from the same sender as from field, otherwise check if the sender is part of the operator authorized to receive this token
+* @param operators :  operator bigmap
+* @param from_ : transfer from address
+* @param token_id : token_id to test  
+*/
 
    export const assert_authorisation = (
       operators: operators,
@@ -114,13 +120,6 @@ export namespace NFT implements TZIP12Interface.FA2{
       assert_owner_of(ledger, token_id, from_);
       return Big_map.update(token_id, Some(to_), ledger)
    }
-   export const assert_token_exist = (s: storage, token_id: nat): unit => {
-      const _ =
-         Option.unopt_with_error(
-            Big_map.find_opt(token_id, s.token_metadata),
-            Errors.undefined_token
-         )
-   };
    export const set_ledger = (s: storage, ledger: ledger): storage =>
       ({ ...s, ledger: ledger });
    export const get_operators = (s: storage): operators => s.operators;
@@ -132,7 +131,7 @@ export namespace NFT implements TZIP12Interface.FA2{
          ([ledger, t]: [ledger, TZIP12.atomic_trans]): ledger => {
             const { to_, token_id, amount } = t;
             ignore(amount);
-            assert_token_exist(s, token_id);
+            Assertions.assert_token_exist(s.token_metadata, token_id);
             assert_authorisation(s.operators, from_, token_id);
             return transfer_token_from_user_to_user(
                ledger,
@@ -156,7 +155,7 @@ export namespace NFT implements TZIP12Interface.FA2{
       const { requests, callback } = b;
       const get_balance_info = (request: TZIP12.request): TZIP12.callback => {
          const { owner, token_id } = request;
-         assert_token_exist(s, token_id);
+         Assertions.assert_token_exist(s.token_metadata, token_id);
          let balance_ = 0 as nat;
          if (is_owner_of(s.ledger, token_id, owner)) balance_ = 1 as nat;
          return ({ request: request, balance: balance_ })
@@ -195,7 +194,7 @@ export namespace NFT implements TZIP12Interface.FA2{
    @view
    const get_balance = (p: [address, nat], s: storage): nat => {
       const [owner, token_id] = p;
-      assert_token_exist(s, token_id);
+      Assertions.assert_token_exist(s.token_metadata, token_id);
       if (is_owner_of(s.ledger, token_id, owner)) {
          return 1n
       } else {
@@ -204,7 +203,7 @@ export namespace NFT implements TZIP12Interface.FA2{
    };
    @view
    const total_supply = (token_id: nat, s: storage): nat => {
-      assert_token_exist(s, token_id);
+      Assertions.assert_token_exist(s.token_metadata, token_id);
       return 1n
    };
    @view

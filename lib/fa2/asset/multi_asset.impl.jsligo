@@ -1,3 +1,5 @@
+#import "../common/assertions.jsligo" "Assertions"
+
 #import "../common/errors.mligo" "Errors"
 
 #import "../common/tzip12.datatypes.jsligo" "TZIP12"
@@ -36,11 +38,6 @@ export namespace MultiAsset implements TZIP12Interface.FA2{
          }
       }
    };
-   const assert_update_permission = (owner: address): unit =>
-      assert_with_error(
-         (owner == (Tezos.get_sender())),
-         "The sender can only manage operators for his own token"
-      );
    export const add_operator = (
       [operators, owner, operator, token_id]: [
          operators,
@@ -53,7 +50,7 @@ export namespace MultiAsset implements TZIP12Interface.FA2{
          return operators
       } // assert_authorisation always allow the owner so this case is not relevant
        else {
-         assert_update_permission(owner);
+         Assertions.assert_update_permission(owner);
          let auth_tokens =
             match(Big_map.find_opt([owner, operator], operators)) {
                when (Some(ts)):
@@ -77,7 +74,7 @@ export namespace MultiAsset implements TZIP12Interface.FA2{
          return operators
       } // assert_authorisation always allow the owner so this case is not relevant
        else {
-         assert_update_permission(owner);
+         Assertions.assert_update_permission(owner);
          const auth_tokens: option<set<nat>> =
             match(Big_map.find_opt([owner, operator], operators)) {
                when (Some(toks)):
@@ -127,13 +124,6 @@ export namespace MultiAsset implements TZIP12Interface.FA2{
    }
    // storage 
 
-   export const assert_token_exist = (s: storage, token_id: nat): unit => {
-      const _ =
-         Option.unopt_with_error(
-            Big_map.find_opt(token_id, s.token_metadata),
-            Errors.undefined_token
-         )
-   };
    export const set_ledger = ([s, ledger]: [storage, ledger]): storage =>
       ({ ...s, ledger: ledger });
    export const get_operators = (s: storage): operators => s.operators;
@@ -144,7 +134,7 @@ export namespace MultiAsset implements TZIP12Interface.FA2{
       const process_atomic_transfer = (from_: address) =>
          ([l, t]: [ledger, TZIP12.atomic_trans]): ledger => {
             const { to_, token_id, amount } = t;
-            assert_token_exist(s, token_id);
+            Assertions.assert_token_exist(s.token_metadata, token_id);
             assert_authorisation([s.operators, from_, token_id]);
             let ledger =
                decrease_token_amount_for_user([l, from_, token_id, amount]);
@@ -168,7 +158,7 @@ export namespace MultiAsset implements TZIP12Interface.FA2{
       const { requests, callback } = b;
       const get_balance_info = (request: TZIP12.request): TZIP12.callback => {
          const { owner, token_id } = request;
-         assert_token_exist(s, token_id);
+         Assertions.assert_token_exist(s.token_metadata, token_id);
          const balance_ = get_for_user([s.ledger, owner, token_id]);
          return ({ request: request, balance: balance_ })
       };
@@ -213,7 +203,7 @@ export namespace MultiAsset implements TZIP12Interface.FA2{
    @view
    const get_balance = (p: [address, nat], s: storage): nat => {
       const [owner, token_id] = p;
-      assert_token_exist(s, token_id);
+      Assertions.assert_token_exist(s.token_metadata, token_id);
       return match(Big_map.find_opt([owner, token_id], s.ledger)) {
          when (None()):
             0n
