@@ -37,19 +37,100 @@ ligo install @ligo/fa
 touch marketplace.jsligo
 ```
 
-Edit the file
+Edit the file to add an additional field `administrators`
 
 ```ligolang
-#import "@ligo/fa/lib/fa2/nft/nft.impl.jsligo" "NFT"
+#import "./lib/fa2/nft/nft.impl.jsligo" "Contract"
 
-type storage = {
-  administrators: set<address>,
-  ledger: NFT.ledger,
-  metadata: NFT.TZIP16.metadata,
-  token_metadata: NFT.TZIP12.tokenMetadata,
-  operators: NFT.operators
+export type storage = {
+    administrators: set<address>,
+    ledger: Contract.NFT.ledger,
+    metadata: Contract.TZIP16.metadata,
+    token_metadata: Contract.TZIP12.tokenMetadata,
+    operators: Contract.NFT.operators
 };
 
+type ret = [list<operation>, storage];
 ```
+
+Importing the library allows you to add TZIP types to your custom storage
+
+Add the TZIP12 default entrypoints, calling the functions of the library and mapping it to your custom storage
+
+```ligolang
+@entry
+const transfer = (p: Contract.TZIP12.transfer, s: storage): ret => {
+    const ret2: [list<operation>, Contract.NFT.storage] =
+        Contract.NFT.transfer(
+            p,
+            {
+                ledger: s.ledger,
+                metadata: s.metadata,
+                token_metadata: s.token_metadata,
+                operators: s.operators,
+            }
+        );
+    return [
+        ret2[0],
+        {
+            ...s,
+            ledger: ret2[1].ledger,
+            metadata: ret2[1].metadata,
+            token_metadata: ret2[1].token_metadata,
+            operators: ret2[1].operators,
+        }
+    ]
+};
+
+@entry
+const balance_of = (p: Contract.TZIP12.balance_of, s: storage): ret => {
+    const ret2: [list<operation>, Contract.NFT.storage] =
+        Contract.NFT.balance_of(
+            p,
+            {
+                ledger: s.ledger,
+                metadata: s.metadata,
+                token_metadata: s.token_metadata,
+                operators: s.operators,
+            }
+        );
+    return [
+        ret2[0],
+        {
+            ...s,
+            ledger: ret2[1].ledger,
+            metadata: ret2[1].metadata,
+            token_metadata: ret2[1].token_metadata,
+            operators: ret2[1].operators
+        }
+    ]
+};
+
+@entry
+const update_operators = (p: Contract.TZIP12.update_operators, s: storage): ret => {
+    const ret2: [list<operation>, Contract.NFT.storage] =
+        Contract.NFT.update_operators(
+            p,
+            {
+                ledger: s.ledger,
+                metadata: s.metadata,
+                token_metadata: s.token_metadata,
+                operators: s.operators
+            }
+        );
+    return [
+        ret2[0],
+        {
+            ...s,
+            ledger: ret2[1].ledger,
+            metadata: ret2[1].metadata,
+            token_metadata: ret2[1].token_metadata,
+            operators: ret2[1].operators
+        }
+    ]
+};
+```
+
+Continue to add non-TZIP new entrypoints, etc ...
 
 ## Implement the interface differently
