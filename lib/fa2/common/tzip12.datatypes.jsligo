@@ -7,8 +7,7 @@ export type tokenMetadata = big_map<nat, tokenMetadataData>;
 
 // Transfer entrypoint
 
-export type atomic_trans = // @layout comb
- { to_: address, token_id: nat, amount: nat };
+export type atomic_trans = { to_: address, token_id: nat, amount: nat };
 
 export type transfer_from = { from_: address, txs: list<atomic_trans> };
 
@@ -18,18 +17,18 @@ export type transfer = list<transfer_from>;
 
 export type request = { owner: address, token_id: nat };
 
-export type callback = // @layout comb
- { request, balance: nat };
+export type callback = { request, balance: nat };
 
 export type callback_param = | ["Main", list<callback>];
 
-export type balance_of = // @layout comb
- { requests: list<request>, callback: contract<callback_param> };
+export type balance_of = {
+    requests: list<request>,
+    callback: contract<callback_param>
+};
 
 // Update_operators entrypoint
 
-export type operator = // @layout comb
- { owner: address, operator: address, token_id: nat };
+export type operator = { owner: address, operator: address, token_id: nat };
 
 export type unit_update =
     ["Add_operator", operator] | ["Remove_operator", operator];

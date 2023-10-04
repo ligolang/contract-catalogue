@@ -1,0 +1,9 @@
+#import "./lib/fa2/nft/nft.impl.jsligo" "NFT"
+
+type storage = {
+    administrators: set<address>,
+    ledger: NFT.ledger,
+    metadata: NFT.TZIP16.metadata,
+    token_metadata: NFT.TZIP12.tokenMetadata,
+    operators: NFT.operators
+};

@@ -7,21 +7,21 @@
 #import "../common/tzip16.datatypes.jsligo" "TZIP16"
 
 export namespace MultiAsset implements TZIP12Interface.FA2{
-   export type Ledger = big_map<[address, nat], nat>;
+   export type ledger = big_map<[address, nat], nat>;
    type operator = address;
-   export type Operators = big_map<[address, operator], set<nat>>;
+   export type operators = big_map<[address, operator], set<nat>>;
    export type storage = {
-      ledger: Ledger,
-      operators: Operators,
+      ledger: ledger,
+      operators: operators,
       token_metadata: TZIP12.tokenMetadata,
       metadata: TZIP16.metadata
    };
    type ret = [list<operation>, storage];
-   //export namespace Operators {
+   //export namespace operators {
    // if transfer policy is Owner_or_operator_transfer
 
    export const assert_authorisation = (
-      [operators, from_, token_id]: [Operators, address, nat]
+      [operators, from_, token_id]: [operators, address, nat]
    ): unit => {
       const sender_ = (Tezos.get_sender());
       if (sender_ != from_) {
@@ -48,12 +48,12 @@ export namespace MultiAsset implements TZIP12Interface.FA2{
 
    export const add_operator = (
       [operators, owner, operator, token_id]: [
-         Operators,
+         operators,
          address,
          operator,
          nat
       ]
-   ): Operators => {
+   ): operators => {
       if (owner == operator) {
          return operators
       } // assert_authorisation always allow the owner so this case is not relevant
@@ -72,12 +72,12 @@ export namespace MultiAsset implements TZIP12Interface.FA2{
    };
    export const remove_operator = (
       [operators, owner, operator, token_id]: [
-         Operators,
+         operators,
          address,
          operator,
          nat
       ]
-   ): Operators => {
+   ): operators => {
       if (owner == operator) {
          return operators
       } // assert_authorisation always allow the owner so this case is not relevant
@@ -100,10 +100,10 @@ export namespace MultiAsset implements TZIP12Interface.FA2{
          return Big_map.update([owner, operator], auth_tokens, operators)
       }
    }
-   //export namespace Ledger {
+   //export namespace ledger {
 
    export const get_for_user = (
-      [ledger, owner, token_id]: [Ledger, address, nat]
+      [ledger, owner, token_id]: [ledger, address, nat]
    ): nat =>
       match((Big_map.find_opt([owner, token_id], ledger))) {
          when (Some(a)):
@@ -112,20 +112,20 @@ export namespace MultiAsset implements TZIP12Interface.FA2{
             0 as nat
       };
    const set_for_user = (
-      [ledger, owner, token_id, amount_]: [Ledger, address, nat, nat]
-   ): Ledger =>
+      [ledger, owner, token_id, amount_]: [ledger, address, nat, nat]
+   ): ledger =>
       Big_map.update([owner, token_id], Some(amount_), ledger);
    export const decrease_token_amount_for_user = (
-      [ledger, from_, token_id, amount_]: [Ledger, address, nat, nat]
-   ): Ledger => {
+      [ledger, from_, token_id, amount_]: [ledger, address, nat, nat]
+   ): ledger => {
       let balance_ = get_for_user([ledger, from_, token_id]);
       assert_with_error((balance_ >= amount_), Errors.ins_balance);
       balance_ = abs(balance_ - amount_);
       return set_for_user([ledger, from_, token_id, balance_])
    };
    export const increase_token_amount_for_user = (
-      [ledger, to_, token_id, amount_]: [Ledger, address, nat, nat]
-   ): Ledger => {
+      [ledger, to_, token_id, amount_]: [ledger, address, nat, nat]
+   ): ledger => {
       let balance_ = get_for_user([ledger, to_, token_id]);
       balance_ = balance_ + amount_;
       return set_for_user([ledger, to_, token_id, balance_])
@@ -139,17 +139,17 @@ export namespace MultiAsset implements TZIP12Interface.FA2{
             Errors.undefined_token
          )
    };
-   export const set_ledger = ([s, ledger]: [storage, Ledger]): storage =>
+   export const set_ledger = ([s, ledger]: [storage, ledger]): storage =>
       ({ ...s, ledger: ledger });
-   export const get_operators = (s: storage): Operators => s.operators;
-   export const set_operators = ([s, operators]: [storage, Operators]): storage =>
+   export const get_operators = (s: storage): operators => s.operators;
+   export const set_operators = ([s, operators]: [storage, operators]): storage =>
       ({ ...s, operators: operators })
    @entry
    const transfer = (t: TZIP12.transfer, s: storage): [list<operation>, storage] => {
       // This function process the "txs" list. Since all transfer share the same "from_" address, we use a se
 
       const process_atomic_transfer = (from_: address) =>
-         ([l, t]: [Ledger, TZIP12.atomic_trans]): Ledger => {
+         ([l, t]: [ledger, TZIP12.atomic_trans]): ledger => {
             const { to_, token_id, amount } = t;
             assert_token_exist(s, token_id);
             assert_authorisation([s.operators, from_, token_id]);
@@ -159,7 +159,7 @@ export namespace MultiAsset implements TZIP12Interface.FA2{
             = increase_token_amount_for_user([ledger, to_, token_id, amount]);
             return ledger
          };
-      const process_single_transfer = ([l, t]: [Ledger, TZIP12.transfer_from]): Ledger => {
+      const process_single_transfer = ([l, t]: [ledger, TZIP12.transfer_from]): ledger => {
          const { from_, txs } = t;
          const ledger = List.fold_left(process_atomic_transfer(from_), l, txs);
          return ledger
@@ -196,8 +196,8 @@ export namespace MultiAsset implements TZIP12Interface.FA2{
       storage
    ] => {
       const update_operator = (
-         [operators, update]: [Operators, TZIP12.unit_update]
-      ): Operators =>
+         [operators, update]: [operators, TZIP12.unit_update]
+      ): operators =>
          match(update) {
             when (Add_operator(operator)):
                add_operator(
@@ -235,10 +235,10 @@ export namespace MultiAsset implements TZIP12Interface.FA2{
       }
    };
    @view
-   const total_supply = (token_id: nat, s: storage): nat =>
+   const total_supply = (_token_id: nat, _s: storage): nat =>
       failwith(Errors.not_available);
    @view
-   const all_tokens = (_: unit, s: storage): set<nat> =>
+   const all_tokens = (_: unit, _s: storage): set<nat> =>
       failwith(Errors.not_available);
    @view
    const is_operator = (op: TZIP12.operator, s: storage): bool => {

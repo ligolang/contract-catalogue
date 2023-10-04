@@ -7,21 +7,21 @@
 #import "../common/tzip16.datatypes.jsligo" "TZIP16"
 
 export namespace NFT implements TZIP12Interface.FA2{
-   export type Ledger = big_map<nat, address>;
+   export type ledger = big_map<nat, address>;
    type operator = address;
-   export type Operators = big_map<[address, operator], set<nat>>;
+   export type operators = big_map<[address, operator], set<nat>>;
    export type storage = {
-      ledger: Ledger,
-      operators: Operators,
+      ledger: ledger,
+      operators: operators,
       token_metadata: TZIP12.tokenMetadata,
       metadata: TZIP16.metadata
    };
    type ret = [list<operation>, storage];
-   // export namespace Operators {
+   // export namespace operators {
    // if transfer policy is Owner_or_operator_transfer
 
    export const assert_authorisation = (
-      operators: Operators,
+      operators: operators,
       from_: address,
       token_id: nat
    ): unit => {
@@ -52,11 +52,11 @@ export namespace NFT implements TZIP12Interface.FA2{
       )
    }
    export const add_operator = (
-      operators: Operators,
+      operators: operators,
       owner: address,
       operator: operator,
       token_id: nat
-   ): Operators => {
+   ): operators => {
       if (owner == operator) {
          return operators
       // assert_authorisation always allow the owner so this case is not relevant
@@ -75,11 +75,11 @@ export namespace NFT implements TZIP12Interface.FA2{
       }
    };
    export const remove_operator = (
-      operators: Operators,
+      operators: operators,
       owner: address,
       operator: operator,
       token_id: nat
-   ): Operators => {
+   ): operators => {
       if (owner == operator) {
          return operators
       // assert_authorisation always allow the owner so this case is not relevant
@@ -103,59 +103,28 @@ export namespace NFT implements TZIP12Interface.FA2{
          return Big_map.update([owner, operator], auth_tokens, operators)
       }
    }
-   // export namespace Ledger {
+   // export namespace ledger {
 
-   export const is_owner_of = (ledger: Ledger, token_id: nat, owner: address): bool => {
+   export const is_owner_of = (ledger: ledger, token_id: nat, owner: address): bool => {
       // We already sanitized token_id, a failwith here indicated a patological storage
 
       const current_owner = Option.unopt(Big_map.find_opt(token_id, ledger));
       return (current_owner == owner)
    };
-   const assert_owner_of = (ledger: Ledger, token_id: nat, owner: address): unit =>
+   const assert_owner_of = (ledger: ledger, token_id: nat, owner: address): unit =>
       assert_with_error(
          is_owner_of(ledger, token_id, owner),
          Errors.ins_balance
       );
    export const transfer_token_from_user_to_user = (
-      ledger: Ledger,
+      ledger: ledger,
       token_id: nat,
       from_: address,
       to_: address
-   ): Ledger => {
+   ): ledger => {
       assert_owner_of(ledger, token_id, from_);
       return Big_map.update(token_id, Some(to_), ledger)
    }
-   /*
-   // export namespace TokenMetadata {
-   // This should be initialized at origination, conforming to either
-   // TZIP-12 : https://gitlab.com/tezos/tzip/-/blob/master/proposals/tzip-12/tzip-12.md#token-metadata
-   // or TZIP-16 : https://gitlab.com/tezos/tzip/-/blob/master/proposals/tzip-12/tzip-12.md#contract-metadata-tzip-016
-
-   export type data = { token_id: nat, token_info: map<string, bytes> };
-   export type Ledger = big_map<nat, data>;
-   const data1 =
-      Map.literal(list([["name", bytes `FA2 NFT 1`], ["decimals", bytes `3`]]));
-   const data3 =
-      Map.literal(list([["name", bytes `FA2 NFT 3`], ["decimals", bytes `3`]]));
-   export const init = (): t =>
-      Big_map.literal(
-         list(
-            [
-               [1 as nat, { token_id: 1 as nat, token_info: data1 }],
-               [3 as nat, { token_id: 3 as nat, token_info: data3 }]
-            ]
-         )
-      );
-   export const get_token_metadata = (token_id: nat, tm: Ledger): data =>
-      match(Big_map.find_opt(token_id, tm)) {
-         when (Some(data)):
-            data
-         when (None()):
-            failwith(Errors.undefined_token)
-      }
-   // export namespace Storage {
-*/
-
    export const assert_token_exist = (s: storage, token_id: nat): unit => {
       const _ =
          Option.unopt_with_error(
@@ -163,17 +132,17 @@ export namespace NFT implements TZIP12Interface.FA2{
             Errors.undefined_token
          )
    };
-   export const set_ledger = (s: storage, ledger: Ledger): storage =>
+   export const set_ledger = (s: storage, ledger: ledger): storage =>
       ({ ...s, ledger: ledger });
-   export const get_operators = (s: storage): Operators => s.operators;
-   export const set_operators = (s: storage, operators: Operators): storage =>
+   export const get_operators = (s: storage): operators => s.operators;
+   export const set_operators = (s: storage, operators: operators): storage =>
       ({ ...s, operators: operators });
    @entry
    const transfer = (t: TZIP12.transfer, s: storage): ret => {
       // This function process the "txs" list. Since all transfer share the same "from_" address, we use a se
 
       const process_atomic_transfer = (from_: address) =>
-         ([ledger, t]: [Ledger, TZIP12.atomic_trans]): Ledger => {
+         ([ledger, t]: [ledger, TZIP12.atomic_trans]): ledger => {
             const { to_, token_id, amount } = t;
             ignore(amount);
             assert_token_exist(s, token_id);
@@ -186,8 +155,8 @@ export namespace NFT implements TZIP12Interface.FA2{
             )
          };
       const process_single_transfer = (
-         [ledger, t]: [Ledger, TZIP12.transfer_from]
-      ): Ledger => {
+         [ledger, t]: [ledger, TZIP12.transfer_from]
+      ): ledger => {
          const { from_, txs } = t;
          return List.fold_left(process_atomic_transfer(from_), ledger, txs)
       };
@@ -213,8 +182,8 @@ export namespace NFT implements TZIP12Interface.FA2{
    @entry
    const update_operators = (updates: TZIP12.update_operators, s: storage): ret => {
       const update_operator = (
-         [operators, update]: [Operators, TZIP12.unit_update]
-      ): Operators =>
+         [operators, update]: [operators, TZIP12.unit_update]
+      ): operators =>
          match(update) {
             when (Add_operator(operator)):
                add_operator(

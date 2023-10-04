@@ -12,17 +12,21 @@ help:
 	@grep -E '^[ a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
 	awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
 
-compile = $(ligo_compiler) compile contract $(project_root) ./lib/$(1) -o ./compiled/$(2) $(3) $(PROTOCOL_OPT)
+compile = $(ligo_compiler) compile contract $(project_root) -m $(1) ./lib/$(2) -o ./compiled/$(3) $(4) $(PROTOCOL_OPT)
 # ^ compile contract to michelson or micheline
 
 test = $(ligo_compiler) run test $(project_root) ./test/$(1) $(PROTOCOL_OPT)
 # ^ run given test file
 
 compile: ## compile contracts
-	@if [ ! -d ./compiled ]; then mkdir ./compiled ; fi
+	@if [ ! -d ./compiled ]; then mkdir -p ./compiled/fa2/nft && mkdir -p ./compiled/fa2/asset ; fi
 	@echo "Compiling contracts..."
-	@$(call compile,fa2/nft/nft.impl.mligo,fa2/nft/NFT_mligo.tz)
-	@$(call compile,fa2/nft/nft.impl.mligo,fa2/nft/NFT_mligo.json,--michelson-format json)
+	@$(call compile,NFT,fa2/nft/nft.impl.mligo,fa2/nft/nft.impl.mligo.tz)
+	@$(call compile,NFT,fa2/nft/nft.impl.mligo,fa2/nft/nft.impl.mligo.json,--michelson-format json)
+	@$(call compile,SingleAsset,fa2/asset/single_asset.impl.mligo,fa2/asset/single_asset.impl.mligo.tz)
+	@$(call compile,SingleAsset,fa2/asset/single_asset.impl.mligo,fa2/asset/single_asset.impl.mligo.json,--michelson-format json)
+	@$(call compile,MultiAsset,fa2/asset/multi_asset.impl.mligo,fa2/asset/multi_asset.impl.mligo.tz)
+	@$(call compile,MultiAsset,fa2/asset/multi_asset.impl.mligo,fa2/asset/multi_asset.impl.mligo.json,--michelson-format json)
 	@echo "Compiled contracts!"
 clean: ## clean up
 	@rm -rf compiled
@@ -30,9 +34,8 @@ clean: ## clean up
 deploy: deploy_deps deploy.js
 
 deploy.js:
-	@if [ ! -f ./deploy/metadata.json ]; then cp deploy/metadata.json.dist deploy/metadata.json ; fi
 	@echo "Running deploy script\n"
-	@cd deploy && npm start
+	@cd deploy && npm i && npm start
 
 deploy_deps:
 	@echo "Installing deploy script dependencies"
@@ -49,12 +52,10 @@ ifndef SUITE
 	@$(call test,fa2/single_asset_jsligo.test.mligo)
 	@$(call test,fa2/multi_asset.test.mligo)
 	@$(call test,fa2/nft/nft.test.mligo)
-	@$(call test,fa2/nft/views.test.mligo)
 	@$(call test,fa2/multi_asset_jsligo.test.mligo)
 	@$(call test,fa2/nft/nft_jsligo.test.mligo)
-	@$(call test,generic-fa2/single_asset.test.mligo)
-	@$(call test,generic-fa2/single_asset.extended.test.mligo)
-	@$(call test,generic-fa2/multi_asset.test.mligo)
+	@$(call test,fa2/nft/views.test.mligo)
+
 ##  @$(call test,fa2/nft/e2e_mutation.test.mligo)
 else
 	@$(call test,$(SUITE).test.mligo)

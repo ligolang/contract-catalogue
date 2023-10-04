@@ -5,7 +5,7 @@ type request = {
    token_id : nat;
 }
 
-type callback = [@layout:comb] {
+type callback = {
    request : request;
    balance : nat;
 }

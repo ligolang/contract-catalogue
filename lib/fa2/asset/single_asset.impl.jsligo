@@ -7,20 +7,20 @@
 #import "../common/tzip16.datatypes.jsligo" "TZIP16"
 
 export namespace SingleAsset implements TZIP12Interface.FA2{
-   export type Ledger = big_map<address, nat>;
+   export type ledger = big_map<address, nat>;
    type operator = address;
-   export type Operators = big_map<address, set<operator>>;
+   export type operators = big_map<address, set<operator>>;
    export type storage = {
-      ledger: Ledger,
-      operators: Operators,
+      ledger: ledger,
+      operators: operators,
       token_metadata: TZIP12.tokenMetadata,
       metadata: TZIP16.metadata
    };
    type ret = [list<operation>, storage];
-   //export namespace Operators {
+   //export namespace operators {
    /** if transfer policy is Owner_or_operator_transfer */
 
-   export const assert_authorisation = (operators: Operators, from_: address): unit => {
+   export const assert_authorisation = (operators: operators, from_: address): unit => {
       const sender_ = Tezos.get_sender();
       if (sender_ == from_) return unit else {
          const authorized =
@@ -42,10 +42,10 @@ export namespace SingleAsset implements TZIP12Interface.FA2{
       )
    };
    export const add_operator = (
-      operators: Operators,
+      operators: operators,
       owner: address,
       operator: operator
-   ): Operators => {
+   ): operators => {
       if (owner == operator) return operators else {
          const _ = assert_update_permission(owner);
          let auths =
@@ -60,10 +60,10 @@ export namespace SingleAsset implements TZIP12Interface.FA2{
       }
    };
    export const remove_operator = (
-      operators: Operators,
+      operators: operators,
       owner: address,
       operator: operator
-   ): Operators => {
+   ): operators => {
       if (owner == operator) return operators else {
          const _ = assert_update_permission(owner);
          const auths =
@@ -79,32 +79,32 @@ export namespace SingleAsset implements TZIP12Interface.FA2{
          return Big_map.update(owner, auths, operators)
       }
    }
-   //export namespace Ledger {
+   //export namespace ledger {
 
-   export const get_for_user = (ledger: Ledger, owner: address): nat =>
+   export const get_for_user = (ledger: ledger, owner: address): nat =>
       match(Big_map.find_opt(owner, ledger)) {
          when (Some(tokens)):
             tokens
          when (None()):
             0 as nat
       };
-   const update_for_user = (ledger: Ledger, owner: address, amount_: nat): Ledger =>
+   const update_for_user = (ledger: ledger, owner: address, amount_: nat): ledger =>
       Big_map.update(owner, Some(amount_), ledger);
    export const decrease_token_amount_for_user = (
-      ledger: Ledger,
+      ledger: ledger,
       from_: address,
       amount_: nat
-   ): Ledger => {
+   ): ledger => {
       let tokens = get_for_user(ledger, from_);
       const _ = assert_with_error(tokens >= amount_, Errors.ins_balance);
       tokens = abs(tokens - amount_);
       return update_for_user(ledger, from_, tokens)
    };
    export const increase_token_amount_for_user = (
-      ledger: Ledger,
+      ledger: ledger,
       to_: address,
       amount_: nat
-   ): Ledger => {
+   ): ledger => {
       let tokens = get_for_user(ledger, to_);
       tokens = tokens + amount_;
       return update_for_user(ledger, to_, tokens)
@@ -114,10 +114,10 @@ export namespace SingleAsset implements TZIP12Interface.FA2{
 
    export const get_amount_for_owner = (s: storage, owner: address) =>
       get_for_user(s.ledger, owner);
-   export const set_ledger = (s: storage, ledger: Ledger) =>
+   export const set_ledger = (s: storage, ledger: ledger) =>
       ({ ...s, ledger: ledger });
    export const get_operators = (s: storage) => s.operators;
-   export const set_operators = (s: storage, operators: Operators) =>
+   export const set_operators = (s: storage, operators: operators) =>
       ({ ...s, operators: operators })
    /** transfert entrypoint*/
 
@@ -126,7 +126,7 @@ export namespace SingleAsset implements TZIP12Interface.FA2{
       /* This function process the "txs" list. Since all transfer share the same "from_" address, we use a se */
 
       const process_atomic_transfer = (from_: address) =>
-         ([ledger, t]: [Ledger, TZIP12.atomic_trans]): Ledger => {
+         ([ledger, t]: [ledger, TZIP12.atomic_trans]): ledger => {
             const { to_, token_id, amount } = t;
             ignore(token_id);
             const _ = assert_authorisation(s.operators, from_);
@@ -134,8 +134,8 @@ export namespace SingleAsset implements TZIP12Interface.FA2{
             return increase_token_amount_for_user(l, to_, amount)
          };
       const process_single_transfer = (
-         [ledger, t]: [Ledger, TZIP12.transfer_from]
-      ): Ledger => {
+         [ledger, t]: [ledger, TZIP12.transfer_from]
+      ): ledger => {
          const { from_, txs } = t;
          return List.fold_left(process_atomic_transfer(from_), ledger, txs)
       };
@@ -188,8 +188,8 @@ operator of A, C cannot transfer tokens that are owned by A, on behalf of B.
       storage
    ] => {
       const update_operator = (
-         [operators, update]: [Operators, TZIP12.unit_update]
-      ): Operators =>
+         [operators, update]: [operators, TZIP12.unit_update]
+      ): operators =>
          match(update) {
             when (Add_operator(operator)):
                add_operator(operators, operator.owner, operator.operator)

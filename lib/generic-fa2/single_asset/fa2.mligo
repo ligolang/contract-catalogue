@@ -13,7 +13,7 @@ type storage = Storage.t
 
 (** transfert entrypoint
 *)
-type atomic_trans = [@layout:comb] {
+type atomic_trans =  {
    to_      : address;
    token_id : nat;
    amount   : nat;
@@ -50,12 +50,12 @@ type request = {
    token_id : nat;
 }
 
-type callback = [@layout:comb] {
+type callback =  {
    request : request;
    balance : nat;
 }
 
-type balance_of = [@layout:comb] {
+type balance_of =  {
    requests : request list;
    callback : callback list contract;
 }
@@ -92,7 +92,7 @@ let balance_of (type a) (b: balance_of) (s: a storage) : operation list * a stor
   )
 )
 *)
-type operator = [@layout:comb] {
+type operator = {
    owner    : address;
    operator : address;
    token_id : nat;

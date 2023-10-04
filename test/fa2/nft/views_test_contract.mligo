@@ -6,7 +6,7 @@ type storage = {
     all_tokens    : nat set option;
 }
 
-type operator_request = [@layout:comb] {
+type operator_request ={
     owner    : address;
     operator : address;
     token_id : nat; 
