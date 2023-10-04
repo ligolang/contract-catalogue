@@ -1,38 +1,105 @@
-// toeknMetadata
+/**
+ * Token-specific metadata is stored/presented as a Michelson value of type
+ * (map string bytes).  A few of the keys are reserved and predefined by
+ * TZIP-012:
+ * 
+ * 
+ * "" (empty-string): should correspond to a TZIP-016 URI which points to a JSON
+ * representation of the token metadata.
+ * 
+ * "name": should be a UTF-8 string giving a “display name” to the token.
+ * 
+ * "symbol": should be a UTF-8 string for the short identifier of the token
+ * (e.g. XTZ, EUR, …).
+ * 
+ * "decimals": should be an integer (converted to a UTF-8 string in decimal)
+ * which defines the position of the decimal point in token balances for display
+ * purposes.
+ * 
+ * In the case of a TZIP-016 URI pointing to a JSON blob, the JSON preserves the
+ * same 3 reserved non-empty fields:
+ * { "symbol": <string>, "name": <string>, "decimals": <number>, ... }
+ * Providing a value for "decimals" is required for all token types. "name" and "symbol" are not required but it is highly recommended for most tokens to provide the values either in the map or the JSON found via the TZIP-016 URI.
+ * Other standards such as TZIP-021 describe token metadata schemas which reserve additional keys for different token types for greater compatibility across indexers, wallets, and tooling.
+**/
 
 export type tokenMetadataData = {
     token_id: nat,
     token_info: map<string, bytes>
 };
 
+/**
+* Token metadata is intended for off-chain, user-facing contexts (e.g.  wallets,
+* explorers, marketplaces). An earlier (superseded) specification of TZIP-012 token metadata is
+* contained in the Legacy Interface section of the Legacy FA2 document.
+* There is one @see tokenMetadataData per token_id
+**/
+
 export type tokenMetadata = big_map<nat, tokenMetadataData>;
 
-// Transfer entrypoint
+/**
+* A partial transaction (ignoring the from field)
+**/
 
 export type atomic_trans = { to_: address, token_id: nat, amount: nat };
 
+/**
+* Some transaction from a common owner address but multiple destinations @see atomic_trans
+**/
+
 export type transfer_from = { from_: address, txs: list<atomic_trans> };
+
+/** 
+* Transfer entrypoint parameter
+* A batch of transaction represented by a list of @see transfer_from
+**/
 
 export type transfer = list<transfer_from>;
 
-// Balance_of entrypoint
+/**
+* @see balance_of request
+**/
 
 export type request = { owner: address, token_id: nat };
 
+/**
+* A callback object is a response from a @see request with a balance
+**/
+
 export type callback = { request, balance: nat };
 
+/**
+* A default Main variant with a list of @see callback
+**/
+
 export type callback_param = | ["Main", list<callback>];
+
+/**
+* balance_of entrypoint parameter
+* Batch a list of balance requests @see request and @see callback_param contract
+**/
 
 export type balance_of = {
     requests: list<request>,
     callback: contract<callback_param>
 };
 
-// Update_operators entrypoint
+/**
+* Operator update
+**/
 
 export type operator = { owner: address, operator: address, token_id: nat };
 
+/**
+* Add or Remove token operators variant with an @see operator update  
+**/
+
 export type unit_update =
     ["Add_operator", operator] | ["Remove_operator", operator];
+
+/**
+* update_operators entrypoint parameter
+* A list of @see unit_update for the specified token owners and token IDs
+**/
 
 export type update_operators = list<unit_update>;
