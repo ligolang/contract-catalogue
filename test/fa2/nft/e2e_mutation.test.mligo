@@ -20,7 +20,9 @@ let originate_and_test_e2e contract =
   ()
 
 let test_mutation =
+
   match Test.mutation_test_all (contract_of FA2_NFT.NFT) originate_and_test_e2e with
+
     [] -> ()
   | ms ->
     let () = List.iter 
