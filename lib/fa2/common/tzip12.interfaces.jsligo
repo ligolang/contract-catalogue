@@ -18,6 +18,7 @@ export interface FA2 {
   const balance_of: (p: TZIP12Datatypes.balance_of, s: storage) => ret;
   @entry
   const update_operators: (p: TZIP12Datatypes.update_operators, s: storage) => ret;
+/* OPTIONAL VIEWS
   @view
   const get_balance: (p: [address, nat], s: storage) => nat;
   @view
@@ -28,5 +29,6 @@ export interface FA2 {
   const is_operator: (op: TZIP12Datatypes.operator, s: storage) => bool;
   @view
   const token_metadata: (p: nat, s: storage) => TZIP12Datatypes.
-  tokenMetadataData;
+  tokenMetadataData;*/
+
 };

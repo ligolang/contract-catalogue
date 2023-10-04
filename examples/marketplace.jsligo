@@ -1,4 +1,4 @@
-#import "./lib/fa2/nft/nft.impl.jsligo" "Contract"
+#import "../lib/fa2/nft/nft.impl.jsligo" "Contract"
 
 export type storage = {
     administrators: set<address>,

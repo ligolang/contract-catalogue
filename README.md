@@ -134,3 +134,62 @@ const update_operators = (p: Contract.TZIP12.update_operators, s: storage): ret 
 Continue to add non-TZIP new entrypoints, etc ...
 
 ## Implement the interface differently
+
+If you are not happy with the default NFT implementation, you can define your own
+
+Create a new file
+
+```bash
+touch myTzip12NFTImplementation.jsligo
+```
+
+Import some code and define implementation of missing types `ledger` and `operators`
+
+```ligolang
+#import "@ligo/fa/lib/fa2/common/errors.mligo" "Errors"
+
+#import "@ligo/fa/lib/fa2/common/assertions.jsligo" "Assertions"
+
+#import "@ligo/fa/lib/fa2/common/tzip12.datatypes.jsligo" "TZIP12"
+
+#import "@ligo/fa/lib/fa2/common/tzip12.interfaces.jsligo" "TZIP12Interface"
+
+#import "@ligo/fa/lib/fa2/common/tzip16.datatypes.jsligo" "TZIP16"
+
+export namespace NFT implements TZIP12Interface.FA2{
+    export type ledger = big_map<nat, address>;
+    type operator = address;
+    export type operators = big_map<[address, operator], set<nat>>;
+    export type storage = {
+        ledger: ledger,
+        operators: operators,
+        token_metadata: TZIP12.tokenMetadata,
+        metadata: TZIP16.metadata
+    };
+    type ret = [list<operation>, storage];
+
+}
+```
+
+Copy the missing entrypoints from the TZIP12 interface and give your own implementation
+
+```ligolang
+  @entry
+    const transfer = (p: TZIP12.transfer, s: storage): ret => {
+        failwith("TODO");
+    };
+    @entry
+    const balance_of = (p: TZIP12.balance_of, s: storage): ret => {
+        failwith("TODO");
+    };
+    @entry
+    const update_operators = (p: TZIP12.update_operators, s: storage): ret => {
+        failwith("TODO");
+    };
+```
+
+Compile it (do not forget to add the parameter -m NFT as you have to define a namespace to be able to implement an interface)
+
+```bash
+ligo compile contract ./examples/myTzip12NFTImplementation.jsligo -m NFT
+```
