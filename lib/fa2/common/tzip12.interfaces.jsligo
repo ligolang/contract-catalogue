@@ -1,7 +1,16 @@
 #import "tzip12.datatypes.jsligo" "TZIP12Datatypes"
 
+#import "tzip16.datatypes.jsligo" "TZIP16Datatypes"
+
 export interface FA2 {
-  type storage;
+  type ledger;
+  type operators;
+  type storage = {
+    ledger: ledger,
+    operators: operators,
+    token_metadata: TZIP12Datatypes.tokenMetadata,
+    metadata: TZIP16Datatypes.metadata
+  };
   type ret = [list<operation>, storage];
   @entry
   const transfer: (p: TZIP12Datatypes.transfer, s: storage) => ret;

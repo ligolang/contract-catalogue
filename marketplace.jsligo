@@ -61,7 +61,7 @@ const balance_of = (p: Contract.TZIP12.balance_of, s: storage): ret => {
 @entry
 const update_operators = (p: Contract.TZIP12.update_operators, s: storage): ret => {
     const ret2: [list<operation>, Contract.NFT.storage] =
-        Contract.NFT.update_ops(
+        Contract.NFT.update_operators(
             p,
             {
                 ledger: s.ledger,
