@@ -1,11 +1,11 @@
 #import "../../helpers/nft_helpers.mligo" "TestHelpers"
 #import "../../helpers/list.mligo" "List_helper"
-#import "../../../lib/fa2/nft/NFT.mligo" "FA2_NFT"
+#import "../../../lib/fa2/nft/nft.impl.mligo" "FA2_NFT"
 #import "./views_test_contract.mligo" "ViewsTestContract"
 
 (* Tests for views *)
 
-type orig_nft = (FA2_NFT parameter_of, FA2_NFT.storage) origination_result
+type orig_nft = (FA2_NFT.NFT parameter_of, FA2_NFT.NFT.storage) origination_result
 
 (* Test get_balance view *)
 let test_get_balance_view =
@@ -13,7 +13,7 @@ let test_get_balance_view =
   let owner1 = List_helper.nth_exn 0 owners in
 
   let orig : orig_nft = Test.originate_from_file
-    "../../../lib/fa2/nft/NFT.mligo"
+    "../../../lib/fa2/nft/nft.impl.mligo"
     initial_storage 0tez in
 
   let initial_storage : ViewsTestContract.storage = {
@@ -38,7 +38,7 @@ let test_total_supply_view =
   let initial_storage, _, _ = TestHelpers.get_initial_storage () in
 
   let orig : orig_nft = Test.originate_from_file
-    "../../../lib/fa2/nft/NFT.mligo"
+    "../../../lib/fa2/nft/nft.impl.mligo"
     initial_storage 0tez in
 
   let initial_storage : ViewsTestContract.storage = {
@@ -64,7 +64,7 @@ let test_total_supply_undefined_token_view =
   let initial_storage, _, _ = TestHelpers.get_initial_storage () in
 
   let orig : orig_nft = Test.originate_from_file
-    "../../../lib/fa2/nft/NFT.mligo"
+    "../../../lib/fa2/nft/nft.impl.mligo"
     initial_storage 0tez in
 
   let initial_storage : ViewsTestContract.storage = {
@@ -89,7 +89,7 @@ let test_is_operator_view =
   let op1    = List_helper.nth_exn 0 operators in
 
   let orig : orig_nft = Test.originate_from_file
-    "../../../lib/fa2/nft/NFT.mligo"
+    "../../../lib/fa2/nft/nft.impl.mligo"
     initial_storage 0tez in
 
   let initial_storage : ViewsTestContract.storage = {
@@ -118,7 +118,7 @@ let test_all_tokens_view =
   let initial_storage, _, _ = TestHelpers.get_initial_storage () in
 
   let orig : orig_nft = Test.originate_from_file
-    "../../../lib/fa2/nft/NFT.mligo"
+    "../../../lib/fa2/nft/nft.impl.mligo"
     initial_storage 0tez in
 
   let initial_storage : ViewsTestContract.storage = {

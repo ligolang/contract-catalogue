@@ -102,8 +102,6 @@ let _test_atomic_tansfer_success_zero_amount_and_self_transfer (contract: fa2_nf
   ] : FA2_NFT.TZIP12.transfer)
   in
 
-  let () = Test.set_source op1 in
-
   let orig = Test.originate contract initial_storage 0tez in
   
   let _ = Test.transfer_exn orig.addr (Transfer transfer_requests) 0tez in

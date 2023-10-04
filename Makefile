@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-ligo_compiler?=docker run --rm -v "$(PWD)":"$(PWD)" -w "$(PWD)" ligolang/ligo:0.57.0
+ligo_compiler?=docker run --rm -v "$(PWD)":"$(PWD)" -w "$(PWD)" ligolang/ligo:1.0.0
 # ^ Override this variable when you run make command by make <COMMAND> ligo_compiler=<LIGO_EXECUTABLE>
 # ^ Otherwise use default one (you'll need docker)
 PROTOCOL_OPT?=
@@ -21,8 +21,8 @@ test = $(ligo_compiler) run test $(project_root) ./test/$(1) $(PROTOCOL_OPT)
 compile: ## compile contracts
 	@if [ ! -d ./compiled ]; then mkdir ./compiled ; fi
 	@echo "Compiling contracts..."
-	@$(call compile,fa2/nft/NFT.mligo,fa2/nft/NFT_mligo.tz)
-	@$(call compile,fa2/nft/NFT.mligo,fa2/nft/NFT_mligo.json,--michelson-format json)
+	@$(call compile,fa2/nft/nft.impl.mligo,fa2/nft/NFT_mligo.tz)
+	@$(call compile,fa2/nft/nft.impl.mligo,fa2/nft/NFT_mligo.json,--michelson-format json)
 	@echo "Compiled contracts!"
 clean: ## clean up
 	@rm -rf compiled
