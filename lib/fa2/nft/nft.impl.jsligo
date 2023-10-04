@@ -1,5 +1,7 @@
 #import "../common/errors.mligo" "Errors"
 
+#import "../common/assertions.jsligo" "Assertions"
+
 #import "../common/tzip12.datatypes.jsligo" "TZIP12"
 
 #import "../common/tzip12.interfaces.jsligo" "TZIP12Interface"
@@ -40,12 +42,6 @@ export namespace NFT implements TZIP12Interface.FA2{
          return unit
       }
    };
-   const assert_update_permission = (owner: address): unit => {
-      return assert_with_error(
-         (owner == (Tezos.get_sender())),
-         "The sender can only manage operators for his own token"
-      )
-   }
    export const add_operator = (
       operators: operators,
       owner: address,
@@ -57,7 +53,7 @@ export namespace NFT implements TZIP12Interface.FA2{
       // assert_authorisation always allow the owner so this case is not relevant
 
       } else {
-         assert_update_permission(owner);
+         Assertions.assert_update_permission(owner);
          let auth_tokens =
             match(Big_map.find_opt([owner, operator], operators)) {
                when (Some(ts)):
@@ -80,7 +76,7 @@ export namespace NFT implements TZIP12Interface.FA2{
       // assert_authorisation always allow the owner so this case is not relevant
 
       } else {
-         assert_update_permission(owner);
+         Assertions.assert_update_permission(owner);
          const auth_tokens: option<set<nat>> =
             match(Big_map.find_opt([owner, operator], operators)) {
                when (Some(ts)):

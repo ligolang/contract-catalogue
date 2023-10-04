@@ -1,0 +1,8 @@
+#import "./errors.mligo" "Errors"
+
+export const assert_update_permission = (owner: address): unit => {
+    return assert_with_error(
+        (owner == (Tezos.get_sender())),
+        Errors.only_sender_manage_operators
+    )
+}
