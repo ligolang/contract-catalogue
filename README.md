@@ -40,7 +40,7 @@ touch marketplace.jsligo
 Edit the file to add an additional field `administrators`
 
 ```ligolang
-#import "./lib/fa2/nft/nft.impl.jsligo" "Contract"
+#import "@ligo/fa/lib/fa2/nft/nft.impl.jsligo" "Contract"
 
 export type storage = {
     administrators: set<address>,
@@ -191,5 +191,5 @@ Copy the missing entrypoints from the TZIP12 interface and give your own impleme
 Compile it (do not forget to add the parameter -m NFT as you have to define a namespace to be able to implement an interface)
 
 ```bash
-ligo compile contract ./examples/myTzip12NFTImplementation.jsligo -m NFT
+ligo compile contract myTzip12NFTImplementation.jsligo -m NFT
 ```
