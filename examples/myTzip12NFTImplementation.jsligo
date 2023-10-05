@@ -1,0 +1,34 @@
+#import "../lib/fa2/common/errors.mligo" "Errors"
+
+#import "../lib/fa2/common/assertions.jsligo" "Assertions"
+
+#import "../lib/fa2/common/tzip12.datatypes.jsligo" "TZIP12"
+
+#import "../lib/fa2/common/tzip12.interfaces.jsligo" "TZIP12Interface"
+
+#import "../lib/fa2/common/tzip16.datatypes.jsligo" "TZIP16"
+
+export namespace NFT implements TZIP12Interface.FA2{
+    export type ledger = big_map<nat, address>;
+    type operator = address;
+    export type operators = big_map<[address, operator], set<nat>>;
+    export type storage = {
+        ledger: ledger,
+        operators: operators,
+        token_metadata: TZIP12.tokenMetadata,
+        metadata: TZIP16.metadata
+    };
+    type ret = [list<operation>, storage];
+    @entry
+    const transfer = (p: TZIP12.transfer, s: storage): ret => {
+        failwith("TODO");
+    };
+    @entry
+    const balance_of = (p: TZIP12.balance_of, s: storage): ret => {
+        failwith("TODO");
+    };
+    @entry
+    const update_operators = (p: TZIP12.update_operators, s: storage): ret => {
+        failwith("TODO");
+    };
+}

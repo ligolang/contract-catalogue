@@ -1,0 +1,232 @@
+#import "../common/assertions.jsligo" "Assertions"
+
+#import "../common/errors.mligo" "Errors"
+
+#import "../common/tzip12.datatypes.jsligo" "TZIP12"
+
+#import "../common/tzip12.interfaces.jsligo" "TZIP12Interface"
+
+#import "../common/tzip16.datatypes.jsligo" "TZIP16"
+
+export namespace NFT implements TZIP12Interface.FA2{
+   export type ledger = big_map<nat, address>;
+   type operator = address;
+   export type operators = big_map<[address, operator], set<nat>>;
+   export type storage = {
+      ledger: ledger,
+      operators: operators,
+      token_metadata: TZIP12.tokenMetadata,
+      metadata: TZIP16.metadata
+   };
+   type ret = [list<operation>, storage];
+   //  operators 
+   /**
+* Check if the intented transfer is sent from the same sender as from field, otherwise check if the sender is part of the operator authorized to receive this token
+* @param operators :  operator bigmap
+* @param from_ : transfer from address
+* @param token_id : token_id to test  
+*/
+
+   export const assert_authorisation = (
+      operators: operators,
+      from_: address,
+      token_id: nat
+   ): unit => {
+      const sender_ = (Tezos.get_sender());
+      if (sender_ != from_) {
+         const authorized =
+            match((Big_map.find_opt([from_, sender_], operators))) {
+               when (Some(a)):
+                  a
+               when (None()):
+                  Set.empty
+            };
+         if (! (Set.mem(token_id, authorized))) {
+            return failwith(Errors.not_operator)
+         }
+      } else {
+         return unit
+      }
+   };
+   export const add_operator = (
+      operators: operators,
+      owner: address,
+      operator: operator,
+      token_id: nat
+   ): operators => {
+      if (owner == operator) {
+         return operators
+      // assert_authorisation always allow the owner so this case is not relevant
+
+      } else {
+         Assertions.assert_update_permission(owner);
+         let auth_tokens =
+            match(Big_map.find_opt([owner, operator], operators)) {
+               when (Some(ts)):
+                  ts
+               when (None()):
+                  Set.empty
+            };
+         auth_tokens = Set.add(token_id, auth_tokens);
+         return Big_map.update([owner, operator], Some(auth_tokens), operators)
+      }
+   };
+   export const remove_operator = (
+      operators: operators,
+      owner: address,
+      operator: operator,
+      token_id: nat
+   ): operators => {
+      if (owner == operator) {
+         return operators
+      // assert_authorisation always allow the owner so this case is not relevant
+
+      } else {
+         Assertions.assert_update_permission(owner);
+         const auth_tokens: option<set<nat>> =
+            match(Big_map.find_opt([owner, operator], operators)) {
+               when (Some(ts)):
+                  do {
+                     const toks = Set.remove(token_id, ts);
+                     if (Set.cardinal(toks) == 0n) {
+                        return None()
+                     } else {
+                        return Some(toks)
+                     }
+                  }
+               when (None()):
+                  None()
+            };
+         return Big_map.update([owner, operator], auth_tokens, operators)
+      }
+   }
+   //  ledger 
+
+   export const is_owner_of = (ledger: ledger, token_id: nat, owner: address): bool => {
+      const current_owner = Option.unopt(Big_map.find_opt(token_id, ledger));
+      return (current_owner == owner)
+   };
+   const assert_owner_of = (ledger: ledger, token_id: nat, owner: address): unit =>
+      assert_with_error(
+         is_owner_of(ledger, token_id, owner),
+         Errors.ins_balance
+      );
+   export const transfer_token_from_user_to_user = (
+      ledger: ledger,
+      token_id: nat,
+      from_: address,
+      to_: address
+   ): ledger => {
+      assert_owner_of(ledger, token_id, from_);
+      return Big_map.update(token_id, Some(to_), ledger)
+   }
+   export const set_ledger = (s: storage, ledger: ledger): storage =>
+      ({ ...s, ledger: ledger });
+   export const get_operators = (s: storage): operators => s.operators;
+   export const set_operators = (s: storage, operators: operators): storage =>
+      ({ ...s, operators: operators });
+   @entry
+   const transfer = (t: TZIP12.transfer, s: storage): ret => {
+      const process_atomic_transfer = (from_: address) =>
+         ([ledger, t]: [ledger, TZIP12.atomic_trans]): ledger => {
+            const { to_, token_id, amount } = t;
+            ignore(amount);
+            Assertions.assert_token_exist(s.token_metadata, token_id);
+            assert_authorisation(s.operators, from_, token_id);
+            return transfer_token_from_user_to_user(
+               ledger,
+               token_id,
+               from_,
+               to_
+            )
+         };
+      const process_single_transfer = (
+         [ledger, t]: [ledger, TZIP12.transfer_from]
+      ): ledger => {
+         const { from_, txs } = t;
+         return List.fold_left(process_atomic_transfer(from_), ledger, txs)
+      };
+      const ledger = List.fold_left(process_single_transfer, s.ledger, t);
+      const store = set_ledger(s, ledger);
+      return [list([]), store]
+   };
+   @entry
+   const balance_of = (b: TZIP12.balance_of, s: storage): ret => {
+      const { requests, callback } = b;
+      const get_balance_info = (request: TZIP12.request): TZIP12.callback => {
+         const { owner, token_id } = request;
+         Assertions.assert_token_exist(s.token_metadata, token_id);
+         let balance_ = 0 as nat;
+         if (is_owner_of(s.ledger, token_id, owner)) balance_ = 1 as nat;
+         return ({ request: request, balance: balance_ })
+      };
+      const callback_param = List.map(get_balance_info, requests);
+      const operation =
+         Tezos.transaction(Main(callback_param), 0mutez, callback);
+      return [list([operation]), s]
+   };
+   @entry
+   const update_operators = (updates: TZIP12.update_operators, s: storage): ret => {
+      const update_operator = (
+         [operators, update]: [operators, TZIP12.unit_update]
+      ): operators =>
+         match(update) {
+            when (Add_operator(operator)):
+               add_operator(
+                  operators,
+                  operator.owner,
+                  operator.operator,
+                  operator.token_id
+               )
+            when (Remove_operator(operator)):
+               remove_operator(
+                  operators,
+                  operator.owner,
+                  operator.operator,
+                  operator.token_id
+               )
+         };
+      let operators = get_operators(s);
+      operators = List.fold_left(update_operator, operators, updates);
+      const store = set_operators(s, operators);
+      return [list([]), store]
+   };
+   @view
+   const get_balance = (p: [address, nat], s: storage): nat => {
+      const [owner, token_id] = p;
+      Assertions.assert_token_exist(s.token_metadata, token_id);
+      if (is_owner_of(s.ledger, token_id, owner)) {
+         return 1n
+      } else {
+         return 0n
+      }
+   };
+   @view
+   const total_supply = (token_id: nat, s: storage): nat => {
+      Assertions.assert_token_exist(s.token_metadata, token_id);
+      return 1n
+   };
+   @view
+   const all_tokens = (_: unit, _s: storage): set<nat> =>
+      failwith(Errors.not_available);
+   @view
+   const is_operator = (op: TZIP12.operator, s: storage): bool => {
+      const authorized =
+         match(Big_map.find_opt([op.owner, op.operator], s.operators)) {
+            when (Some(a)):
+               a
+            when (None()):
+               Set.empty
+         };
+      return (Set.mem(op.token_id, authorized) || op.owner == op.operator)
+   };
+   @view
+   const token_metadata = (p: nat, s: storage): TZIP12.tokenMetadataData => {
+      return match(Big_map.find_opt(p, s.token_metadata)) {
+         when (Some(data)):
+            data
+         when (None()):
+            failwith(Errors.undefined_token)
+      }
+   }
+}

@@ -1,4 +1,4 @@
-#import "../../lib/fa2/nft/NFT.mligo" "FA2_NFT"
+#import "../../lib/fa2/nft/nft.impl.jsligo" "FA2_NFT"
 
 let get_initial_storage () =
   let () = Test.reset_state 8n ([
@@ -47,21 +47,36 @@ let get_initial_storage () =
   in
 
   let token_metadata = (Big_map.literal [
-    (1n, ({token_id=1n;token_info=(Map.empty : (string, bytes) map);} : FA2_NFT.TokenMetadata.data));
-    (2n, ({token_id=2n;token_info=(Map.empty : (string, bytes) map);} : FA2_NFT.TokenMetadata.data));
-    (3n, ({token_id=3n;token_info=(Map.empty : (string, bytes) map);} : FA2_NFT.TokenMetadata.data));
-    (4n, ({token_id=3n;token_info=(Map.empty : (string, bytes) map);} : FA2_NFT.TokenMetadata.data));
-    (5n, ({token_id=3n;token_info=(Map.empty : (string, bytes) map);} : FA2_NFT.TokenMetadata.data));
-  ] : FA2_NFT.TokenMetadata.t) in
+    (1n, ({token_id=1n;token_info=(Map.empty : (string, bytes) map);} : FA2_NFT.TZIP12.tokenMetadataData));
+    (2n, ({token_id=2n;token_info=(Map.empty : (string, bytes) map);} : FA2_NFT.TZIP12.tokenMetadataData));
+    (3n, ({token_id=3n;token_info=(Map.empty : (string, bytes) map);} : FA2_NFT.TZIP12.tokenMetadataData));
+    (4n, ({token_id=3n;token_info=(Map.empty : (string, bytes) map);} : FA2_NFT.TZIP12.tokenMetadataData));
+    (5n, ({token_id=3n;token_info=(Map.empty : (string, bytes) map);} : FA2_NFT.TZIP12.tokenMetadataData));
+  ] : FA2_NFT.TZIP12.tokenMetadata) in
 
-  let metadata = FA2_NFT.Metadata.init() in
-  let token_ids = Set.literal [1n; 2n; 3n] in
+  let metadata =Big_map.literal [
+	("", [%bytes {|tezos-storage:data|}]);
+	("data", [%bytes
+{|{
+	"name":"FA2",
+	"description":"Example FA2 implementation",
+	"version":"0.1.0",
+	"license":{"name":"MIT"},
+	"authors":["Benjamin Fuentes<benjamin.fuentes@marigold.dev>"],
+	"homepage":"",
+	"source":{"tools":["Ligo"], "location":"https://github.com/ligolang/contract-catalogue/tree/main/lib/fa2"},
+	"interfaces":["TZIP-012"],
+	"errors":[],
+	"views":[]
 
-  let initial_storage : FA2_NFT.storage = {
+}|}]);
+] in
+  
+
+  let initial_storage : FA2_NFT.NFT.storage = {
     ledger         = ledger;
     token_metadata = token_metadata;
     operators      = operators;
-    token_ids      = token_ids;
     metadata       = metadata;
   } in
 
@@ -69,7 +84,7 @@ let get_initial_storage () =
 
 
 let assert_balances
-  (contract_address : (FA2_NFT parameter_of, FA2_NFT.storage) typed_address )
+  (contract_address : (FA2_NFT.NFT parameter_of, FA2_NFT.NFT.storage) typed_address )
   (a, b, c : (address * nat) * (address * nat) * (address * nat)) =
   let (owner1, token_id_1) = a in
   let (owner2, token_id_2) = b in

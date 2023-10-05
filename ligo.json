@@ -1,7 +1,7 @@
 {
   "name": "@ligo/fa",
-  "version": "1.0.6",
-  "description": "A FA2 contract with nft, single asset & multi asset contracts",
+  "version": "1.0.7",
+  "description": "FA2 interface and types compliant with TZIP12. The library is also providing 3 Ligo contract implementations for nft, single asset & multi asset contracts",
   "directories": {
     "lib": "lib",
     "test": "test"
@@ -13,11 +13,11 @@
   "main": "lib/main.mligo",
   "keywords": [
     "ligo",
+    "ligo@^1.0.0",
     "tezos",
     "jsligo",
     "cameligo",
-    "nft",
-    "tezos-ligo"
+    "nft"
   ],
   "author": "ligoLANG <https://ligolang.org/>",
   "license": "MIT",

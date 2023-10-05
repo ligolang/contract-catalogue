@@ -1,4 +1,4 @@
-#import "../../../lib/fa2/nft/NFT.mligo" "FA2_NFT"
+#import "../../../lib/fa2/nft/nft.impl.mligo" "FA2_NFT"
 #import "./nft.test.mligo" "Test_FA2_NFT"
  
 let originate_and_test_e2e contract =
@@ -20,7 +20,9 @@ let originate_and_test_e2e contract =
   ()
 
 let test_mutation =
-  match Test.mutation_test_all (contract_of FA2_NFT) originate_and_test_e2e with
+
+  match Test.mutation_test_all (contract_of FA2_NFT.NFT) originate_and_test_e2e with
+
     [] -> ()
   | ms ->
     let () = List.iter 
