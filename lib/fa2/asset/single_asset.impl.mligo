@@ -8,8 +8,9 @@
 
 #import "../common/tzip16.datatypes.jsligo" "TZIP16"
 
-module SingleAsset  = struct
-   type ledger = (address, nat) big_map
+
+module Datatypes  = struct
+ type ledger = (address, nat) big_map
    type operator = address
    type operators = (address, operator set) big_map
    type storage =  {
@@ -18,12 +19,14 @@ module SingleAsset  = struct
       token_metadata : TZIP12.tokenMetadata;
       metadata : TZIP16.metadata;
    }
-   type ret = operation list * storage
+end
+
+module Sidecar  = struct
 
 // Operators 
 
 
-   let assert_authorisation (operators : operators) (from_ : address) : unit =
+   let assert_authorisation (operators : Datatypes.operators) (from_ : address) : unit =
       let sender_ = (Tezos.get_sender ()) in
       if (sender_ = from_) then ()
       else
@@ -35,7 +38,7 @@ module SingleAsset  = struct
 
   
 
-   let add_operator (operators : operators) (owner : address) (operator : operator) : operators =
+   let add_operator (operators : Datatypes.operators) (owner : address) (operator : Datatypes.operator) : Datatypes.operators =
       if owner = operator then operators (* assert_authorisation always allow the owner so this case is not relevant *)
       else
          let () = Assertions.assert_update_permission owner in
@@ -44,7 +47,7 @@ module SingleAsset  = struct
          let auths  = Set.add operator auths in
          Big_map.update owner (Some auths) operators
 
-   let remove_operator (operators : operators) (owner : address) (operator : operator) : operators =
+   let remove_operator (operators : Datatypes.operators) (owner : address) (operator : Datatypes.operator) : Datatypes.operators =
       if owner = operator then operators (* assert_authorisation always allow the owner so this case is not relevant *)
       else
          let () = Assertions.assert_update_permission owner in
@@ -58,22 +61,22 @@ module SingleAsset  = struct
 
 // Ledger 
 
-   let get_for_user    (ledger:ledger) (owner: address) : nat =
+   let get_for_user    (ledger:Datatypes.ledger) (owner: address) : nat =
       match Big_map.find_opt owner ledger with
          Some (tokens) -> tokens
       |  None          -> 0n
 
-   let update_for_user (ledger:ledger) (owner: address) (amount_ : nat) : ledger =
+   let update_for_user (ledger:Datatypes.ledger) (owner: address) (amount_ : nat) : Datatypes.ledger =
       Big_map.update owner (Some amount_) ledger
 
-   let decrease_token_amount_for_user (ledger : ledger) (from_ : address) (amount_ : nat) : ledger =
+   let decrease_token_amount_for_user (ledger : Datatypes.ledger) (from_ : address) (amount_ : nat) : Datatypes.ledger =
       let tokens = get_for_user ledger from_ in
       let () = assert_with_error (tokens >= amount_) Errors.ins_balance in
       let tokens = abs(tokens - amount_) in
       let ledger = update_for_user ledger from_ tokens in
       ledger
 
-   let increase_token_amount_for_user (ledger : ledger) (to_   : address) (amount_ : nat) : ledger =
+   let increase_token_amount_for_user (ledger : Datatypes.ledger) (to_   : address) (amount_ : nat) : Datatypes.ledger =
       let tokens = get_for_user ledger to_ in
       let tokens = tokens + amount_ in
       let ledger = update_for_user ledger to_ tokens in
@@ -83,14 +86,23 @@ module SingleAsset  = struct
 
  
   
-   let get_amount_for_owner (s:storage) (owner : address) =
+   let get_amount_for_owner (s:Datatypes.storage) (owner : address) =
       get_for_user s.ledger owner
 
-   let set_ledger (s:storage) (ledger:ledger) = {s with ledger = ledger}
+   let set_ledger (s:Datatypes.storage) (ledger:Datatypes.ledger) = {s with ledger = ledger}
 
-   let get_operators (s:storage) = s.operators
-   let set_operators (s:storage) (operators:operators) = {s with operators = operators}
+   let get_operators (s:Datatypes.storage) = s.operators
+   let set_operators (s:Datatypes.storage) (operators:Datatypes.operators) = {s with operators = operators}
 
+
+
+end
+
+module SingleAsset  = struct
+   type ledger = Datatypes.ledger
+   type operators = Datatypes.operators
+   type storage =  Datatypes.storage
+   type ret = operation list * storage
 
 
 [@entry] let transfer : TZIP12.transfer -> storage -> operation list * storage =
@@ -98,9 +110,9 @@ module SingleAsset  = struct
    (* This function process the "txs" list. Since all transfer share the same "from_" address, we use a se *)
    let process_atomic_transfer (from_:address) (ledger, t:ledger * TZIP12.atomic_trans) =
       let {to_;token_id=_token_id;amount=amount_} = t in
-      let ()     = assert_authorisation s.operators from_ in
-      let ledger = decrease_token_amount_for_user ledger from_ amount_ in
-      let ledger = increase_token_amount_for_user ledger to_   amount_ in
+      let ()     = Sidecar.assert_authorisation s.operators from_ in
+      let ledger = Sidecar.decrease_token_amount_for_user ledger from_ amount_ in
+      let ledger = Sidecar.increase_token_amount_for_user ledger to_   amount_ in
       ledger
    in
    let process_single_transfer (ledger, t:ledger * TZIP12.transfer_from ) =
@@ -109,7 +121,7 @@ module SingleAsset  = struct
       ledger
    in
    let ledger = List.fold_left process_single_transfer s.ledger t in
-   let s = set_ledger s ledger in
+   let s = Sidecar.set_ledger s ledger in
    ([]: operation list),s
 
 
@@ -118,7 +130,7 @@ module SingleAsset  = struct
    let {requests;callback} = b in
    let get_balance_info (request : TZIP12.request) : TZIP12.callback =
       let {owner;token_id=_token_id} = request in
-      let balance_ = get_amount_for_owner s owner    in
+      let balance_ = Sidecar.get_amount_for_owner s owner    in
       {request=request;balance=balance_}
    in
    let callback_param = List.map get_balance_info requests in
@@ -146,12 +158,12 @@ operator of A, C cannot transfer tokens that are owned by A, on behalf of B.
 [@entry] let update_operators :  TZIP12.update_operators -> storage -> operation list * storage =
    fun (updates: TZIP12.update_operators) (s: storage) ->
    let update_operator (operators,update : operators * TZIP12.unit_update) = match update with
-      Add_operator    {owner=owner;operator=operator;token_id=_token_id} -> add_operator    operators owner operator
-   |  Remove_operator {owner=owner;operator=operator;token_id=_token_id} -> remove_operator operators owner operator
+      Add_operator    {owner=owner;operator=operator;token_id=_token_id} -> Sidecar.add_operator    operators owner operator
+   |  Remove_operator {owner=owner;operator=operator;token_id=_token_id} -> Sidecar.remove_operator operators owner operator
    in
-   let operators = get_operators s in
+   let operators = Sidecar.get_operators s in
    let operators = List.fold_left update_operator operators updates in
-   let s = set_operators s operators in
+   let s = Sidecar.set_operators s operators in
    ([]: operation list),s
 
 

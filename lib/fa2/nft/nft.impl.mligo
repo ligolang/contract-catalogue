@@ -18,7 +18,6 @@ module Datatypes  = struct
       token_metadata : TZIP12.tokenMetadata;
       metadata : TZIP16.metadata;
    }
-   type ret = operation list * storage
 end
 
 
@@ -102,15 +101,10 @@ module Sidecar  = struct
 end
 
 module NFT  = struct
-   type ledger = (nat,address) big_map
-   type operator = address
-   type operators = ((address * operator), nat set) big_map
-   type storage =  {
-      ledger : ledger;
-      operators : operators;
-      token_metadata : TZIP12.tokenMetadata;
-      metadata : TZIP16.metadata;
-   }
+   type ledger = Datatypes.ledger
+   type operator = Datatypes.operator
+   type operators = Datatypes.operators
+   type storage =  Datatypes.storage
    type ret = operation list * storage
 
 [@entry] let transfer (t:TZIP12.transfer) (s:storage) : operation list * storage =

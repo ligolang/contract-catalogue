@@ -8,9 +8,9 @@
 
 #import "../common/tzip16.datatypes.jsligo" "TZIP16"
 
-export namespace MultiAsset implements TZIP12Interface.FA2{
+export namespace Datatypes {
    export type ledger = big_map<[address, nat], nat>;
-   type operator = address;
+   export type operator = address;
    export type operators = big_map<[address, operator], set<nat>>;
    export type storage = {
       ledger: ledger,
@@ -19,10 +19,13 @@ export namespace MultiAsset implements TZIP12Interface.FA2{
       metadata: TZIP16.metadata
    };
    type ret = [list<operation>, storage];
+};
+
+export namespace Sidecar {
    //operators
 
    export const assert_authorisation = (
-      [operators, from_, token_id]: [operators, address, nat]
+      [operators, from_, token_id]: [Datatypes.operators, address, nat]
    ): unit => {
       const sender_ = (Tezos.get_sender());
       if (sender_ != from_) {
@@ -40,12 +43,12 @@ export namespace MultiAsset implements TZIP12Interface.FA2{
    };
    export const add_operator = (
       [operators, owner, operator, token_id]: [
-         operators,
+         Datatypes.operators,
          address,
-         operator,
+         Datatypes.operator,
          nat
       ]
-   ): operators => {
+   ): Datatypes.operators => {
       if (owner == operator) {
          return operators
       } // assert_authorisation always allow the owner so this case is not relevant
@@ -64,12 +67,12 @@ export namespace MultiAsset implements TZIP12Interface.FA2{
    };
    export const remove_operator = (
       [operators, owner, operator, token_id]: [
-         operators,
+         Datatypes.operators,
          address,
-         operator,
+         Datatypes.operator,
          nat
       ]
-   ): operators => {
+   ): Datatypes.operators => {
       if (owner == operator) {
          return operators
       } // assert_authorisation always allow the owner so this case is not relevant
@@ -95,7 +98,7 @@ export namespace MultiAsset implements TZIP12Interface.FA2{
    // ledger 
 
    export const get_for_user = (
-      [ledger, owner, token_id]: [ledger, address, nat]
+      [ledger, owner, token_id]: [Datatypes.ledger, address, nat]
    ): nat =>
       match((Big_map.find_opt([owner, token_id], ledger))) {
          when (Some(a)):
@@ -104,42 +107,58 @@ export namespace MultiAsset implements TZIP12Interface.FA2{
             0 as nat
       };
    const set_for_user = (
-      [ledger, owner, token_id, amount_]: [ledger, address, nat, nat]
-   ): ledger =>
+      [ledger, owner, token_id, amount_]: [Datatypes.ledger, address, nat, nat]
+   ): Datatypes.ledger =>
       Big_map.update([owner, token_id], Some(amount_), ledger);
    export const decrease_token_amount_for_user = (
-      [ledger, from_, token_id, amount_]: [ledger, address, nat, nat]
-   ): ledger => {
+      [ledger, from_, token_id, amount_]: [Datatypes.ledger, address, nat, nat]
+   ): Datatypes.ledger => {
       let balance_ = get_for_user([ledger, from_, token_id]);
       assert_with_error((balance_ >= amount_), Errors.ins_balance);
       balance_ = abs(balance_ - amount_);
       return set_for_user([ledger, from_, token_id, balance_])
    };
    export const increase_token_amount_for_user = (
-      [ledger, to_, token_id, amount_]: [ledger, address, nat, nat]
-   ): ledger => {
+      [ledger, to_, token_id, amount_]: [Datatypes.ledger, address, nat, nat]
+   ): Datatypes.ledger => {
       let balance_ = get_for_user([ledger, to_, token_id]);
       balance_ = balance_ + amount_;
       return set_for_user([ledger, to_, token_id, balance_])
    }
    // storage 
 
-   export const set_ledger = ([s, ledger]: [storage, ledger]): storage =>
+   export const set_ledger = (
+      [s, ledger]: [Datatypes.storage, Datatypes.ledger]
+   ): Datatypes.storage =>
       ({ ...s, ledger: ledger });
-   export const get_operators = (s: storage): operators => s.operators;
-   export const set_operators = ([s, operators]: [storage, operators]): storage =>
+   export const get_operators = (s: Datatypes.storage): Datatypes.operators =>
+      s.operators;
+   export const set_operators = (
+      [s, operators]: [Datatypes.storage, Datatypes.operators]
+   ): Datatypes.storage =>
       ({ ...s, operators: operators })
+}
+
+export namespace MultiAsset implements TZIP12Interface.FA2{
+   export type ledger = Datatypes.ledger;
+   export type operators = Datatypes.operators;
+   export type storage = Datatypes.storage;
+   type ret = [list<operation>, storage];
    @entry
    const transfer = (t: TZIP12.transfer, s: storage): [list<operation>, storage] => {
       const process_atomic_transfer = (from_: address) =>
          ([l, t]: [ledger, TZIP12.atomic_trans]): ledger => {
             const { to_, token_id, amount } = t;
             Assertions.assert_token_exist(s.token_metadata, token_id);
-            assert_authorisation([s.operators, from_, token_id]);
+            Sidecar.assert_authorisation([s.operators, from_, token_id]);
             let ledger =
-               decrease_token_amount_for_user([l, from_, token_id, amount]);
+               Sidecar.decrease_token_amount_for_user(
+                  [l, from_, token_id, amount]
+               );
             ledger
-            = increase_token_amount_for_user([ledger, to_, token_id, amount]);
+            = Sidecar.increase_token_amount_for_user(
+                 [ledger, to_, token_id, amount]
+              );
             return ledger
          };
       const process_single_transfer = ([l, t]: [ledger, TZIP12.transfer_from]): ledger => {
@@ -148,7 +167,7 @@ export namespace MultiAsset implements TZIP12Interface.FA2{
          return ledger
       };
       const ledger = List.fold_left(process_single_transfer, s.ledger, t);
-      return [list([]), set_ledger([s, ledger])]
+      return [list([]), Sidecar.set_ledger([s, ledger])]
    };
    @entry
    const balance_of = (b: TZIP12.balance_of, s: storage): [
@@ -159,7 +178,7 @@ export namespace MultiAsset implements TZIP12Interface.FA2{
       const get_balance_info = (request: TZIP12.request): TZIP12.callback => {
          const { owner, token_id } = request;
          Assertions.assert_token_exist(s.token_metadata, token_id);
-         const balance_ = get_for_user([s.ledger, owner, token_id]);
+         const balance_ = Sidecar.get_for_user([s.ledger, owner, token_id]);
          return ({ request: request, balance: balance_ })
       };
       const callback_param = List.map(get_balance_info, requests);
@@ -177,7 +196,7 @@ export namespace MultiAsset implements TZIP12Interface.FA2{
       ): operators =>
          match(update) {
             when (Add_operator(operator)):
-               add_operator(
+               Sidecar.add_operator(
                   [
                      operators,
                      operator.owner,
@@ -186,7 +205,7 @@ export namespace MultiAsset implements TZIP12Interface.FA2{
                   ]
                )
             when (Remove_operator(operator)):
-               remove_operator(
+               Sidecar.remove_operator(
                   [
                      operators,
                      operator.owner,
@@ -195,9 +214,9 @@ export namespace MultiAsset implements TZIP12Interface.FA2{
                   ]
                )
          };
-      let operators = get_operators(s);
+      let operators = Sidecar.get_operators(s);
       operators = List.fold_left(update_operator, operators, updates);
-      const store = set_operators([s, operators]);
+      const store = Sidecar.set_operators([s, operators]);
       return [list([]), store]
    };
    @view
