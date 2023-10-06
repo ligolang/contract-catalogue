@@ -132,40 +132,6 @@ export namespace Sidecar {
       operators: Datatypes.operators
    ): Datatypes.storage =>
       ({ ...s, operators: operators });
-   @view
-   const get_balance = (p: [address, nat], s: Datatypes.storage): nat => {
-      const [owner, token_id] = p;
-      Assertions.assert_token_exist(s.token_metadata, token_id);
-      if (is_owner_of(s.ledger, token_id, owner)) {
-         return 1n
-      } else {
-         return 0n
-      }
-   };
-   @view
-   const total_supply = (token_id: nat, s: Datatypes.storage): nat => {
-      Assertions.assert_token_exist(s.token_metadata, token_id);
-      return 1n
-   };
-   @view
-   const all_tokens = (_: unit, _s: Datatypes.storage): set<nat> =>
-      failwith(Errors.not_available);
-   @view
-   const is_operator = (_op: address, _s: Datatypes.storage): bool => {
-      //TODO
-
-      return true
-   };
-   @view
-   const token_metadata = (p: nat, s: Datatypes.storage): TZIP12.
-   tokenMetadataData => {
-      return match(Big_map.find_opt(p, s.token_metadata)) {
-         when (Some(data)):
-            data
-         when (None()):
-            failwith(Errors.undefined_token)
-      }
-   }
 }
 
 export namespace NFT implements TZIP12Interface.FA2{
@@ -248,7 +214,7 @@ export namespace NFT implements TZIP12Interface.FA2{
       return [list([]), store]
    };
    @view
-   const get_balance = (p: [address, nat], s: storage): nat => {
+   const get_balance = (p: [address, nat], s: Datatypes.storage): nat => {
       const [owner, token_id] = p;
       Assertions.assert_token_exist(s.token_metadata, token_id);
       if (Sidecar.is_owner_of(s.ledger, token_id, owner)) {
@@ -258,15 +224,15 @@ export namespace NFT implements TZIP12Interface.FA2{
       }
    };
    @view
-   const total_supply = (token_id: nat, s: storage): nat => {
+   const total_supply = (token_id: nat, s: Datatypes.storage): nat => {
       Assertions.assert_token_exist(s.token_metadata, token_id);
       return 1n
    };
    @view
-   const all_tokens = (_: unit, _s: storage): set<nat> =>
+   const all_tokens = (_: unit, _s: Datatypes.storage): set<nat> =>
       failwith(Errors.not_available);
    @view
-   const is_operator = (op: TZIP12.operator, s: storage): bool => {
+   const is_operator = (op: TZIP12.operator, s: Datatypes.storage): bool => {
       const authorized =
          match(Big_map.find_opt([op.owner, op.operator], s.operators)) {
             when (Some(a)):
@@ -277,7 +243,8 @@ export namespace NFT implements TZIP12Interface.FA2{
       return (Set.mem(op.token_id, authorized) || op.owner == op.operator)
    };
    @view
-   const token_metadata = (p: nat, s: storage): TZIP12.tokenMetadataData => {
+   const token_metadata = (p: nat, s: Datatypes.storage): TZIP12.
+   tokenMetadataData => {
       return match(Big_map.find_opt(p, s.token_metadata)) {
          when (Some(data)):
             data
