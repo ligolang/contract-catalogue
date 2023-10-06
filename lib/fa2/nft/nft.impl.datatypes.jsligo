@@ -1,0 +1,15 @@
+#import "../common/tzip16.datatypes.jsligo" "TZIP16"
+
+#import "../common/tzip12.datatypes.jsligo" "TZIP12"
+
+
+export type ledger = big_map<nat, address>;
+export type operators = big_map<[address, address], set<nat>>; //[owner,operator]
+
+export type storage = {
+  ledger: ledger,
+  operators: operators,
+  token_metadata: TZIP12.tokenMetadata,
+  metadata: TZIP16.metadata
+};
+
