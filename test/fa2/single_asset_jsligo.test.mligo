@@ -353,3 +353,4 @@ let test_update_operator_add_operator_and_transfer =
   in
   let _ = Test.transfer_exn orig.addr (Transfer transfer_requests) 0tez in
   ()
+

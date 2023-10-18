@@ -158,38 +158,34 @@ export interface FA2 {
 
   @entry
   const update_operators: (p: TZIP12Datatypes.update_operators, s: storage) => ret;
-/** OPTIONAL VIEWS **/
-/** return the balance corresponding to the owner/token pair
+  /** OPTIONAL VIEWS **/
+  //TODO waiting for next ligo feature : Interface optional fields to uncomment these lines
+  /** return the balance corresponding to the owner/token pair
 **/
-/*
+
   @view
   const get_balance: (p: [address, nat], s: storage) => nat;
-  */
-/**  return to total number of tokens for the given token-id if known or fail if not.
+  /**  return to total number of tokens for the given token-id if known or fail if not.
   **/
-/*
+
   @view
   const total_supply: (token_id: nat, s: storage) => nat;
-  */
-/** returns the list of all the token IDs
+  /** returns the list of all the token IDs
 **/
-/*
+
   @view
   const all_tokens: (_: unit, s: storage) => set<nat>;
-  */
-/**  return whether %operator is allowed to transfer %token_id tokens owned by owner
+  /**  return whether %operator is allowed to transfer %token_id tokens owned by owner
   **/
-/*
+
   @view
   const is_operator: (op: TZIP12Datatypes.operator, s: storage) => bool;
-  */
-/** It is one of the 2 ways of providing token-specific metadata, it
+  /** It is one of the 2 ways of providing token-specific metadata, it
 is defined in section Token Metadata and is not optional if
 the contract does not have a %token_metadata big-map
   **/
-/*
+
   @view
   const token_metadata: (p: nat, s: storage) => TZIP12Datatypes.
-  tokenMetadataData;*/
-
+  tokenMetadataData;
 };
