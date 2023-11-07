@@ -8,7 +8,7 @@
 
 #import "../common/tzip16.datatypes.jsligo" "TZIP16"
 
-export namespace Datatypes {
+export namespace SingleAsset implements TZIP12Interface.FA2{
    export type ledger = big_map<address, nat>;
    export type operator = address;
    export type operators = big_map<address, set<operator>>;
@@ -18,15 +18,10 @@ export namespace Datatypes {
       token_metadata: TZIP12.tokenMetadata,
       metadata: TZIP16.metadata
    };
-}
-
-export namespace Sidecar {
+   type ret = [list<operation>, storage];
    // operators 
 
-   export const assert_authorisation = (
-      operators: Datatypes.operators,
-      from_: address
-   ): unit => {
+   export const assert_authorisation = (operators: operators, from_: address): unit => {
       const sender_ = Tezos.get_sender();
       if (sender_ == from_) return unit else {
          const authorized =
@@ -42,10 +37,10 @@ export namespace Sidecar {
       }
    };
    export const add_operator = (
-      operators: Datatypes.operators,
+      operators: operators,
       owner: address,
-      operator: Datatypes.operator
-   ): Datatypes.operators => {
+      operator: operator
+   ): operators => {
       if (owner == operator) return operators else {
          const _ = Assertions.assert_update_permission(owner);
          let auths =
@@ -60,10 +55,10 @@ export namespace Sidecar {
       }
    };
    export const remove_operator = (
-      operators: Datatypes.operators,
+      operators: operators,
       owner: address,
-      operator: Datatypes.operator
-   ): Datatypes.operators => {
+      operator: operator
+   ): operators => {
       if (owner == operator) return operators else {
          const _ = Assertions.assert_update_permission(owner);
          const auths =
@@ -81,59 +76,43 @@ export namespace Sidecar {
    }
    // ledger 
 
-   export const get_for_user = (ledger: Datatypes.ledger, owner: address): nat =>
+   export const get_for_user = (ledger: ledger, owner: address): nat =>
       match(Big_map.find_opt(owner, ledger)) {
          when (Some(tokens)):
             tokens
          when (None()):
             0 as nat
       };
-   const update_for_user = (
-      ledger: Datatypes.ledger,
-      owner: address,
-      amount_: nat
-   ): Datatypes.ledger =>
+   const update_for_user = (ledger: ledger, owner: address, amount_: nat): ledger =>
       Big_map.update(owner, Some(amount_), ledger);
    export const decrease_token_amount_for_user = (
-      ledger: Datatypes.ledger,
+      ledger: ledger,
       from_: address,
       amount_: nat
-   ): Datatypes.ledger => {
+   ): ledger => {
       let tokens = get_for_user(ledger, from_);
       const _ = assert_with_error(tokens >= amount_, Errors.ins_balance);
       tokens = abs(tokens - amount_);
       return update_for_user(ledger, from_, tokens)
    };
    export const increase_token_amount_for_user = (
-      ledger: Datatypes.ledger,
+      ledger: ledger,
       to_: address,
       amount_: nat
-   ): Datatypes.ledger => {
+   ): ledger => {
       let tokens = get_for_user(ledger, to_);
       tokens = tokens + amount_;
       return update_for_user(ledger, to_, tokens)
    }
    // Storage 
 
-   export const get_amount_for_owner = (s: Datatypes.storage, owner: address) =>
+   export const get_amount_for_owner = (s: storage, owner: address) =>
       get_for_user(s.ledger, owner);
-   export const set_ledger = (s: Datatypes.storage, ledger: Datatypes.ledger) =>
+   export const set_ledger = (s: storage, ledger: ledger) =>
       ({ ...s, ledger: ledger });
-   export const get_operators = (s: Datatypes.storage) => s.operators;
-   export const set_operators = (
-      s: Datatypes.storage,
-      operators: Datatypes.operators
-   ) =>
+   export const get_operators = (s: storage) => s.operators;
+   export const set_operators = (s: storage, operators: operators) =>
       ({ ...s, operators: operators })
-/** transfert entrypoint*/
-
-}
-
-export namespace SingleAsset implements TZIP12Interface.FA2{
-   export type ledger = Datatypes.ledger;
-   export type operators = Datatypes.operators
-   export type storage = Datatypes.storage;
-   type ret = [list<operation>, storage];
    @entry
    const transfer = (t: TZIP12.transfer, s: storage): [list<operation>, storage] => {
       /* This function process the "txs" list. Since all transfer share the same "from_" address, we use a se */
@@ -142,10 +121,9 @@ export namespace SingleAsset implements TZIP12Interface.FA2{
          ([ledger, t]: [ledger, TZIP12.atomic_trans]): ledger => {
             const { to_, token_id, amount } = t;
             ignore(token_id);
-            const _ = Sidecar.assert_authorisation(s.operators, from_);
-            let l =
-               Sidecar.decrease_token_amount_for_user(ledger, from_, amount);
-            return Sidecar.increase_token_amount_for_user(l, to_, amount)
+            const _ = assert_authorisation(s.operators, from_);
+            let l = decrease_token_amount_for_user(ledger, from_, amount);
+            return increase_token_amount_for_user(l, to_, amount)
          };
       const process_single_transfer = (
          [ledger, t]: [ledger, TZIP12.transfer_from]
@@ -154,7 +132,7 @@ export namespace SingleAsset implements TZIP12Interface.FA2{
          return List.fold_left(process_atomic_transfer(from_), ledger, txs)
       };
       const ledger = List.fold_left(process_single_transfer, s.ledger, t);
-      const store = Sidecar.set_ledger(s, ledger);
+      const store = set_ledger(s, ledger);
       return [list([]), store]
    };
    /** balance_of entrypoint
@@ -169,7 +147,7 @@ export namespace SingleAsset implements TZIP12Interface.FA2{
       const get_balance_info = (request: TZIP12.request): TZIP12.callback => {
          const { owner, token_id } = request;
          ignore(token_id);
-         const balance_ = Sidecar.get_amount_for_owner(s, owner);
+         const balance_ = get_amount_for_owner(s, owner);
          return { request: request, balance: balance_ }
       };
       const callback_param = List.map(get_balance_info, requests);
@@ -206,21 +184,13 @@ operator of A, C cannot transfer tokens that are owned by A, on behalf of B.
       ): operators =>
          match(update) {
             when (Add_operator(operator)):
-               Sidecar.add_operator(
-                  operators,
-                  operator.owner,
-                  operator.operator
-               )
+               add_operator(operators, operator.owner, operator.operator)
             when (Remove_operator(operator)):
-               Sidecar.remove_operator(
-                  operators,
-                  operator.owner,
-                  operator.operator
-               )
+               remove_operator(operators, operator.owner, operator.operator)
          };
       const operators =
-         List.fold_left(update_operator, Sidecar.get_operators(s), updates);
-      const store = Sidecar.set_operators(s, operators);
+         List.fold_left(update_operator, get_operators(s), updates);
+      const store = set_operators(s, operators);
       return [list([]), store]
    };
    @view

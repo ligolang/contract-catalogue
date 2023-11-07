@@ -8,7 +8,7 @@
 
 #import "../common/tzip16.datatypes.jsligo" "TZIP16"
 
-export namespace Datatypes {
+export namespace NFT implements TZIP12Interface.FA2{
    export type ledger = big_map<nat, address>;
    export type operators = big_map<[address, address], set<nat>>; //[owner,operator]
 
@@ -18,11 +18,11 @@ export namespace Datatypes {
       token_metadata: TZIP12.tokenMetadata,
       metadata: TZIP16.metadata
    };
-}
+   type ret = [list<operation>, storage];
+   //** LIGOFA_NFT
 
-export namespace Sidecar {
    export const assert_authorisation = (
-      operators: Datatypes.operators,
+      operators: operators,
       from_: address,
       token_id: nat
    ): unit => {
@@ -43,11 +43,11 @@ export namespace Sidecar {
       }
    };
    export const add_operator = (
-      operators: Datatypes.operators,
+      operators: operators,
       owner: address,
       operator: address,
       token_id: nat
-   ): Datatypes.operators => {
+   ): operators => {
       if (owner == operator) {
          return operators
       // assert_authorisation always allow the owner so this case is not relevant
@@ -66,11 +66,11 @@ export namespace Sidecar {
       }
    };
    export const remove_operator = (
-      operators: Datatypes.operators,
+      operators: operators,
       owner: address,
       operator: address,
       token_id: nat
-   ): Datatypes.operators => {
+   ): operators => {
       if (owner == operator) {
          return operators
       // assert_authorisation always allow the owner so this case is not relevant
@@ -96,16 +96,12 @@ export namespace Sidecar {
    }
    //  ledger 
 
-   export const is_owner_of = (
-      ledger: Datatypes.ledger,
-      token_id: nat,
-      owner: address
-   ): bool => {
+   export const is_owner_of = (ledger: ledger, token_id: nat, owner: address): bool => {
       const current_owner = Option.unopt(Big_map.find_opt(token_id, ledger));
       return (current_owner == owner)
    };
-   const assert_owner_of = (
-      ledger: Datatypes.ledger,
+   export const assert_owner_of = (
+      ledger: ledger,
       token_id: nat,
       owner: address
    ): unit =>
@@ -114,31 +110,20 @@ export namespace Sidecar {
          Errors.ins_balance
       );
    export const transfer_token_from_user_to_user = (
-      ledger: Datatypes.ledger,
+      ledger: ledger,
       token_id: nat,
       from_: address,
       to_: address
-   ): Datatypes.ledger => {
+   ): ledger => {
       assert_owner_of(ledger, token_id, from_);
       return Big_map.update(token_id, Some(to_), ledger)
    }
-   export const set_ledger = (s: Datatypes.storage, ledger: Datatypes.ledger): Datatypes.
-   storage =>
+   export const set_ledger = (s: storage, ledger: ledger): storage =>
       ({ ...s, ledger: ledger });
-   export const get_operators = (s: Datatypes.storage): Datatypes.operators =>
-      s.operators;
-   export const set_operators = (
-      s: Datatypes.storage,
-      operators: Datatypes.operators
-   ): Datatypes.storage =>
+   export const get_operators = (s: storage): operators => s.operators;
+   export const set_operators = (s: storage, operators: operators): storage =>
       ({ ...s, operators: operators });
-}
-
-export namespace NFT implements TZIP12Interface.FA2{
-   type storage = Datatypes.storage;
-   type ledger = Datatypes.ledger;
-   type operators = Datatypes.operators;
-   type ret = [list<operation>, storage];
+   //** TZIP12Interface.FA2
    //  operators 
    /**
 * Check if the intented transfer is sent from the same sender as from field, otherwise check if the sender is part of the operator authorized to receive this token
@@ -150,12 +135,12 @@ export namespace NFT implements TZIP12Interface.FA2{
    @entry
    const transfer = (t: TZIP12.transfer, s: storage): ret => {
       const process_atomic_transfer = (from_: address) =>
-         ([ledger, t]: [Datatypes.ledger, TZIP12.atomic_trans]): ledger => {
+         ([ledger, t]: [ledger, TZIP12.atomic_trans]): ledger => {
             const { to_, token_id, amount } = t;
             ignore(amount);
             Assertions.assert_token_exist(s.token_metadata, token_id);
-            Sidecar.assert_authorisation(s.operators, from_, token_id);
-            return Sidecar.transfer_token_from_user_to_user(
+            assert_authorisation(s.operators, from_, token_id);
+            return transfer_token_from_user_to_user(
                ledger,
                token_id,
                from_,
@@ -163,13 +148,13 @@ export namespace NFT implements TZIP12Interface.FA2{
             )
          };
       const process_single_transfer = (
-         [ledger, t]: [Datatypes.ledger, TZIP12.transfer_from]
-      ): Datatypes.ledger => {
+         [ledger, t]: [ledger, TZIP12.transfer_from]
+      ): ledger => {
          const { from_, txs } = t;
          return List.fold_left(process_atomic_transfer(from_), ledger, txs)
       };
       const ledger = List.fold_left(process_single_transfer, s.ledger, t);
-      const store = Sidecar.set_ledger(s, ledger);
+      const store = set_ledger(s, ledger);
       return [list([]), store]
    };
    @entry
@@ -179,7 +164,7 @@ export namespace NFT implements TZIP12Interface.FA2{
          const { owner, token_id } = request;
          Assertions.assert_token_exist(s.token_metadata, token_id);
          let balance_ = 0 as nat;
-         if (Sidecar.is_owner_of(s.ledger, token_id, owner)) balance_ = 1 as nat;
+         if (is_owner_of(s.ledger, token_id, owner)) balance_ = 1 as nat;
          return ({ request: request, balance: balance_ })
       };
       const callback_param = List.map(get_balance_info, requests);
@@ -191,48 +176,48 @@ export namespace NFT implements TZIP12Interface.FA2{
    const update_operators = (updates: TZIP12.update_operators, s: storage): ret => {
       const update_operator = (
          [operators, update]: [operators, TZIP12.unit_update]
-      ): Datatypes.operators =>
+      ): operators =>
          match(update) {
             when (Add_operator(operator)):
-               Sidecar.add_operator(
+               add_operator(
                   operators,
                   operator.owner,
                   operator.operator,
                   operator.token_id
                )
             when (Remove_operator(operator)):
-               Sidecar.remove_operator(
+               remove_operator(
                   operators,
                   operator.owner,
                   operator.operator,
                   operator.token_id
                )
          };
-      let operators = Sidecar.get_operators(s);
+      let operators = get_operators(s);
       operators = List.fold_left(update_operator, operators, updates);
-      const store = Sidecar.set_operators(s, operators);
+      const store = set_operators(s, operators);
       return [list([]), store]
    };
    @view
-   const get_balance = (p: [address, nat], s: Datatypes.storage): nat => {
+   const get_balance = (p: [address, nat], s: storage): nat => {
       const [owner, token_id] = p;
       Assertions.assert_token_exist(s.token_metadata, token_id);
-      if (Sidecar.is_owner_of(s.ledger, token_id, owner)) {
+      if (is_owner_of(s.ledger, token_id, owner)) {
          return 1n
       } else {
          return 0n
       }
    };
    @view
-   const total_supply = (token_id: nat, s: Datatypes.storage): nat => {
+   const total_supply = (token_id: nat, s: storage): nat => {
       Assertions.assert_token_exist(s.token_metadata, token_id);
       return 1n
    };
    @view
-   const all_tokens = (_: unit, _s: Datatypes.storage): set<nat> =>
+   const all_tokens = (_: unit, _s: storage): set<nat> =>
       failwith(Errors.not_available);
    @view
-   const is_operator = (op: TZIP12.operator, s: Datatypes.storage): bool => {
+   const is_operator = (op: TZIP12.operator, s: storage): bool => {
       const authorized =
          match(Big_map.find_opt([op.owner, op.operator], s.operators)) {
             when (Some(a)):
@@ -243,8 +228,7 @@ export namespace NFT implements TZIP12Interface.FA2{
       return (Set.mem(op.token_id, authorized) || op.owner == op.operator)
    };
    @view
-   const token_metadata = (p: nat, s: Datatypes.storage): TZIP12.
-   tokenMetadataData => {
+   const token_metadata = (p: nat, s: storage): TZIP12.tokenMetadataData => {
       return match(Big_map.find_opt(p, s.token_metadata)) {
          when (Some(data)):
             data
