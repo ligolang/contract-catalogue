@@ -63,9 +63,3 @@ endif
 
 lint: ## lint code
 	@npx eslint ./scripts --ext .ts
-
-sandbox-start: ## start sandbox
-	@./scripts/run-sandbox
-
-sandbox-stop: ## stop sandbox
-	@docker stop sandbox
