@@ -71,13 +71,14 @@ let get_initial_storage () =
 
 }|}]);
 ] in
-  
+
 
   let initial_storage : FA2_NFT.NFT.storage = {
     ledger         = ledger;
     token_metadata = token_metadata;
     operators      = operators;
     metadata       = metadata;
+    extension      = ();
   } in
 
   initial_storage, owners, ops

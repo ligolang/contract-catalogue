@@ -83,6 +83,7 @@ let get_initial_storage (a, b, c : nat * nat * nat) =
       metadata       = metadata;
       token_metadata = token_metadata;
       operators      = operators;
+      extension      = ();
   } in
 
   initial_storage, owners, ops
@@ -125,7 +126,7 @@ let test_atomic_tansfer_success =
   in
   let () = Test.set_source op1 in
   let orig = Test.originate (contract_of FA2_single_asset.SingleAsset) initial_storage 0tez in
-  
+
   let _ = Test.transfer_exn orig.addr (Transfer transfer_requests) 0tez in
   let () = assert_balances orig.addr ((owner1, 8n), (owner2, 7n), (owner3, 15n)) in
   ()
@@ -144,7 +145,7 @@ let test_atomic_transfer_failure_not_operator =
   in
   let () = Test.set_source op3 in
   let orig = Test.originate (contract_of FA2_single_asset.SingleAsset) initial_storage 0tez in
-  
+
   let result = Test.transfer orig.addr (Transfer transfer_requests) 0tez in
   match result with
     Success _ -> failwith "This test should fail"
@@ -165,7 +166,7 @@ let test_atomic_transfer_failure_not_suffient_balance =
   in
   let () = Test.set_source op1 in
   let orig = Test.originate (contract_of FA2_single_asset.SingleAsset) initial_storage 0tez in
-  
+
   let result = Test.transfer orig.addr (Transfer transfer_requests) 0tez in
   match result with
     Success _ -> failwith "This test should fail"
@@ -186,7 +187,7 @@ let test_atomic_tansfer_success_zero_amount_and_self_transfer =
   in
   let () = Test.set_source op1 in
   let orig = Test.originate (contract_of FA2_single_asset.SingleAsset) initial_storage 0tez in
-  
+
   let _ = Test.transfer_exn orig.addr (Transfer transfer_requests) 0tez in
   let () = assert_balances orig.addr ((owner1, 10n), (owner2, 10n), (owner3, 10n)) in
   ()
@@ -204,7 +205,7 @@ let test_transfer_failure_transitive_operators =
   in
   let () = Test.set_source op2 in
   let orig = Test.originate (contract_of FA2_single_asset.SingleAsset) initial_storage 0tez in
-  
+
   let result = Test.transfer orig.addr (Transfer transfer_requests) 0tez in
   match result with
     Success _ -> failwith "This test should fail"
@@ -224,7 +225,7 @@ let test_empty_transfer_and_balance_of =
   } : FA2_single_asset.TZIP12.balance_of) in
 
   let orig = Test.originate (contract_of FA2_single_asset.SingleAsset) initial_storage 0tez in
-  
+
   let _ = Test.transfer_exn orig.addr (Balance_of balance_of_requests) 0tez in
 
   let callback_storage = Test.get_storage orig_callback.addr in
@@ -238,7 +239,7 @@ let test_balance_of_requests_with_duplicates =
   let _owner3= List_helper.nth_exn 2 owners in
   let _op1   = List_helper.nth_exn 0 operators in
   let orig_callback = Test.originate (contract_of Callback) ([] : nat list) 0tez in
-  
+
 
   let balance_of_requests = ({
     requests = ([
@@ -250,7 +251,7 @@ let test_balance_of_requests_with_duplicates =
   } : FA2_single_asset.TZIP12.balance_of) in
 
   let orig = Test.originate (contract_of FA2_single_asset.SingleAsset) initial_storage 0tez in
-  
+
   let _ = Test.transfer_exn orig.addr (Balance_of balance_of_requests) 0tez in
 
   let callback_storage = Test.get_storage orig_callback.addr in
@@ -264,7 +265,7 @@ let test_balance_of_0_balance_if_address_does_not_hold_tokens =
   let _owner3= List_helper.nth_exn 2 owners in
   let op1    = List_helper.nth_exn 0 operators in
   let orig_callback = Test.originate (contract_of Callback) ([] : nat list) 0tez in
-  
+
 
   let balance_of_requests = ({
     requests = ([
@@ -276,7 +277,7 @@ let test_balance_of_0_balance_if_address_does_not_hold_tokens =
   } : FA2_single_asset.TZIP12.balance_of) in
 
   let orig = Test.originate (contract_of FA2_single_asset.SingleAsset) initial_storage 0tez in
-  
+
   let _ = Test.transfer_exn orig.addr (Balance_of balance_of_requests) 0tez in
 
   let callback_storage = Test.get_storage orig_callback.addr in
@@ -292,7 +293,7 @@ let test_update_operator_remove_operator_and_transfer =
   let owner3 = List_helper.nth_exn 2 owners in
   let op1    = List_helper.nth_exn 0 operators in
   let orig = Test.originate (contract_of FA2_single_asset.SingleAsset) initial_storage 0tez in
-  
+
 
   let () = Test.set_source owner1 in
   let _ = Test.transfer_exn orig.addr
@@ -324,7 +325,7 @@ let test_update_operator_add_operator_and_transfer =
   let owner3 = List_helper.nth_exn 2 owners in
   let op3    = List_helper.nth_exn 2 operators in
   let orig = Test.originate (contract_of FA2_single_asset.SingleAsset) initial_storage 0tez in
-  
+
 
   let () = Test.set_source owner1 in
   let _ = Test.transfer_exn orig.addr

@@ -3,24 +3,25 @@
 #import "../common/tzip12.datatypes.jsligo" "TZIP12"
 #import "../common/tzip12.interfaces.jsligo" "TZIP12Interface"
 #import "../common/tzip16.datatypes.jsligo" "TZIP16"
-module NFT = struct
+module NFTExtendable = struct
   type ledger = (nat, address) big_map
 
   type operator = address
 
   type operators = ((address * operator), nat set) big_map
 
-  type storage =
+  type 'a storage =
     {
      ledger : ledger;
      operators : operators;
      token_metadata : TZIP12.tokenMetadata;
-     metadata : TZIP16.metadata
+     metadata : TZIP16.metadata;
+     extension : 'a
     }
 
-  type ret = operation list * storage
+  type 'a ret = operation list * 'a storage
 
-  //module Operators = struct
+  // Operators
 
   let assert_authorisation
     (operators : operators)
@@ -110,22 +111,21 @@ module NFT = struct
 
   //module Storage = struct
 
-  let is_owner_of (s : storage) (owner : address) (token_id : nat) : bool =
+  let is_owner_of (type a) (s : a storage) (owner : address) (token_id : nat) : bool =
     is_owner_of s.ledger token_id owner
 
-  let set_ledger (s : storage) (ledger : ledger) = {s with ledger = ledger}
+  let set_ledger (type a) (s : a storage) (ledger : ledger) = {s with ledger = ledger}
 
-  let get_operators (s : storage) = s.operators
+  let get_operators (type a) (s : a storage) = s.operators
 
-  let set_operators (s : storage) (operators : operators) =
+  let set_operators (type a) (s : a storage) (operators : operators) =
     {s with operators = operators}
 
-  let get_balance (s : storage) (owner : address) (token_id : nat) : nat =
+  let get_balance (type a) (s : a storage) (owner : address) (token_id : nat) : nat =
     let () = Assertions.assert_token_exist s.token_metadata token_id in
     if is_owner_of s owner token_id then 1n else 0n
 
-  [@entry]
-  let transfer (t : TZIP12.transfer) (s : storage) : operation list * storage =
+  let transfer (type a) (t : TZIP12.transfer) (s : a storage) : a ret =
     (* This function process the "txs" list. Since all transfer share the same "from_" address, we use a se *)
 
     let process_atomic_transfer
@@ -151,9 +151,7 @@ module NFT = struct
     let s = set_ledger s ledger in
     ([] : operation list), s
 
-  [@entry]
-  let balance_of (b : TZIP12.balance_of) (s : storage)
-  : operation list * storage =
+  let balance_of (type a) (b : TZIP12.balance_of) (s : a storage) : a ret =
     let {
      requests;
      callback
@@ -172,9 +170,7 @@ module NFT = struct
     let operation = Tezos.transaction (Main callback_param) 0mutez callback in
     ([operation] : operation list), s
 
-  [@entry]
-  let update_operators (updates : TZIP12.update_operators) (s : storage)
-  : operation list * storage =
+  let update_operators (type a) (updates : TZIP12.update_operators) (s : a storage) : a ret =
     let update_operator (operators, update : operators * TZIP12.unit_update) =
       match update with
         Add_operator
@@ -194,35 +190,73 @@ module NFT = struct
     let s = set_operators s operators in
     ([] : operation list), s
 
-  [@view]
-  let get_balance (p : address * nat) (s : storage) =
+  let get_balance (type a) (p : address * nat) (s : a storage) =
     let (owner, token_id) = p in
     let balance_ = get_balance s owner token_id in
     balance_
 
-  [@view]
-  let total_supply (token_id : nat) (s : storage) =
+  let total_supply (type a) (token_id : nat) (s : a storage) =
     let () = Assertions.assert_token_exist s.token_metadata token_id in
     1n
 
-  [@view]
-  let all_tokens (() : unit) (_s : storage) : nat set =
+  let all_tokens (type a) (() : unit) (_s : a storage) : nat set =
     failwith Errors.not_available
 
-  [@view]
-  let is_operator (op : TZIP12.operator) (s : storage) : bool =
+  let is_operator (type a) (op : TZIP12.operator) (s : a storage) : bool =
     let authorized =
       match Big_map.find_opt (op.owner, op.operator) s.operators with
         Some (opSet) -> opSet
       | None -> Set.empty in
     Set.size authorized > 0n || op.owner = op.operator
 
-  [@view]
-  let token_metadata (p : nat) (s : storage) : TZIP12.tokenMetadataData =
+  let token_metadata (type a) (p : nat) (s : a storage) : TZIP12.tokenMetadataData =
     match Big_map.find_opt p s.token_metadata with
       Some (data) -> data
     | None () -> failwith Errors.undefined_token
 
 end
 
-module DUMMY :  TZIP12Interface.FA2 = NFT
+module NFT = struct
+  type ledger = NFTExtendable.ledger
+
+  type operator = NFTExtendable.operator
+
+  type operators = NFTExtendable.operators
+
+  type storage = unit NFTExtendable.storage
+
+  type ret = unit NFTExtendable.ret
+
+  [@entry]
+  let transfer (t : TZIP12.transfer) (s : storage) : ret =
+    NFTExtendable.transfer t s
+
+  [@entry]
+  let balance_of (b : TZIP12.balance_of) (s : storage) : ret =
+    NFTExtendable.balance_of b s
+
+  [@entry]
+  let update_operators (updates : TZIP12.update_operators) (s : storage) : ret =
+    NFTExtendable.update_operators updates s
+
+  [@view]
+  let get_balance (p : (address * nat)) (s : storage) : nat =
+    NFTExtendable.get_balance p s
+
+  (* FIXME Not sure why we are implementing the two following views *)
+  [@view]
+  let total_supply (token_id : nat) (s : storage) : nat =
+    NFTExtendable.total_supply token_id s
+
+  [@view]
+  let all_tokens (_ : unit) (s : storage) : nat set =
+    NFTExtendable.all_tokens () s
+
+  [@view]
+  let is_operator (op : TZIP12.operator) (s : storage) : bool =
+    NFTExtendable.is_operator op s
+
+  [@view]
+  let token_metadata (p : nat) (s : storage) : TZIP12.tokenMetadataData =
+    NFTExtendable.token_metadata p s
+end

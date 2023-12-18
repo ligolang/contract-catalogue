@@ -3,24 +3,24 @@
 #import "../common/tzip12.datatypes.jsligo" "TZIP12"
 #import "../common/tzip12.interfaces.jsligo" "TZIP12Interface"
 #import "../common/tzip16.datatypes.jsligo" "TZIP16"
-module SingleAsset = struct
+module SingleAssetExtendable = struct
   type ledger = (address, nat) big_map
 
   type operator = address
 
   type operators = (address, operator set) big_map
 
-  type storage =
-    {
+  type 'a storage = {
      ledger : ledger;
      operators : operators;
      token_metadata : TZIP12.tokenMetadata;
-     metadata : TZIP16.metadata
+     metadata : TZIP16.metadata;
+     extension: 'a
     }
 
-  type ret = operation list * storage
+  type 'a ret = operation list * 'a storage
 
-  // Operators 
+  // Operators
 
   let assert_authorisation (operators : operators) (from_ : address) : unit =
     let sender_ = (Tezos.get_sender ()) in
@@ -70,7 +70,7 @@ module SingleAsset = struct
             if (Set.size os = 0n) then None else Some (os) in
       Big_map.update owner auths operators
 
-  // Ledger 
+  // Ledger
 
   let get_for_user (ledger : ledger) (owner : address) : nat =
     match Big_map.find_opt owner ledger with
@@ -103,20 +103,18 @@ module SingleAsset = struct
 
   // Storage
 
-  let get_amount_for_owner (s : storage) (owner : address) =
+  let get_amount_for_owner (type a) (s : a storage) (owner : address) =
     get_for_user s.ledger owner
 
-  let set_ledger (s : storage) (ledger : ledger) = {s with ledger = ledger}
+  let set_ledger (type a) (s : a storage) (ledger : ledger) = {s with ledger = ledger}
 
-  let get_operators (s : storage) = s.operators
+  let get_operators (type a) (s : a storage) = s.operators
 
-  let set_operators (s : storage) (operators : operators) =
+  let set_operators (type a) (s : a storage) (operators : operators) =
     {s with operators = operators}
 
-  [@entry]
-  let transfer : TZIP12.transfer -> storage -> operation list * storage =
-    fun (t : TZIP12.transfer)
-      (s : storage) -> (* This function process the "txs" list. Since all transfer share the same "from_" address, we use a se *)
+  let transfer (type a) (t : TZIP12.transfer) (s : a storage) : a ret =
+      (* This function process the "txs" list. Since all transfer share the same "from_" address, we use a se *)
 
       let process_atomic_transfer
         (from_ : address)
@@ -141,10 +139,8 @@ module SingleAsset = struct
       let s = set_ledger s ledger in
       ([] : operation list), s
 
-  [@entry]
-  let balance_of : TZIP12.balance_of -> storage -> operation list * storage =
-    fun (b : TZIP12.balance_of)
-      (s : storage) -> let {
+  let balance_of (type a) (b : TZIP12.balance_of) (s : a storage) : a ret =
+    let {
        requests;
        callback
       } = b in
@@ -181,11 +177,8 @@ operator of A, C cannot transfer tokens that are owned by A, on behalf of B.
 
 *)
 
-  [@entry]
-  let update_operators
-  : TZIP12.update_operators -> storage -> operation list * storage =
-    fun (updates : TZIP12.update_operators)
-      (s : storage) -> let update_operator
+  let update_operators (type a) (updates : TZIP12.update_operators) (s : a storage) : a ret =
+    let update_operator
         (operators, update : operators * TZIP12.unit_update) =
         match update with
           Add_operator
@@ -205,14 +198,61 @@ operator of A, C cannot transfer tokens that are owned by A, on behalf of B.
       let s = set_operators s operators in
       ([] : operation list), s
 
-  [@view]
-  let get_balance (p : (address * nat)) (s : storage) : nat =
+  let get_balance (type a) (p : (address * nat)) (s : a storage) : nat =
     let (owner, token_id) = p in
     let () = Assertions.assert_token_exist s.token_metadata token_id in
     match Big_map.find_opt owner s.ledger with
       None -> 0n
     | Some (n) -> n
 
+  let total_supply (type a) (_token_id : nat) (_s : a storage) : nat =
+    failwith Errors.not_available
+
+  let all_tokens (type a) (_ : unit) (_s : a storage) : nat set =
+    failwith Errors.not_available
+
+  let is_operator (type a) (op : TZIP12.operator) (s : a storage) : bool =
+    let authorized =
+      match Big_map.find_opt (op.owner) s.operators with
+        Some (opSet) -> opSet
+      | None -> Set.empty in
+    Set.mem op.operator authorized || op.owner = op.operator
+
+  let token_metadata (type a) (p : nat) (s : a storage) : TZIP12.tokenMetadataData =
+    match Big_map.find_opt p s.token_metadata with
+      Some (data) -> data
+    | None () -> failwith Errors.undefined_token
+
+end
+
+module SingleAsset = struct
+  type ledger = SingleAssetExtendable.ledger
+
+  type operator = SingleAssetExtendable.operator
+
+  type operators = SingleAssetExtendable.operators
+
+  type storage = unit SingleAssetExtendable.storage
+
+  type ret = unit SingleAssetExtendable.ret
+
+  [@entry]
+  let transfer (t : TZIP12.transfer) (s : storage) : ret =
+    SingleAssetExtendable.transfer t s
+
+  [@entry]
+  let balance_of (b : TZIP12.balance_of) (s : storage) : ret =
+    SingleAssetExtendable.balance_of b s
+
+  [@entry]
+  let update_operators (updates : TZIP12.update_operators) (s : storage) : ret =
+    SingleAssetExtendable.update_operators updates s
+
+  [@view]
+  let get_balance (p : (address * nat)) (s : storage) : nat =
+    SingleAssetExtendable.get_balance p s
+
+  (* FIXME Not sure why we are implementing the two following views *)
   [@view]
   let total_supply (_token_id : nat) (_s : storage) : nat =
     failwith Errors.not_available
@@ -223,18 +263,9 @@ operator of A, C cannot transfer tokens that are owned by A, on behalf of B.
 
   [@view]
   let is_operator (op : TZIP12.operator) (s : storage) : bool =
-    let authorized =
-      match Big_map.find_opt (op.owner) s.operators with
-        Some (opSet) -> opSet
-      | None -> Set.empty in
-    Set.mem op.operator authorized || op.owner = op.operator
+    SingleAssetExtendable.is_operator op s
 
   [@view]
   let token_metadata (p : nat) (s : storage) : TZIP12.tokenMetadataData =
-    match Big_map.find_opt p s.token_metadata with
-      Some (data) -> data
-    | None () -> failwith Errors.undefined_token
-
+    SingleAssetExtendable.token_metadata p s
 end
-
-module DUMMY :  TZIP12Interface.FA2 = SingleAsset

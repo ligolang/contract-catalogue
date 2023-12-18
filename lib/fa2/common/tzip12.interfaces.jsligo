@@ -3,12 +3,12 @@
 #import "tzip16.datatypes.jsligo" "TZIP16Datatypes"
 
 export interface FA2 {
-  /** The ledger stores user<->token ownership 
+  /** The ledger stores user<->token ownership
  * @see storage.ledger
   **/
 
   type ledger;
-  /** A group of operators. An operator is a Tezos address that originates token transfer operation on behalf of the owner. 
+  /** A group of operators. An operator is a Tezos address that originates token transfer operation on behalf of the owner.
    * @see storage.operators
   **/
 
@@ -19,7 +19,8 @@ export interface FA2 {
     ledger: ledger,
     operators: operators,
     token_metadata: TZIP12Datatypes.tokenMetadata,
-    metadata: TZIP16Datatypes.metadata
+    metadata: TZIP16Datatypes.metadata,
+    extension: unit
   };
   type ret = [list<operation>, storage];
   /**
@@ -39,66 +40,66 @@ export interface FA2 {
   *  Core Transfer Behavior
   *  FA2 token contracts MUST always implement this behavior.
   *
-  * 
+  *
   * - Every transfer operation MUST happen atomically and in order. If at least one
   * transfer in the batch cannot be completed, the whole transaction MUST fail, all
   * token transfers MUST be reverted, and token balances MUST remain unchanged.
-  * 
-  * 
+  *
+  *
   * - Each transfer in the batch MUST decrement token balance of the source (from_)
   * address by the amount of the transfer and increment token balance of the destination
   * (to_) address by the amount of the transfer.
-  * 
-  * 
+  *
+  *
   * - If the transfer amount exceeds current token balance of the source address,
   * the whole transfer operation MUST fail with the error mnemonic "FA2_INSUFFICIENT_BALANCE".
-  * 
-  * 
+  *
+  *
   * - If the token owner does not hold any tokens of type token_id, the owner's balance
   * is interpreted as zero. No token owner can have a negative balance.
-  * 
-  * 
+  *
+  *
   * - The transfer MUST update token balances exactly as the operation
   * parameters specify it. Transfer operations MUST NOT try to adjust transfer
   * amounts or try to add/remove additional transfers like transaction fees.
-  * 
-  * 
+  *
+  *
   * - Transfers of zero amount MUST be treated as normal transfers.
-  * 
-  * 
+  *
+  *
   * - Transfers with the same address (from_ equals to_) MUST be treated as normal
   * transfers.
-  * 
-  * 
+  *
+  *
   * -If one of the specified token_ids is not defined within the FA2 contract, the
   * entrypoint MUST fail with the error mnemonic "FA2_TOKEN_UNDEFINED".
-  * 
-  * 
+  *
+  *
   * - Transfer implementations MUST apply transfer permission policy logic (either
   * default transfer permission policy or
   * customized one).
   * If permission logic rejects a transfer, the whole operation MUST fail.
-  * 
-  * 
+  *
+  *
   * - Core transfer behavior MAY be extended. If additional constraints on tokens
   * transfer are required, FA2 token contract implementation MAY invoke additional
   * permission policies. If the additional permission fails, the whole transfer
   * operation MUST fail with a custom error mnemonic.
-  * 
-  * 
-  * 
+  *
+  *
+  *
   * Default Transfer Permission Policy
-  * 
-  * 
+  *
+  *
   * - Token owner address MUST be able to perform a transfer of its own tokens (e. g.
   * SENDER equals to from_ parameter in the transfer).
-  * 
-  * 
+  *
+  *
   * - An operator (a Tezos address that performs token transfer operation on behalf
   * of the owner) MUST be permitted to manage the specified owner's tokens before
   * it invokes a transfer transaction (see update_operators).
-  * 
-  * 
+  *
+  *
   * - If the address that invokes a transfer operation is neither a token owner nor
   * one of the permitted operators, the transaction MUST fail with the error mnemonic
   * "FA2_NOT_OPERATOR". If at least one of the transfers in the batch is not permitted,
@@ -113,16 +114,16 @@ export interface FA2 {
   * Gets the balance of multiple account/token pairs. Accepts a list of
   * balance_of_requests and a callback contract callback which accepts a list of
   * balance_of_response records.
-  * 
-  * 
+  *
+  *
   * - There may be duplicate balance_of_request's, in which case they should not be
   * deduplicated nor reordered.
-  * 
-  * 
+  *
+  *
   * - If the account does not hold any tokens, the account
   * balance is interpreted as zero.
-  * 
-  * 
+  *
+  *
   * - If one of the specified token_ids is not defined within the FA2 contract, the
   * entrypoint MUST fail with the error mnemonic "FA2_TOKEN_UNDEFINED".
   * @param p : @see TZIP12Datatypes.balance_of
@@ -133,21 +134,21 @@ export interface FA2 {
   const balance_of: (p: TZIP12Datatypes.balance_of, s: storage) => ret;
   /**
   * Add or Remove token operators for the specified token owners and token IDs.
-  * 
-  * 
+  *
+  *
   * - The entrypoint accepts a list of update_operator commands. If two different
   * commands in the list add and remove an operator for the same token owner and
   * token ID, the last command in the list MUST take effect.
-  * 
-  * 
+  *
+  *
   * - It is possible to update operators for a token owner that does not hold any token
   * balances yet.
-  * 
-  * 
+  *
+  *
   * - Operator relation is not transitive. If C is an operator of B and if B is an
   * operator of A, C cannot transfer tokens that are owned by A, on behalf of B.
-  * 
-  * 
+  *
+  *
   * The standard does not specify who is permitted to update operators on behalf of
   * the token owner. Depending on the business use case, the particular implementation
   * of the FA2 contract MAY limit operator updates to a token owner (owner == SENDER)
@@ -186,6 +187,5 @@ the contract does not have a %token_metadata big-map
   **/
 
   @view
-  const token_metadata: (p: nat, s: storage) => TZIP12Datatypes.
-  tokenMetadataData;
+  const token_metadata: (p: nat, s: storage) => TZIP12Datatypes.tokenMetadataData;
 };

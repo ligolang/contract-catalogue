@@ -3,24 +3,25 @@
 #import "../common/tzip12.datatypes.jsligo" "TZIP12"
 #import "../common/tzip12.interfaces.jsligo" "TZIP12Interface"
 #import "../common/tzip16.datatypes.jsligo" "TZIP16"
-module MultiAsset = struct
+module MultiAssetExtendable = struct
   type ledger = ((address * nat), nat) big_map
 
   type operator = address
 
   type operators = ((address * operator), nat set) big_map
 
-  type storage =
+  type 'a storage =
     {
      ledger : ledger;
      operators : operators;
      token_metadata : TZIP12.tokenMetadata;
-     metadata : TZIP16.metadata
+     metadata : TZIP16.metadata;
+     extension : 'a
     }
 
-  type ret = operation list * storage
+  type 'a ret = operation list * 'a storage
 
-  // Operators 
+  // Operators
 
   let assert_authorisation
     (operators : operators)
@@ -76,7 +77,7 @@ module MultiAsset = struct
             if (Set.size ts = 0n) then None else Some (ts) in
       Big_map.update (owner, operator) auth_tokens operators
 
-  // Ledger 
+  // Ledger
 
   let get_for_user (ledger : ledger) (owner : address) (token_id : nat) : nat =
     match Big_map.find_opt (owner, token_id) ledger with
@@ -113,24 +114,23 @@ module MultiAsset = struct
     let ledger = set_for_user ledger to_ token_id balance_ in
     ledger
 
-  // Storage 
+  // Storage
 
-  let assert_token_exist (s : storage) (token_id : nat) : unit =
+  let assert_token_exist (type a) (s : a storage) (token_id : nat) : unit =
     let _ =
       Option.unopt_with_error
         (Big_map.find_opt token_id s.token_metadata)
         Errors.undefined_token in
     ()
 
-  let set_ledger (s : storage) (ledger : ledger) = {s with ledger = ledger}
+  let set_ledger (type a) (s : a storage) (ledger : ledger) = {s with ledger = ledger}
 
-  let get_operators (s : storage) = s.operators
+  let get_operators (type a) (s : a storage) = s.operators
 
-  let set_operators (s : storage) (operators : operators) =
+  let set_operators (type a) (s : a storage) (operators : operators) =
     {s with operators = operators}
 
-  [@entry]
-  let transfer (t : TZIP12.transfer) (s : storage) : operation list * storage =
+  let transfer (type a) (t : TZIP12.transfer) (s : a storage) : a ret =
     (* This function process the "txs" list. Since all transfer share the same "from_" address, we use a se *)
 
     let process_atomic_transfer
@@ -156,9 +156,7 @@ module MultiAsset = struct
     let ledger = List.fold_left process_single_transfer s.ledger t in
     ([] : operation list), set_ledger s ledger
 
-  [@entry]
-  let balance_of (b : TZIP12.balance_of) (s : storage)
-  : operation list * storage =
+  let balance_of (type a) (b : TZIP12.balance_of) (s : a storage) : a ret =
     let {
      requests;
      callback
@@ -178,9 +176,7 @@ module MultiAsset = struct
     let operation = Tezos.transaction (Main callback_param) 0mutez callback in
     ([operation] : operation list), s
 
-  [@entry]
-  let update_operators (updates : TZIP12.update_operators) (s : storage)
-  : operation list * storage =
+  let update_operators (type a) (updates : TZIP12.update_operators) (s : a storage) : a ret =
     let update_operator (operators, update : operators * TZIP12.unit_update) =
       match update with
         Add_operator
@@ -200,14 +196,61 @@ module MultiAsset = struct
     let s = set_operators s operators in
     ([] : operation list), s
 
-  [@view]
-  let get_balance (p : (address * nat)) (s : storage) : nat =
+  let get_balance (type a) (p : (address * nat)) (s : a storage) : nat =
     let (owner, token_id) = p in
     let () = assert_token_exist s token_id in
     match Big_map.find_opt (owner, token_id) s.ledger with
       None -> 0n
     | Some (n) -> n
 
+  let total_supply (type a) (_token_id : nat) (_s : a storage) : nat =
+    failwith Errors.not_available
+
+  let all_tokens (type a) (_ : unit) (_s : a storage) : nat set =
+    failwith Errors.not_available
+
+  let is_operator (type a) (op : TZIP12.operator) (s : a storage) : bool =
+    let authorized =
+      match Big_map.find_opt (op.owner, op.operator) s.operators with
+        Some (opSet) -> opSet
+      | None -> Set.empty in
+    Set.size authorized > 0n || op.owner = op.operator
+
+  let token_metadata (type a) (p : nat) (s : a storage) : TZIP12.tokenMetadataData =
+    match Big_map.find_opt p s.token_metadata with
+      Some (data) -> data
+    | None () -> failwith Errors.undefined_token
+
+end
+
+module MultiAsset = struct
+  type ledger = MultiAssetExtendable.ledger
+
+  type operator = MultiAssetExtendable.operator
+
+  type operators = MultiAssetExtendable.operators
+
+  type storage = unit MultiAssetExtendable.storage
+
+  type ret = unit MultiAssetExtendable.ret
+
+  [@entry]
+  let transfer (t : TZIP12.transfer) (s : storage) : ret =
+    MultiAssetExtendable.transfer t s
+
+  [@entry]
+  let balance_of (b : TZIP12.balance_of) (s : storage) : ret =
+    MultiAssetExtendable.balance_of b s
+
+  [@entry]
+  let update_operators (updates : TZIP12.update_operators) (s : storage) : ret =
+    MultiAssetExtendable.update_operators updates s
+
+  [@view]
+  let get_balance (p : (address * nat)) (s : storage) : nat =
+    MultiAssetExtendable.get_balance p s
+
+  (* FIXME Not sure why we are implementing the two following views *)
   [@view]
   let total_supply (_token_id : nat) (_s : storage) : nat =
     failwith Errors.not_available
@@ -218,18 +261,9 @@ module MultiAsset = struct
 
   [@view]
   let is_operator (op : TZIP12.operator) (s : storage) : bool =
-    let authorized =
-      match Big_map.find_opt (op.owner, op.operator) s.operators with
-        Some (opSet) -> opSet
-      | None -> Set.empty in
-    Set.size authorized > 0n || op.owner = op.operator
+    MultiAssetExtendable.is_operator op s
 
   [@view]
   let token_metadata (p : nat) (s : storage) : TZIP12.tokenMetadataData =
-    match Big_map.find_opt p s.token_metadata with
-      Some (data) -> data
-    | None () -> failwith Errors.undefined_token
-
+    MultiAssetExtendable.token_metadata p s
 end
-
-module DUMMY :  TZIP12Interface.FA2 = MultiAsset
