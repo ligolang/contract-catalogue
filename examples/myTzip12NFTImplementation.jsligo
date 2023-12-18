@@ -16,7 +16,8 @@ export namespace NFT implements TZIP12Interface.FA2{
         ledger: ledger,
         operators: operators,
         token_metadata: TZIP12.tokenMetadata,
-        metadata: TZIP16.metadata
+        metadata: TZIP16.metadata,
+        extension: unit
     };
     type ret = [list<operation>, storage];
     @entry
