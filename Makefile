@@ -12,7 +12,7 @@ help:
 	@grep -E '^[ a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
 	awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
 
-compile = $(ligo_compiler) compile contract $(project_root) -m $(1) ./lib/$(2) -o ./compiled/$(3) $(4) $(PROTOCOL_OPT)
+compile = $(ligo_compiler) compile contract $(project_root) ./lib/$(1) -o ./compiled/$(2) $(3) $(PROTOCOL_OPT)
 # ^ compile contract to michelson or micheline
 
 test = $(ligo_compiler) run test $(project_root) ./test/$(1) $(PROTOCOL_OPT)
@@ -21,12 +21,12 @@ test = $(ligo_compiler) run test $(project_root) ./test/$(1) $(PROTOCOL_OPT)
 compile: ## compile contracts
 	@if [ ! -d ./compiled ]; then mkdir -p ./compiled/fa2/nft && mkdir -p ./compiled/fa2/asset ; fi
 	@echo "Compiling contracts..."
-	@$(call compile,NFT,fa2/nft/nft.impl.mligo,fa2/nft/nft.impl.mligo.tz)
-	@$(call compile,NFT,fa2/nft/nft.impl.mligo,fa2/nft/nft.impl.mligo.json,--michelson-format json)
-	@$(call compile,SingleAsset,fa2/asset/single_asset.impl.mligo,fa2/asset/single_asset.impl.mligo.tz)
-	@$(call compile,SingleAsset,fa2/asset/single_asset.impl.mligo,fa2/asset/single_asset.impl.mligo.json,--michelson-format json)
-	@$(call compile,MultiAsset,fa2/asset/multi_asset.impl.mligo,fa2/asset/multi_asset.impl.mligo.tz)
-	@$(call compile,MultiAsset,fa2/asset/multi_asset.impl.mligo,fa2/asset/multi_asset.impl.mligo.json,--michelson-format json)
+	@$(call compile,fa2/nft/nft.impl.mligo,fa2/nft/nft.impl.mligo.tz)
+	@$(call compile,fa2/nft/nft.impl.mligo,fa2/nft/nft.impl.mligo.json,--michelson-format json)
+	@$(call compile,fa2/asset/single_asset.impl.mligo,fa2/asset/single_asset.impl.mligo.tz)
+	@$(call compile,fa2/asset/single_asset.impl.mligo,fa2/asset/single_asset.impl.mligo.json,--michelson-format json)
+	@$(call compile,fa2/asset/multi_asset.impl.mligo,fa2/asset/multi_asset.impl.mligo.tz)
+	@$(call compile,fa2/asset/multi_asset.impl.mligo,fa2/asset/multi_asset.impl.mligo.json,--michelson-format json)
 	@echo "Compiled contracts!"
 clean: ## clean up
 	@rm -rf compiled

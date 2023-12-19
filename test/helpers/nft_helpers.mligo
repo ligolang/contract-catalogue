@@ -1,4 +1,4 @@
-#import "../../lib/fa2/nft/nft.impl.jsligo" "FA2_NFT"
+#import "../../lib/fa2/nft/nft.impl.mligo" "FA2_NFT"
 
 let get_initial_storage () =
   let () = Test.reset_state 8n ([
@@ -73,19 +73,18 @@ let get_initial_storage () =
 ] in
 
 
-  let initial_storage : FA2_NFT.NFT.storage = {
+  let initial_storage : FA2_NFT.storage = {
     ledger         = ledger;
     token_metadata = token_metadata;
     operators      = operators;
     metadata       = metadata;
-    extension      = ();
   } in
 
   initial_storage, owners, ops
 
 
 let assert_balances
-  (contract_address : (FA2_NFT.NFT parameter_of, FA2_NFT.NFT.storage) typed_address )
+  (contract_address : (FA2_NFT parameter_of, FA2_NFT.storage) typed_address )
   (a, b, c : (address * nat) * (address * nat) * (address * nat)) =
   let (owner1, token_id_1) = a in
   let (owner2, token_id_2) = b in

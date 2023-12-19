@@ -3,7 +3,7 @@
 #import "../../helpers/list.mligo" "List_helper"
 #import "../../helpers/nft_helpers.mligo" "TestHelpers"
 (* Tests for FA2 multi asset contract *)
-type return = operation list * FA2_NFT.NFT.storage
+type return = operation list * FA2_NFT.storage
 (* Transfer *)
 (* 1. transfer successful *)
 let _test_atomic_tansfer_operator_success () =
@@ -17,8 +17,8 @@ let _test_atomic_tansfer_operator_success () =
   ] : FA2_NFT.TZIP12.transfer)
   in
   let () = Test.set_source op1 in
-  let orig = Test.originate (contract_of FA2_NFT.NFT) initial_storage 0tez in
-  
+  let orig = Test.originate (contract_of FA2_NFT) initial_storage 0tez in
+
   let _ = Test.transfer orig.addr (Transfer transfer_requests) 0tez in
   let () = TestHelpers.assert_balances orig.addr ((owner2, 1n), (owner2, 2n), (owner3, 3n)) in
   ()
@@ -34,8 +34,8 @@ let _test_atomic_tansfer_owner_success () =
   ] : FA2_NFT.TZIP12.transfer)
   in
   let () = Test.set_source owner1 in
-  let orig = Test.originate (contract_of FA2_NFT.NFT) initial_storage 0tez in
-  
+  let orig = Test.originate (contract_of FA2_NFT) initial_storage 0tez in
+
   let _ = Test.transfer orig.addr (Transfer transfer_requests) 0tez in
   let () = TestHelpers.assert_balances orig.addr ((owner2, 1n), (owner2, 2n), (owner3, 3n)) in
   ()
@@ -51,8 +51,8 @@ let _test_transfer_token_undefined () =
   ] : FA2_NFT.TZIP12.transfer)
   in
   let () = Test.set_source op1 in
-  let orig = Test.originate (contract_of FA2_NFT.NFT) initial_storage 0tez in
-  
+  let orig = Test.originate (contract_of FA2_NFT) initial_storage 0tez in
+
   let result = Test.transfer orig.addr (Transfer transfer_requests) 0tez in
   TestHelpers.assert_error result FA2_NFT.Errors.undefined_token
 let test_transfer_token_undefined = _test_transfer_token_undefined ()
@@ -67,8 +67,8 @@ let _test_atomic_transfer_failure_not_operator () =
   ] : FA2_NFT.TZIP12.transfer)
   in
   let () = Test.set_source op2 in
-  let orig = Test.originate (contract_of FA2_NFT.NFT) initial_storage 0tez in
-  
+  let orig = Test.originate (contract_of FA2_NFT) initial_storage 0tez in
+
   let result = Test.transfer orig.addr (Transfer transfer_requests) 0tez in
   TestHelpers.assert_error result FA2_NFT.Errors.not_operator
 let test_atomic_transfer_failure_not_operator
@@ -85,8 +85,8 @@ let _test_atomic_tansfer_success_zero_amount_and_self_transfer () =
   ] : FA2_NFT.TZIP12.transfer)
   in
   let () = Test.set_source op1 in
-  let orig = Test.originate (contract_of FA2_NFT.NFT) initial_storage 0tez in
-  
+  let orig = Test.originate (contract_of FA2_NFT) initial_storage 0tez in
+
   let _ = Test.transfer orig.addr (Transfer transfer_requests) 0tez in
   let () = TestHelpers.assert_balances orig.addr ((owner1, 1n), (owner2, 2n), (owner3, 3n)) in
   ()
@@ -103,8 +103,8 @@ let _test_transfer_failure_transitive_operators () =
   ] : FA2_NFT.TZIP12.transfer)
   in
   let () = Test.set_source op3 in
-  let orig = Test.originate (contract_of FA2_NFT.NFT) initial_storage 0tez in
-  
+  let orig = Test.originate (contract_of FA2_NFT) initial_storage 0tez in
+
   let result = Test.transfer orig.addr (Transfer transfer_requests) 0tez in
   TestHelpers.assert_error result FA2_NFT.Errors.not_operator
 let test_transfer_failure_transitive_operators =
@@ -119,8 +119,8 @@ let _test_empty_transfer_and_balance_of () =
     requests = ([] : FA2_NFT.TZIP12.request list);
     callback = callback_contract;
   } : FA2_NFT.TZIP12.balance_of) in
-  let orig = Test.originate (contract_of FA2_NFT.NFT) initial_storage 0tez in
-  
+  let orig = Test.originate (contract_of FA2_NFT) initial_storage 0tez in
+
   let _ = Test.transfer orig.addr (Balance_of balance_of_requests) 0tez in
   let callback_storage = Test.get_storage orig_callback.addr in
   Test.assert (List.size(callback_storage) = 0n)
@@ -141,8 +141,8 @@ let _test_balance_of_token_undefines () =
     ] : FA2_NFT.TZIP12.request list);
     callback = callback_contract;
   } : FA2_NFT.TZIP12.balance_of) in
-  let orig = Test.originate (contract_of FA2_NFT.NFT) initial_storage 0tez in
-  
+  let orig = Test.originate (contract_of FA2_NFT) initial_storage 0tez in
+
   let result = Test.transfer orig.addr (Balance_of balance_of_requests) 0tez in
   TestHelpers.assert_error result FA2_NFT.Errors.undefined_token
 let test_balance_of_token_undefines = _test_balance_of_token_undefines ()
@@ -162,8 +162,8 @@ let _test_balance_of_requests_with_duplicates () =
     ] : FA2_NFT.TZIP12.request list);
     callback = callback_contract;
   } : FA2_NFT.TZIP12.balance_of) in
-  let orig = Test.originate (contract_of FA2_NFT.NFT) initial_storage 0tez in
-  
+  let orig = Test.originate (contract_of FA2_NFT) initial_storage 0tez in
+
   let _ = Test.transfer orig.addr (Balance_of balance_of_requests) 0tez in
   let callback_storage = Test.get_storage orig_callback.addr in
   Test.assert (callback_storage = ([1n; 1n; 1n; 0n]))
@@ -185,8 +185,8 @@ let _test_balance_of_0_balance_if_address_does_not_hold_tokens () =
       ] : FA2_NFT.TZIP12.request list);
       callback = callback_contract;
     } : FA2_NFT.TZIP12.balance_of) in
-    let orig = Test.originate (contract_of FA2_NFT.NFT) initial_storage 0tez in
-    
+    let orig = Test.originate (contract_of FA2_NFT) initial_storage 0tez in
+
     let _ = Test.transfer orig.addr (Balance_of balance_of_requests) 0tez in
     let callback_storage = Test.get_storage orig_callback.addr in
     Test.assert (callback_storage = ([1n; 1n; 0n]))
@@ -199,8 +199,8 @@ let _test_update_operator_remove_operator_and_transfer () =
   let owner1 = List_helper.nth_exn 0 owners in
   let owner2 = List_helper.nth_exn 1 owners in
   let op1    = List_helper.nth_exn 0 operators in
-  let orig = Test.originate (contract_of FA2_NFT.NFT) initial_storage 0tez in
-  
+  let orig = Test.originate (contract_of FA2_NFT) initial_storage 0tez in
+
   let () = Test.set_source owner1 in
   let _ = Test.transfer orig.addr
     (Update_operators ([
@@ -224,8 +224,8 @@ let _test_update_operator_remove_operator_and_transfer1 () =
   let initial_storage, owners, operators = TestHelpers.get_initial_storage () in
   let owner4 = List_helper.nth_exn 3 owners in
   let op1    = List_helper.nth_exn 0 operators in
-  let orig = Test.originate (contract_of FA2_NFT.NFT) initial_storage 0tez in
-  
+  let orig = Test.originate (contract_of FA2_NFT) initial_storage 0tez in
+
   let () = Test.set_source owner4 in
   let _ = Test.transfer orig.addr
     (Update_operators ([
@@ -247,8 +247,8 @@ let _test_update_operator_add_operator_and_transfer () =
   let owner1 = List_helper.nth_exn 0 owners in
   let owner2 = List_helper.nth_exn 1 owners in
   let op3    = List_helper.nth_exn 2 operators in
-  let orig = Test.originate (contract_of FA2_NFT.NFT) initial_storage 0tez in
-  
+  let orig = Test.originate (contract_of FA2_NFT) initial_storage 0tez in
+
   let () = Test.set_source owner1 in
   let _ = Test.transfer orig.addr
     (Update_operators ([
@@ -273,8 +273,8 @@ let _test_update_operator_add_operator_and_transfer1 () =
   let owner2 = List_helper.nth_exn 1 owners in
   let owner4 = List_helper.nth_exn 3 owners in
   let op3    = List_helper.nth_exn 2 operators in
-  let orig = Test.originate (contract_of FA2_NFT.NFT) initial_storage 0tez in
-  
+  let orig = Test.originate (contract_of FA2_NFT) initial_storage 0tez in
+
   let () = Test.set_source owner4 in
   let _ = Test.transfer orig.addr
     (Update_operators ([
@@ -298,8 +298,8 @@ let _test_only_sender_manage_operators () =
   let owner1 = List_helper.nth_exn 0 owners in
   let owner2 = List_helper.nth_exn 1 owners in
   let op3    = List_helper.nth_exn 2 operators in
-  let orig = Test.originate (contract_of FA2_NFT.NFT) initial_storage 0tez in
-  
+  let orig = Test.originate (contract_of FA2_NFT) initial_storage 0tez in
+
   let () = Test.set_source owner2 in
   let result = Test.transfer orig.addr
     (Update_operators ([
