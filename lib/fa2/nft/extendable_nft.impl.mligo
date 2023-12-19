@@ -125,6 +125,12 @@ let get_balance (type a) (s : a storage) (owner : address) (token_id : nat) : na
   let () = Assertions.assert_token_exist s.token_metadata token_id in
   if is_owner_of s owner token_id then 1n else 0n
 
+let set_balance (type a) (s : a storage) (owner : address) (token_id : nat) : a storage =
+  let () = Assertions.assert_token_exist s.token_metadata token_id in
+  let previous, new_ledger = Big_map.get_and_update token_id (Some owner) s.ledger in
+  let () = assert (Option.is_none previous) in
+  set_ledger s new_ledger
+
 let transfer (type a) (t : TZIP12.transfer) (s : a storage) : a ret =
   (* This function process the "txs" list. Since all transfer share the same "from_" address, we use a se *)
 
@@ -195,6 +201,7 @@ let get_balance (type a) (p : address * nat) (s : a storage) =
   let balance_ = get_balance s owner token_id in
   balance_
 
+(* FIXME? Dynamic supply *)
 let total_supply (type a) (token_id : nat) (s : a storage) =
   let () = Assertions.assert_token_exist s.token_metadata token_id in
   1n
