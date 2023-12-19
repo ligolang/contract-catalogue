@@ -16,11 +16,11 @@ export interface FA2 {
   /* Mandatory storage to be recognized as TZIP12 contract*/
 
   type storage = {
+    extension: unit,
     ledger: ledger,
     operators: operators,
     token_metadata: TZIP12Datatypes.tokenMetadata,
     metadata: TZIP16Datatypes.metadata,
-    extension: unit
   };
   type ret = [list<operation>, storage];
   /**
