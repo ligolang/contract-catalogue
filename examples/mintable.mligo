@@ -20,9 +20,9 @@ type mint = {
 let mint (mint : mint) (s : storage): ret =
   let sender = Tezos.get_sender () in
   let () = assert (sender = s.extension.admin) in
-  (* TODO ?
-  let () = FA2.Storage.assert_token_exist  s token_id in
-  *)
+  let () = NFT.Assertions.assert_token_exist s.token_metadata mint.token_id in
+  (* Check that nobody owns the token already *)
+  let () = assert (Option.is_none (Big_map.find_opt mint.token_id s.ledger)) in
   let s = NFT.set_balance s mint.owner mint.token_id in
   [], s
 
@@ -44,7 +44,6 @@ let update_operators (u: NFT.TZIP12.update_operators) (s: storage) : ret =
 let get_balance (p : (address * nat)) (s : storage) : nat =
   NFT.get_balance p s
 
-(* FIXME Not sure why we are implementing the two following views *)
 [@view]
 let total_supply (token_id : nat) (s : storage) : nat =
   NFT.total_supply token_id s

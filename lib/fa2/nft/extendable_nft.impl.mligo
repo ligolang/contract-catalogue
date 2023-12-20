@@ -127,8 +127,7 @@ let get_balance (type a) (s : a storage) (owner : address) (token_id : nat) : na
 
 let set_balance (type a) (s : a storage) (owner : address) (token_id : nat) : a storage =
   let () = Assertions.assert_token_exist s.token_metadata token_id in
-  let previous, new_ledger = Big_map.get_and_update token_id (Some owner) s.ledger in
-  let () = assert (Option.is_none previous) in
+  let new_ledger = Big_map.update token_id (Some owner) s.ledger in
   set_ledger s new_ledger
 
 let transfer (type a) (t : TZIP12.transfer) (s : a storage) : a ret =
