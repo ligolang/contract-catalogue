@@ -1,6 +1,6 @@
 {
   "name": "@ligo/fa",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "FA2 interface and types compliant with TZIP12. The library is also providing 3 Ligo contract implementations for nft, single asset & multi asset contracts",
   "directories": {
     "lib": "lib",
