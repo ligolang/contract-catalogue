@@ -22,6 +22,13 @@ type storage = {
 
 type ret = operation list * storage
 
+let empty_storage : storage = {
+  ledger = Big_map.empty;
+  operators = Big_map.empty;
+  token_metadata = Big_map.empty;
+  metadata = Big_map.empty
+}
+
 [@inline]
 let lift (s : storage) : unit SingleAssetExtendable.storage =
   {

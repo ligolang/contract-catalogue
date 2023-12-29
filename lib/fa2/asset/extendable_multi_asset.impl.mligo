@@ -20,6 +20,14 @@ type 'a storage =
 
 type 'a ret = operation list * 'a storage
 
+let make_storage (type a) (extension : a) : a storage = {
+  ledger = Big_map.empty;
+  operators = Big_map.empty;
+  token_metadata = Big_map.empty;
+  metadata = Big_map.empty;
+  extension = extension;
+}
+
 // Operators
 
 let assert_authorisation
