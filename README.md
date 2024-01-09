@@ -44,6 +44,8 @@ To extend the storage, define the type of the extension and refer to the origina
 such:
 
 ```ocaml
+#import "@ligo/fa/lib/main.mligo" "FA2"
+
 module NFT = FA2.NFTExtendable
 
 type extension = {
