@@ -53,7 +53,7 @@ export type storage = {
 
 type ret = [list<operation>, storage];
 
-import Contract = FA2.NFT
+import Contract = Contract.NFT
 
 ```
 

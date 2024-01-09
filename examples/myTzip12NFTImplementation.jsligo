@@ -32,4 +32,29 @@ export namespace NFT implements TZIP12Interface.FA2{
     const update_operators = (p: TZIP12.update_operators, s: storage): ret => {
         failwith("TODO");
     };
+
+    @view
+    const get_balance = (p: [address, nat], s: storage): nat => {
+        failwith("TODO");
+    }
+
+    @view
+    const total_supply = (token_id: nat, s: storage): nat => {
+        failwith("TODO");
+    }
+
+    @view
+    const all_tokens = (_: unit, s: storage): set<nat> => {
+        failwith("TODO");
+    }
+
+    @view
+    const is_operator = (op: TZIP12.operator, s: storage): bool => {
+        failwith("TODO");
+    }
+
+    @view
+    const token_metadata = (p: nat, s: storage): TZIP12.tokenMetadataData => {
+        failwith("TODO");
+    }
 }
