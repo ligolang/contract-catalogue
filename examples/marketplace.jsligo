@@ -58,7 +58,7 @@ const balance_of = (p: Contract.TZIP12.balance_of, s: storage): ret => {
             ledger: ret2[1].ledger,
             metadata: ret2[1].metadata,
             token_metadata: ret2[1].token_metadata,
-            operators: ret2[1].operators;
+            operators: ret2[1].operators,
         }
     ]
 };

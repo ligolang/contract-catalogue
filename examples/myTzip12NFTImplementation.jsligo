@@ -13,11 +13,11 @@ export namespace NFT implements TZIP12Interface.FA2{
     type operator = address;
     export type operators = big_map<[address, operator], set<nat>>;
     export type storage = {
+        extension: unit,
         ledger: ledger,
         operators: operators,
         token_metadata: TZIP12.tokenMetadata,
         metadata: TZIP16.metadata,
-        extension: unit
     };
     type ret = [list<operation>, storage];
     @entry

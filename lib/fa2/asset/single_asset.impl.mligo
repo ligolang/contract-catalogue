@@ -59,14 +59,13 @@ let update_operators (updates : TZIP12.update_operators) (s : storage) : ret =
 let get_balance (p : (address * nat)) (s : storage) : nat =
   SingleAssetExtendable.get_balance p (lift s)
 
-(* FIXME Not sure why we are implementing the two following views *)
 [@view]
-let total_supply (_token_id : nat) (_s : storage) : nat =
-  failwith Errors.not_available
+let total_supply (token_id : nat) (s : storage) : nat =
+  SingleAssetExtendable.total_supply token_id (lift s)
 
 [@view]
-let all_tokens (_ : unit) (_s : storage) : nat set =
-  failwith Errors.not_available
+let all_tokens (_ : unit) (s : storage) : nat set =
+  SingleAssetExtendable.all_tokens () (lift s)
 
 [@view]
 let is_operator (op : TZIP12.operator) (s : storage) : bool =
