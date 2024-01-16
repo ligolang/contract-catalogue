@@ -2,20 +2,20 @@
  * Token-specific metadata is stored/presented as a Michelson value of type
  * (map string bytes).  A few of the keys are reserved and predefined by
  * TZIP-012:
- * 
- * 
+ *
+ *
  * "" (empty-string): should correspond to a TZIP-016 URI which points to a JSON
  * representation of the token metadata.
- * 
+ *
  * "name": should be a UTF-8 string giving a “display name” to the token.
- * 
+ *
  * "symbol": should be a UTF-8 string for the short identifier of the token
  * (e.g. XTZ, EUR, …).
- * 
+ *
  * "decimals": should be an integer (converted to a UTF-8 string in decimal)
  * which defines the position of the decimal point in token balances for display
  * purposes.
- * 
+ *
  * In the case of a TZIP-016 URI pointing to a JSON blob, the JSON preserves the
  * same 3 reserved non-empty fields:
  * { "symbol": <string>, "name": <string>, "decimals": <number>, ... }
@@ -49,7 +49,7 @@ export type atomic_trans = { to_: address, token_id: nat, amount: nat };
 
 export type transfer_from = { from_: address, txs: list<atomic_trans> };
 
-/** 
+/**
 * Transfer entrypoint parameter
 * A batch of transaction represented by a list of @see transfer_from
 **/
@@ -91,7 +91,7 @@ export type balance_of = {
 export type operator = { owner: address, operator: address, token_id: nat };
 
 /**
-* Add or Remove token operators variant with an @see operator update  
+* Add or Remove token operators variant with an @see operator update
 **/
 
 export type unit_update =

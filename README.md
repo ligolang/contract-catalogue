@@ -11,7 +11,7 @@
     Single Asset Token where a different amount of single token can belong to multiple
     addresses at a time (1:n)
   - [Multiple Assets](./lib/fa2/asset/multi_asset.impl.mligo): This is an implementation of
-    Multi Asset Token where there are many tokens (available in different amounts)
+    Multi Asset Token where there are several token ids (available in different amounts)
     and they can belong to multiple addresses (m:n)
 
 ## Use the implementation directly
@@ -47,15 +47,19 @@ export type storage = {
     ledger: Contract.NFT.ledger,
     metadata: Contract.TZIP16.metadata,
     token_metadata: Contract.TZIP12.tokenMetadata,
-    operators: Contract.NFT.operators
+    operators: Contract.NFT.operators,
+    extension: unit
 };
 
 type ret = [list<operation>, storage];
+
+import Contract = Contract.NFT
+
 ```
 
-Importing the library allows you to add TZIP types to your custom storage
+Importing the library allows you to add TZIP types to your custom storage.
 
-Add the TZIP12 default entrypoints, calling the functions of the library and mapping it to your custom storage
+Add the TZIP12 default entrypoints, calling the functions of the library and mapping it to your custom storage. For instance, to reimplement the `transfer` entrypoint, do:
 
 ```ligolang
 @entry
@@ -68,6 +72,7 @@ const transfer = (p: Contract.TZIP12.transfer, s: storage): ret => {
                 metadata: s.metadata,
                 token_metadata: s.token_metadata,
                 operators: s.operators,
+                extension: unit
             }
         );
     return [
@@ -78,60 +83,13 @@ const transfer = (p: Contract.TZIP12.transfer, s: storage): ret => {
             metadata: ret2[1].metadata,
             token_metadata: ret2[1].token_metadata,
             operators: ret2[1].operators,
-        }
-    ]
-};
-
-@entry
-const balance_of = (p: Contract.TZIP12.balance_of, s: storage): ret => {
-    const ret2: [list<operation>, Contract.NFT.storage] =
-        Contract.NFT.balance_of(
-            p,
-            {
-                ledger: s.ledger,
-                metadata: s.metadata,
-                token_metadata: s.token_metadata,
-                operators: s.operators,
-            }
-        );
-    return [
-        ret2[0],
-        {
-            ...s,
-            ledger: ret2[1].ledger,
-            metadata: ret2[1].metadata,
-            token_metadata: ret2[1].token_metadata,
-            operators: ret2[1].operators
-        }
-    ]
-};
-
-@entry
-const update_operators = (p: Contract.TZIP12.update_operators, s: storage): ret => {
-    const ret2: [list<operation>, Contract.NFT.storage] =
-        Contract.NFT.update_operators(
-            p,
-            {
-                ledger: s.ledger,
-                metadata: s.metadata,
-                token_metadata: s.token_metadata,
-                operators: s.operators
-            }
-        );
-    return [
-        ret2[0],
-        {
-            ...s,
-            ledger: ret2[1].ledger,
-            metadata: ret2[1].metadata,
-            token_metadata: ret2[1].token_metadata,
-            operators: ret2[1].operators
+            extension: unit
         }
     ]
 };
 ```
 
-Continue to add non-TZIP new entrypoints, etc ...
+See the `examples/marketplace.jsligo` file for a complete example.
 
 ## Implement the interface differently
 

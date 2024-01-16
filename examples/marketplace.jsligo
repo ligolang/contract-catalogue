@@ -1,11 +1,17 @@
-#import "../lib/fa2/nft/nft.impl.jsligo" "Contract"
+#import "../lib/main.mligo" "FA2"
+
+import Contract = FA2.NFT
+
+// FIXME These files make no sense and should probably be removed
+// but here we're just showcasing how to import the library
 
 export type storage = {
     administrators: set<address>,
     ledger: Contract.NFT.ledger,
     metadata: Contract.TZIP16.metadata,
     token_metadata: Contract.TZIP12.tokenMetadata,
-    operators: Contract.NFT.operators
+    operators: Contract.NFT.operators,
+    extension: unit
 };
 
 type ret = [list<operation>, storage];
@@ -20,6 +26,7 @@ const transfer = (p: Contract.TZIP12.transfer, s: storage): ret => {
                 metadata: s.metadata,
                 token_metadata: s.token_metadata,
                 operators: s.operators,
+                extension: unit
             }
         );
     return [
@@ -30,6 +37,7 @@ const transfer = (p: Contract.TZIP12.transfer, s: storage): ret => {
             metadata: ret2[1].metadata,
             token_metadata: ret2[1].token_metadata,
             operators: ret2[1].operators,
+            extension: unit
         }
     ]
 };
@@ -44,6 +52,7 @@ const balance_of = (p: Contract.TZIP12.balance_of, s: storage): ret => {
                 metadata: s.metadata,
                 token_metadata: s.token_metadata,
                 operators: s.operators,
+                extension: unit
             }
         );
     return [
@@ -53,7 +62,8 @@ const balance_of = (p: Contract.TZIP12.balance_of, s: storage): ret => {
             ledger: ret2[1].ledger,
             metadata: ret2[1].metadata,
             token_metadata: ret2[1].token_metadata,
-            operators: ret2[1].operators
+            operators: ret2[1].operators;
+            extension: unit
         }
     ]
 };
@@ -67,7 +77,8 @@ const update_operators = (p: Contract.TZIP12.update_operators, s: storage): ret 
                 ledger: s.ledger,
                 metadata: s.metadata,
                 token_metadata: s.token_metadata,
-                operators: s.operators
+                operators: s.operators,
+                extension: unit
             }
         );
     return [
@@ -77,7 +88,8 @@ const update_operators = (p: Contract.TZIP12.update_operators, s: storage): ret 
             ledger: ret2[1].ledger,
             metadata: ret2[1].metadata,
             token_metadata: ret2[1].token_metadata,
-            operators: ret2[1].operators
+            operators: ret2[1].operators,
+            extension: unit
         }
     ]
 };

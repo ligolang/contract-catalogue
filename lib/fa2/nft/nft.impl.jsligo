@@ -8,17 +8,19 @@
 
 #import "../common/tzip16.datatypes.jsligo" "TZIP16"
 
-export namespace NFT implements TZIP12Interface.FA2{
+export namespace NFTExtendable {
    export type ledger = big_map<nat, address>;
-   export type operators = big_map<[address, address], set<nat>>; //[owner,operator]
+   export type operator = address;
+   export type operators = big_map<[address, operator], set<nat>>; //[owner,operator]
 
-   export type storage = {
+   export type storage<T> = {
       ledger: ledger,
       operators: operators,
       token_metadata: TZIP12.tokenMetadata,
-      metadata: TZIP16.metadata
+      metadata: TZIP16.metadata,
+      extension: T
    };
-   type ret = [list<operation>, storage];
+   type ret<T> = [list<operation>, storage<T>];
    //** LIGOFA_NFT
 
    export const assert_authorisation = (
@@ -94,7 +96,7 @@ export namespace NFT implements TZIP12Interface.FA2{
          return Big_map.update([owner, operator], auth_tokens, operators)
       }
    }
-   //  ledger 
+   //  ledger
 
    export const is_owner_of = (ledger: ledger, token_id: nat, owner: address): bool => {
       const current_owner = Option.unopt(Big_map.find_opt(token_id, ledger));
@@ -118,22 +120,23 @@ export namespace NFT implements TZIP12Interface.FA2{
       assert_owner_of(ledger, token_id, from_);
       return Big_map.update(token_id, Some(to_), ledger)
    }
-   export const set_ledger = (s: storage, ledger: ledger): storage =>
+
+   export const set_ledger = <T>([s, ledger]: [storage<T>, ledger]): storage<T> =>
       ({ ...s, ledger: ledger });
-   export const get_operators = (s: storage): operators => s.operators;
-   export const set_operators = (s: storage, operators: operators): storage =>
-      ({ ...s, operators: operators });
+   export const get_operators = <T>(s: storage<T>): operators => s.operators;
+   export const set_operators = <T>([s, operators]: [storage<T>, operators]): storage<T> =>
+      ({ ...s, operators: operators })
+
    //** TZIP12Interface.FA2
-   //  operators 
+   //  operators
    /**
 * Check if the intented transfer is sent from the same sender as from field, otherwise check if the sender is part of the operator authorized to receive this token
 * @param operators :  operator bigmap
 * @param from_ : transfer from address
-* @param token_id : token_id to test  
+* @param token_id : token_id to test
 */
 
-   @entry
-   const transfer = (t: TZIP12.transfer, s: storage): ret => {
+   export const transfer = <T>(t: TZIP12.transfer, s: storage<T>): ret<T> => {
       const process_atomic_transfer = (from_: address) =>
          ([ledger, t]: [ledger, TZIP12.atomic_trans]): ledger => {
             const { to_, token_id, amount } = t;
@@ -154,11 +157,11 @@ export namespace NFT implements TZIP12Interface.FA2{
          return List.fold_left(process_atomic_transfer(from_), ledger, txs)
       };
       const ledger = List.fold_left(process_single_transfer, s.ledger, t);
-      const store = set_ledger(s, ledger);
+      const store = set_ledger([s, ledger]);
       return [list([]), store]
    };
-   @entry
-   const balance_of = (b: TZIP12.balance_of, s: storage): ret => {
+
+   export const balance_of = <T>(b: TZIP12.balance_of, s: storage<T>): ret<T> => {
       const { requests, callback } = b;
       const get_balance_info = (request: TZIP12.request): TZIP12.callback => {
          const { owner, token_id } = request;
@@ -172,8 +175,8 @@ export namespace NFT implements TZIP12Interface.FA2{
          Tezos.transaction(Main(callback_param), 0mutez, callback);
       return [list([operation]), s]
    };
-   @entry
-   const update_operators = (updates: TZIP12.update_operators, s: storage): ret => {
+
+   export const update_operators = <T>(updates: TZIP12.update_operators, s: storage<T>): ret<T> => {
       const update_operator = (
          [operators, update]: [operators, TZIP12.unit_update]
       ): operators =>
@@ -195,11 +198,11 @@ export namespace NFT implements TZIP12Interface.FA2{
          };
       let operators = get_operators(s);
       operators = List.fold_left(update_operator, operators, updates);
-      const store = set_operators(s, operators);
+      const store = set_operators([s, operators]);
       return [list([]), store]
    };
-   @view
-   const get_balance = (p: [address, nat], s: storage): nat => {
+
+   export const get_balance = <T>(p: [address, nat], s: storage<T>): nat => {
       const [owner, token_id] = p;
       Assertions.assert_token_exist(s.token_metadata, token_id);
       if (is_owner_of(s.ledger, token_id, owner)) {
@@ -208,16 +211,16 @@ export namespace NFT implements TZIP12Interface.FA2{
          return 0n
       }
    };
-   @view
-   const total_supply = (token_id: nat, s: storage): nat => {
+
+   export const total_supply = <T>(token_id: nat, s: storage<T>): nat => {
       Assertions.assert_token_exist(s.token_metadata, token_id);
       return 1n
    };
-   @view
-   const all_tokens = (_: unit, _s: storage): set<nat> =>
+
+   export const all_tokens = <T>(_: unit, _s: storage<T>): set<nat> =>
       failwith(Errors.not_available);
-   @view
-   const is_operator = (op: TZIP12.operator, s: storage): bool => {
+
+   export const is_operator = <T>(op: TZIP12.operator, s: storage<T>): bool => {
       const authorized =
          match(Big_map.find_opt([op.owner, op.operator], s.operators)) {
             when (Some(a)):
@@ -227,8 +230,8 @@ export namespace NFT implements TZIP12Interface.FA2{
          };
       return (Set.mem(op.token_id, authorized) || op.owner == op.operator)
    };
-   @view
-   const token_metadata = (p: nat, s: storage): TZIP12.tokenMetadataData => {
+
+   export const token_metadata = <T>(p: nat, s: storage<T>): TZIP12.tokenMetadataData => {
       return match(Big_map.find_opt(p, s.token_metadata)) {
          when (Some(data)):
             data
@@ -236,4 +239,44 @@ export namespace NFT implements TZIP12Interface.FA2{
             failwith(Errors.undefined_token)
       }
    }
+}
+
+export namespace NFT implements TZIP12Interface.FA2 {
+  export type ledger = NFTExtendable.ledger;
+  export type operator = NFTExtendable.operator;
+  export type operators = NFTExtendable.operators;
+  export type storage = NFTExtendable.storage<unit>;
+  type ret = [list<operation>, storage];
+
+  @entry
+  const transfer = (t: TZIP12.transfer, s: storage): ret =>
+    NFTExtendable.transfer(t, s)
+
+  @entry
+  const balance_of = (b: TZIP12.balance_of, s: storage): ret =>
+    NFTExtendable.balance_of(b, s)
+
+  @entry
+  const update_operators = (updates: TZIP12.update_operators, s: storage): ret =>
+    NFTExtendable.update_operators(updates, s)
+
+  @view
+  const get_balance = (p: [address, nat], s: storage): nat =>
+    NFTExtendable.get_balance(p, s)
+
+  @view
+  const total_supply = (token_id: nat, s: storage): nat =>
+    NFTExtendable.total_supply(token_id, s)
+
+  @view
+  const all_tokens = (_: unit, s: storage): set<nat> =>
+    NFTExtendable.all_tokens(unit, s)
+
+  @view
+  const is_operator = (op: TZIP12.operator, s: storage): bool =>
+    NFTExtendable.is_operator(op, s)
+
+  @view
+  const token_metadata = (p: nat, s: storage): TZIP12.tokenMetadataData =>
+    NFTExtendable.token_metadata(p, s)
 }
