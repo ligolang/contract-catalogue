@@ -5,14 +5,14 @@
 
 (* Tests for views *)
 
-type orig_nft = (FA2_NFT.NFT parameter_of, FA2_NFT.NFT.storage) origination_result
+type orig_nft = (FA2_NFT parameter_of, FA2_NFT.storage) origination_result
 
 (* Test get_balance view *)
 let test_get_balance_view =
   let initial_storage, owners, _ = TestHelpers.get_initial_storage () in
   let owner1 = List_helper.nth_exn 0 owners in
 
-  let orig = Test.originate (contract_of FA2_NFT.NFT) initial_storage 0tez in
+  let orig = Test.originate (contract_of FA2_NFT) initial_storage 0tez in
 
 
   let initial_storage : ViewsTestContract.storage = {
@@ -24,7 +24,7 @@ let test_get_balance_view =
   } in
 
   let orig_v = Test.originate (contract_of ViewsTestContract) initial_storage 0tez in
-  
+
   let _ = Test.transfer_exn orig_v.addr
     (Get_balance (owner1,1n) : ViewsTestContract parameter_of) 0tez
   in
@@ -36,7 +36,7 @@ let test_get_balance_view =
 let test_total_supply_view =
   let initial_storage, _, _ = TestHelpers.get_initial_storage () in
 
-  let orig = Test.originate (contract_of FA2_NFT.NFT) initial_storage 0tez in
+  let orig = Test.originate (contract_of FA2_NFT) initial_storage 0tez in
 
 
   let initial_storage : ViewsTestContract.storage = {
@@ -48,7 +48,7 @@ let test_total_supply_view =
   } in
 
   let orig_v = Test.originate (contract_of ViewsTestContract) initial_storage 0tez in
-  
+
   let _ = Test.transfer_exn orig_v.addr
     (Total_supply 2n : ViewsTestContract parameter_of) 0tez
   in
@@ -61,7 +61,7 @@ let test_total_supply_view =
 let test_total_supply_undefined_token_view =
   let initial_storage, _, _ = TestHelpers.get_initial_storage () in
 
-  let orig = Test.originate (contract_of FA2_NFT.NFT) initial_storage 0tez in
+  let orig = Test.originate (contract_of FA2_NFT) initial_storage 0tez in
 
 
   let initial_storage : ViewsTestContract.storage = {
@@ -73,7 +73,7 @@ let test_total_supply_undefined_token_view =
   } in
 
   let orig_v = Test.originate (contract_of ViewsTestContract) initial_storage 0tez in
-  
+
   let result = Test.transfer orig_v.addr
     (Total_supply 15n : ViewsTestContract parameter_of) 0tez
   in
@@ -85,7 +85,7 @@ let test_is_operator_view =
   let owner1 = List_helper.nth_exn 0 owners in
   let op1    = List_helper.nth_exn 0 operators in
 
-  let orig = Test.originate (contract_of FA2_NFT.NFT) initial_storage 0tez in
+  let orig = Test.originate (contract_of FA2_NFT) initial_storage 0tez in
 
 
   let initial_storage : ViewsTestContract.storage = {
@@ -97,7 +97,7 @@ let test_is_operator_view =
   } in
 
   let orig_v = Test.originate (contract_of ViewsTestContract) initial_storage 0tez in
-  
+
   let _ = Test.transfer_exn orig_v.addr
     (Is_operator {
       owner    = owner1;

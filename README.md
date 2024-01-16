@@ -26,70 +26,77 @@ make compile
 make deploy
 ```
 
-## Extend the implementation
+## Extend an implementation
 
-If you want to build a dapp that is more than just a FA2 contract, like an NFT marketplace, you can extend the base code
+If you need additional features in your contract, you can use the extendable version. An example is
+available in the file `examples/mintable.mligo`. Using the extension mechanism, it adds an admin
+address to the storage, as well as a `mint` entrypoint to mint owner-less NFTs. Only the admin can
+call this entrypoint.
 
 Install the library and create a new file
 
 ```bash
 ligo install @ligo/fa
-touch marketplace.jsligo
+touch mintable.mligo
 ```
 
-Edit the file to add an additional field `administrators`
+To extend the storage, define the type of the extension and refer to the original storage type as
+such:
 
-```ligolang
-#import "@ligo/fa/lib/fa2/nft/nft.impl.jsligo" "Contract"
+```ocaml
+#import "@ligo/fa/lib/main.mligo" "FA2"
 
-export type storage = {
-    administrators: set<address>,
-    ledger: Contract.NFT.ledger,
-    metadata: Contract.TZIP16.metadata,
-    token_metadata: Contract.TZIP12.tokenMetadata,
-    operators: Contract.NFT.operators,
-    extension: unit
-};
+module NFT = FA2.NFTExtendable
 
-type ret = [list<operation>, storage];
+type extension = {
+  admin: address
+}
 
-import Contract = Contract.NFT
-
+type storage = extension NFT.storage
+type ret = operation list * storage
 ```
 
-Importing the library allows you to add TZIP types to your custom storage.
+Importing the library allows you to refer to the TZIP12 operations signatures and make it easier to
+redefine all the entrypoints and views that are required:
 
-Add the TZIP12 default entrypoints, calling the functions of the library and mapping it to your custom storage. For instance, to reimplement the `transfer` entrypoint, do:
+```ocaml
+(* Standard FA2 interface, copied from the source *)
 
-```ligolang
-@entry
-const transfer = (p: Contract.TZIP12.transfer, s: storage): ret => {
-    const ret2: [list<operation>, Contract.NFT.storage] =
-        Contract.NFT.transfer(
-            p,
-            {
-                ledger: s.ledger,
-                metadata: s.metadata,
-                token_metadata: s.token_metadata,
-                operators: s.operators,
-                extension: unit
-            }
-        );
-    return [
-        ret2[0],
-        {
-            ...s,
-            ledger: ret2[1].ledger,
-            metadata: ret2[1].metadata,
-            token_metadata: ret2[1].token_metadata,
-            operators: ret2[1].operators,
-            extension: unit
-        }
-    ]
-};
+[@entry]
+let transfer (t: NFT.TZIP12.transfer) (s: storage) : ret =
+  NFT.transfer t s
+
+[@entry]
+let balance_of (b: NFT.TZIP12.balance_of) (s: storage) : ret =
+  NFT.balance_of b s
+
+(* Etc. *)
 ```
 
-See the `examples/marketplace.jsligo` file for a complete example.
+To make it easier to define new entrypoints, some functions are available in the library, and you
+can also use the `storage` fields directly:
+
+```ocaml
+(* Extension *)
+
+type mint = {
+   owner    : address;
+   token_id : nat;
+}
+
+[@entry]
+let mint (mint : mint) (s : storage): ret =
+  let sender = Tezos.get_sender () in
+  let () = assert (sender = s.extension.admin) in
+  let () = NFT.Assertions.assert_token_exist s.token_metadata mint.token_id in
+  (* Check that nobody owns the token already *)
+  let () = assert (Option.is_none (Big_map.find_opt mint.token_id s.ledger)) in
+  let s = NFT.set_balance s mint.owner mint.token_id in
+  [], s
+```
+
+Note that this version requires the minted NFTs to be already defined in the `token_metadata` big
+map. However, you can also change the `mint` entrypoint to create new tokens dynamically.
 
 ## Implement the interface differently
 
