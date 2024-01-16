@@ -22,6 +22,17 @@ export type storage<T> = {
 
 type ret<T> = [list<operation>, storage<T>];
 
+const make_storage = (extension) =>
+   (
+      {
+         ledger: Big_map.empty,
+         operators: Big_map.empty,
+         token_metadata: Big_map.empty,
+         metadata: Big_map.empty,
+         extension: extension
+      }
+   )
+
 //operators
 export const assert_authorisation = (
    [operators, from_, token_id]: [operators, address, nat]
