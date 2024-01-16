@@ -12,7 +12,7 @@ type fa2_nft = (FA2_NFT parameter_of, FA2_NFT.storage) module_contract
 (* Transfer *)
 
 (* 1. transfer successful *)
-let _test_atomic_tansfer_operator_success (contract: fa2_nft) =
+let _test_atomic_transfer_operator_success (contract: fa2_nft) =
   let initial_storage, owners, operators = TestHelpers.get_initial_storage () in
   let owner1 = List_helper.nth_exn 0 owners in
   let owner2 = List_helper.nth_exn 1 owners in
@@ -29,11 +29,11 @@ let _test_atomic_tansfer_operator_success (contract: fa2_nft) =
   let () = TestHelpers.assert_balances orig.addr ((owner2, 1n), (owner2, 2n), (owner3, 3n)) in
   ()
 
-let test_atomic_tansfer_operator_success = _test_atomic_tansfer_operator_success (contract_of FA2_NFT)
+let test_atomic_transfer_operator_success = _test_atomic_transfer_operator_success (contract_of FA2_NFT)
 
 
 (* 1.1. transfer successful owner *)
-let _test_atomic_tansfer_owner_success (contract: fa2_nft) =
+let _test_atomic_transfer_owner_success (contract: fa2_nft) =
   let initial_storage, owners, _ = TestHelpers.get_initial_storage () in
   let owner1 = List_helper.nth_exn 0 owners in
   let owner2 = List_helper.nth_exn 1 owners in
@@ -49,7 +49,7 @@ let _test_atomic_tansfer_owner_success (contract: fa2_nft) =
   let () = TestHelpers.assert_balances orig.addr ((owner2, 1n), (owner2, 2n), (owner3, 3n)) in
   ()
 
-let test_atomic_tansfer_owner_success = _test_atomic_tansfer_owner_success (contract_of FA2_NFT)
+let test_atomic_transfer_owner_success = _test_atomic_transfer_owner_success (contract_of FA2_NFT)
 
 
 (* 2. transfer failure token undefined *)
@@ -91,7 +91,7 @@ let test_atomic_transfer_failure_not_operator
   = _test_atomic_transfer_failure_not_operator (contract_of FA2_NFT)
 
 (* 4. self transfer *)
-let _test_atomic_tansfer_success_zero_amount_and_self_transfer (contract: fa2_nft) =
+let _test_atomic_transfer_success_zero_amount_and_self_transfer (contract: fa2_nft) =
   let initial_storage, owners, _operators = TestHelpers.get_initial_storage () in
 
   let owner1 = List_helper.nth_exn 0 owners in
@@ -107,9 +107,9 @@ let _test_atomic_tansfer_success_zero_amount_and_self_transfer (contract: fa2_nf
   let _ = Test.transfer_exn orig.addr (Transfer transfer_requests) 0tez in
   let () = TestHelpers.assert_balances orig.addr ((owner1, 1n), (owner2, 2n), (owner3, 3n)) in
   ()
-let test_atomic_tansfer_success_zero_amount_and_self_transfer =
+let test_atomic_transfer_success_zero_amount_and_self_transfer =
 
-  _test_atomic_tansfer_success_zero_amount_and_self_transfer (contract_of FA2_NFT)
+  _test_atomic_transfer_success_zero_amount_and_self_transfer (contract_of FA2_NFT)
 
 
 (* 5. transfer failure transitive operators *)
