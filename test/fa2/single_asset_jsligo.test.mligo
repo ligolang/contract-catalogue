@@ -111,7 +111,7 @@ let assert_balances
 (* Transfer *)
 
 (* 1. transfer successful *)
-let test_atomic_tansfer_success =
+let test_atomic_transfer_success =
   let initial_storage, owners, operators = get_initial_storage (10n, 10n, 10n) in
   let owner1 = List_helper.nth_exn 0 owners in
   let owner2 = List_helper.nth_exn 1 owners in
@@ -171,7 +171,7 @@ let test_atomic_transfer_failure_not_suffient_balance =
   | Fail _ -> failwith "invalid test failure"
 
 (* 4. transfer successful 0 amount & self transfer *)
-let test_atomic_tansfer_success_zero_amount_and_self_transfer =
+let test_atomic_transfer_success_zero_amount_and_self_transfer =
   let initial_storage, owners, operators = get_initial_storage (10n, 10n, 10n) in
   let owner1 = List_helper.nth_exn 0 owners in
   let owner2 = List_helper.nth_exn 1 owners in

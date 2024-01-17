@@ -6,7 +6,7 @@
 type return = operation list * FA2_NFT.storage
 (* Transfer *)
 (* 1. transfer successful *)
-let _test_atomic_tansfer_operator_success () =
+let _test_atomic_transfer_operator_success () =
   let initial_storage, owners, operators = TestHelpers.get_initial_storage () in
   let owner1 = List_helper.nth_exn 0 owners in
   let owner2 = List_helper.nth_exn 1 owners in
@@ -22,9 +22,9 @@ let _test_atomic_tansfer_operator_success () =
   let _ = Test.transfer orig.addr (Transfer transfer_requests) 0tez in
   let () = TestHelpers.assert_balances orig.addr ((owner2, 1n), (owner2, 2n), (owner3, 3n)) in
   ()
-let test_atomic_tansfer_operator_success = _test_atomic_tansfer_operator_success ()
+let test_atomic_transfer_operator_success = _test_atomic_transfer_operator_success ()
 (* 1.1. transfer successful owner *)
-let _test_atomic_tansfer_owner_success () =
+let _test_atomic_transfer_owner_success () =
   let initial_storage, owners, _ = TestHelpers.get_initial_storage () in
   let owner1 = List_helper.nth_exn 0 owners in
   let owner2 = List_helper.nth_exn 1 owners in
@@ -39,7 +39,7 @@ let _test_atomic_tansfer_owner_success () =
   let _ = Test.transfer orig.addr (Transfer transfer_requests) 0tez in
   let () = TestHelpers.assert_balances orig.addr ((owner2, 1n), (owner2, 2n), (owner3, 3n)) in
   ()
-let test_atomic_tansfer_owner_success = _test_atomic_tansfer_owner_success ()
+let test_atomic_transfer_owner_success = _test_atomic_transfer_owner_success ()
 (* 2. transfer failure token undefined *)
 let _test_transfer_token_undefined () =
   let initial_storage, owners, operators = TestHelpers.get_initial_storage () in
@@ -74,7 +74,7 @@ let _test_atomic_transfer_failure_not_operator () =
 let test_atomic_transfer_failure_not_operator
   = _test_atomic_transfer_failure_not_operator ()
 (* 4. self transfer *)
-let _test_atomic_tansfer_success_zero_amount_and_self_transfer () =
+let _test_atomic_transfer_success_zero_amount_and_self_transfer () =
   let initial_storage, owners, operators = TestHelpers.get_initial_storage () in
   let owner1 = List_helper.nth_exn 0 owners in
   let owner2 = List_helper.nth_exn 1 owners in
@@ -90,8 +90,8 @@ let _test_atomic_tansfer_success_zero_amount_and_self_transfer () =
   let _ = Test.transfer orig.addr (Transfer transfer_requests) 0tez in
   let () = TestHelpers.assert_balances orig.addr ((owner1, 1n), (owner2, 2n), (owner3, 3n)) in
   ()
-let test_atomic_tansfer_success_zero_amount_and_self_transfer =
-  _test_atomic_tansfer_success_zero_amount_and_self_transfer ()
+let test_atomic_transfer_success_zero_amount_and_self_transfer =
+  _test_atomic_transfer_success_zero_amount_and_self_transfer ()
 (* 5. transfer failure transitive operators *)
 let _test_transfer_failure_transitive_operators () =
   let initial_storage, owners, operators = TestHelpers.get_initial_storage () in

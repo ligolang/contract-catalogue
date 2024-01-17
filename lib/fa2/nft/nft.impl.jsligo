@@ -1,19 +1,34 @@
 #import "../common/assertions.jsligo" "Assertions"
+
 #import "../common/errors.mligo" "Errors"
+
 #import "../common/tzip12.datatypes.jsligo" "TZIP12"
+
 #import "../common/tzip16.datatypes.jsligo" "TZIP16"
+
 #import "./extendable_nft.impl.jsligo" "NFTExtendable"
 
 export type ledger = NFTExtendable.ledger;
+
 export type operator = NFTExtendable.operator;
+
 export type operators = NFTExtendable.operators;
+
 export type storage = {
-  ledger : ledger,
-  operators : operators,
-  token_metadata : TZIP12.tokenMetadata,
-  metadata : TZIP16.metadata,
+  ledger: ledger,
+  operators: operators,
+  token_metadata: TZIP12.tokenMetadata,
+  metadata: TZIP16.metadata,
 }
+
 type ret = [list<operation>, storage];
+
+const empty_storage: storage = {
+  ledger: Big_map.empty,
+  operators: Big_map.empty,
+  token_metadata: Big_map.empty,
+  metadata: Big_map.empty
+}
 
 @inline
 const lift = (s: storage): NFTExtendable.storage<unit> => {

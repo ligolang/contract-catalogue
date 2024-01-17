@@ -11,23 +11,32 @@ type operator = MultiAssetExtendable.operator
 
 type operators = MultiAssetExtendable.operators
 
-type storage = {
+type storage =
+  {
    ledger : ledger;
    operators : operators;
    token_metadata : TZIP12.tokenMetadata;
-   metadata : TZIP16.metadata;
-}
+   metadata : TZIP16.metadata
+  }
 
 type ret = operation list * storage
+
+let empty_storage : storage =
+  {
+   ledger = Big_map.empty;
+   operators = Big_map.empty;
+   token_metadata = Big_map.empty;
+   metadata = Big_map.empty
+  }
 
 [@inline]
 let lift (s : storage) : unit MultiAssetExtendable.storage =
   {
-    extension = ();
-    ledger = s.ledger;
-    operators = s.operators;
-    token_metadata = s.token_metadata;
-    metadata = s.metadata;
+   extension = ();
+   ledger = s.ledger;
+   operators = s.operators;
+   token_metadata = s.token_metadata;
+   metadata = s.metadata
   }
 
 [@inline]
@@ -35,10 +44,10 @@ let unlift (ret : operation list * unit MultiAssetExtendable.storage) : ret =
   let ops, s = ret in
   ops,
   {
-    ledger = s.ledger;
-    operators = s.operators;
-    token_metadata = s.token_metadata;
-    metadata = s.metadata;
+   ledger = s.ledger;
+   operators = s.operators;
+   token_metadata = s.token_metadata;
+   metadata = s.metadata
   }
 
 [@entry]

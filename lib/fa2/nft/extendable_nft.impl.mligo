@@ -12,17 +12,25 @@ type operators = ((address * operator), nat set) big_map
 
 type 'a storage =
   {
-   extension: 'a;
+   extension : 'a;
    ledger : ledger;
    operators : operators;
    token_metadata : TZIP12.tokenMetadata;
-   metadata : TZIP16.metadata;
+   metadata : TZIP16.metadata
   }
 
 type 'a ret = operation list * 'a storage
 
-// Operators
+let make_storage (type a) (extension : a) : a storage =
+  {
+   ledger = Big_map.empty;
+   operators = Big_map.empty;
+   token_metadata = Big_map.empty;
+   metadata = Big_map.empty;
+   extension = extension
+  }
 
+// Operators
 let assert_authorisation
   (operators : operators)
   (from_ : address)
@@ -39,8 +47,7 @@ let assert_authorisation
     if Set.mem token_id authorized then () else failwith Errors.not_operator
 
 let is_operator
-  (operators, owner, operator, token_id
-   : (operators * address * address * nat))
+  (operators, owner, operator, token_id : (operators * address * address * nat))
 : bool =
   let authorized =
     match Big_map.find_opt (owner, operator) operators with
@@ -57,7 +64,6 @@ let add_operator
   if owner = operator
   then operators
   (* assert_authorisation always allow the owner so this case is not relevant *)
-
   else
     let () = Assertions.assert_update_permission owner in
     let auth_tokens =
@@ -76,7 +82,6 @@ let remove_operator
   if owner = operator
   then operators
   (* assert_authorisation always allow the owner so this case is not relevant *)
-
   else
     let () = Assertions.assert_update_permission owner in
     let auth_tokens =
@@ -90,13 +95,11 @@ let remove_operator
     Big_map.update (owner, operator) auth_tokens operators
 
 //module Ledger = struct
-
 let is_owner_of (ledger : ledger) (token_id : nat) (owner : address) : bool =
   let current_owner = Option.unopt (Big_map.find_opt token_id ledger) in
   current_owner = owner
 
-let assert_owner_of (ledger : ledger) (token_id : nat) (owner : address)
-: unit =
+let assert_owner_of (ledger : ledger) (token_id : nat) (owner : address) : unit =
   assert_with_error (is_owner_of ledger token_id owner) Errors.ins_balance
 
 let transfer_token_from_user_to_user
@@ -110,29 +113,30 @@ let transfer_token_from_user_to_user
   ledger
 
 //module Storage = struct
+let is_owner_of (type a) (s : a storage) (owner : address) (token_id : nat)
+: bool = is_owner_of s.ledger token_id owner
 
-let is_owner_of (type a) (s : a storage) (owner : address) (token_id : nat) : bool =
-  is_owner_of s.ledger token_id owner
-
-let set_ledger (type a) (s : a storage) (ledger : ledger) = {s with ledger = ledger}
+let set_ledger (type a) (s : a storage) (ledger : ledger) =
+  {s with ledger = ledger}
 
 let get_operators (type a) (s : a storage) = s.operators
 
 let set_operators (type a) (s : a storage) (operators : operators) =
   {s with operators = operators}
 
-let get_balance (type a) (s : a storage) (owner : address) (token_id : nat) : nat =
+let get_balance (type a) (s : a storage) (owner : address) (token_id : nat)
+: nat =
   let () = Assertions.assert_token_exist s.token_metadata token_id in
   if is_owner_of s owner token_id then 1n else 0n
 
-let set_balance (type a) (s : a storage) (owner : address) (token_id : nat) : a storage =
+let set_balance (type a) (s : a storage) (owner : address) (token_id : nat)
+: a storage =
   let () = Assertions.assert_token_exist s.token_metadata token_id in
   let new_ledger = Big_map.update token_id (Some owner) s.ledger in
   set_ledger s new_ledger
 
 let transfer (type a) (t : TZIP12.transfer) (s : a storage) : a ret =
   (* This function process the "txs" list. Since all transfer share the same "from_" address, we use a se *)
-
   let process_atomic_transfer
     (from_ : address)
     (ledger, t : ledger * TZIP12.atomic_trans) =
@@ -175,7 +179,10 @@ let balance_of (type a) (b : TZIP12.balance_of) (s : a storage) : a ret =
   let operation = Tezos.transaction (Main callback_param) 0mutez callback in
   ([operation] : operation list), s
 
-let update_operators (type a) (updates : TZIP12.update_operators) (s : a storage) : a ret =
+let update_operators (type a)
+  (updates : TZIP12.update_operators)
+  (s : a storage)
+: a ret =
   let update_operator (operators, update : operators * TZIP12.unit_update) =
     match update with
       Add_operator
@@ -219,5 +226,3 @@ let token_metadata (type a) (p : nat) (s : a storage) : TZIP12.tokenMetadataData
   match Big_map.find_opt p s.token_metadata with
     Some (data) -> data
   | None () -> failwith Errors.undefined_token
-
-

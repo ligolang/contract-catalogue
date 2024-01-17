@@ -1,22 +1,38 @@
 #import "../common/assertions.jsligo" "Assertions"
+
 #import "../common/errors.mligo" "Errors"
+
 #import "../common/tzip12.datatypes.jsligo" "TZIP12"
+
 #import "../common/tzip12.interfaces.jsligo" "TZIP12Interface"
+
 #import "../common/tzip16.datatypes.jsligo" "TZIP16"
+
 #import "./extendable_single_asset.impl.jsligo" "SingleAssetExtendable"
 
 export type ledger = SingleAssetExtendable.ledger;
+
 export type operator = SingleAssetExtendable.operator;
+
 export type operators = SingleAssetExtendable.operators;
+
 export type storage = SingleAssetExtendable.storage<unit>;
+
 export type storage = {
-   ledger : ledger,
-   operators : operators,
-   token_metadata : TZIP12.tokenMetadata,
-   metadata : TZIP16.metadata,
+  ledger: ledger,
+  operators: operators,
+  token_metadata: TZIP12.tokenMetadata,
+  metadata: TZIP16.metadata,
 }
 
 type ret = [list<operation>, storage];
+
+const empty_storage: storage = {
+  ledger: Big_map.empty,
+  operators: Big_map.empty,
+  token_metadata: Big_map.empty,
+  metadata: Big_map.empty
+}
 
 @inline
 const lift = (s: storage): SingleAssetExtendable.storage<unit> => {
@@ -30,7 +46,9 @@ const lift = (s: storage): SingleAssetExtendable.storage<unit> => {
 }
 
 @inline
-const unlift = ([ops, s]: [list<operation>, SingleAssetExtendable.storage<unit>]): ret => {
+const unlift = (
+  [ops, s]: [list<operation>, SingleAssetExtendable.storage<unit>]
+): ret => {
   let storage = {
     ledger: s.ledger,
     operators: s.operators,
