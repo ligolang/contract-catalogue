@@ -1,0 +1,74 @@
+#import "tzip12.datatypes.jsligo" "TZIP12Datatypes"
+
+export type tokenMetadataData = TZIP12Datatypes.tokenMetadataData;
+
+export type operator = TZIP12Datatypes.operator;
+
+export type transfer = TZIP12Datatypes.transfer;
+
+/**
+* Approve entrypoint batch item
+**/
+
+export type approve_allowance = {
+    owner: address,
+    spender: address,
+    token_id: nat,
+    action: [["Increase", nat], ["Decrease", nat]]
+};
+
+/**
+* Approve entrypoint parameter
+* A batch of transactions represented by a list of @see approve_allowance
+**/
+
+export type approve = list<approve_allowance>;
+
+export type ticket_to_export = {
+    from_: address,
+    token_id: nat,
+    amount: nat
+};
+
+export type export_tickets_to = {
+    destination: contract<list<[address, list<ticket<[nat, option<bytes>]>>]>>,
+    txs: {
+        to_: address,
+        tickets_to_export: list<ticket_to_export>
+    }
+};
+
+/**
+* Export_ticket entrypoint parameter
+* A batch of transactions represented by a list of @see export_tickets_to
+**/
+
+export type export_tickets = list<export_tickets_to>;
+
+/**
+* Lambda_export entrypoint parameter
+* A batch of transactions represented by a list of @see approve_allowance
+**/
+
+export type lambda_export = {
+    tickets_to_export: list<ticket_to_export>,
+    action: ((p: list<ticket<[nat, option<bytes>]>>) => list<operation>)
+};
+
+export type import_ticket = [nat, option<bytes>];
+
+/**
+* Import_ticket entrypoint parameter
+* A batch of transactions represented by a list of @see import_ticket
+**/
+export type import_tickets = {
+    to_: address,
+    tickets: list<import_ticket>
+};
+
+// Views:
+
+/**
+* get_allowance view parameter
+**/
+export type get_allowance = {owner: address, spender: address, token_id: nat};

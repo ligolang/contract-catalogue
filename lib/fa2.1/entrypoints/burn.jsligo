@@ -1,0 +1,110 @@
+#import "../data/amount.jsligo" "Amount"
+#import "../data/errors.jsligo" "Errors"
+#import "../data/ledger.jsligo" "Ledger"
+#import "../data/storage.jsligo" "Storage"
+#import "../data/token.jsligo" "Token"
+#import "../data/tokenMetadata.jsligo" "TokenMetadata"
+#import "./transfer.jsligo" "Transfer"
+#import "../data/approvals.jsligo" "Approvals"
+
+type Storage = Storage.T;
+type LedgerModule = Ledger.ledger_module;
+
+type BurnParam = {
+  from_      : address;
+  token_id   : Token.T;
+  amount     : Amount.T;
+};
+
+type total_supply_update_type =
+@layout("comb")
+{
+  token_id: Token.T,
+  new_total_supply: nat,
+  diff: int
+};
+
+type balance_event_data =
+@layout("comb")
+{
+  owner: address,
+  token_id: nat,
+  new_balance: nat,
+  diff: int
+};
+
+type allowance_update_type =
+@layout("comb")
+{
+  owner     : address;
+  spender   : address;
+  token_id  : Token.T;
+  new_allowance : nat;
+  diff      : int;
+};
+
+export type T = BurnParam;
+
+
+type Burn = BurnParam;
+export type T = BurnParam;
+
+export const burn = <A, L>(
+  burnParam: BurnParam,
+  storage: Storage<A, L>,
+  ledger: LedgerModule<L>
+): [list<operation>, Storage<A, L>] => {
+  let operations = list([]);
+  const { from_, token_id, amount } = burnParam;
+  
+  Storage.assert_token_exist(storage, token_id);
+
+  const approvals = Storage.get_approvals(storage);
+
+  const oldApprovals = Approvals.get_amount(approvals, from_, Tezos.get_sender(), token_id);
+
+  const authorizedApprovals = Transfer.authorize_transfer(storage, approvals, from_, token_id, amount);
+
+  const newApprovals = Approvals.get_amount(authorizedApprovals, from_, Tezos.get_sender(), token_id);
+
+  if (oldApprovals != newApprovals) {
+       const allowance_update: allowance_update_type = {
+           owner: from_,
+           spender: Tezos.get_sender(),
+           token_id: token_id,
+           new_allowance: newApprovals,
+           diff: newApprovals - oldApprovals;
+       };
+       const allowance_event_op = Tezos.emit("%allowance_update", allowance_update);
+       operations = list([allowance_event_op, ...operations]);
+   }
+  
+  const newLedger = Ledger.decrease_token_amount_for_user(ledger, from_, token_id, amount);
+  
+  let newStorage = Storage.set_approvals(storage, authorizedApprovals);
+  newStorage = Storage.set_ledger(newStorage, newLedger.data);
+
+  let oldSupply = Ledger.get_supply(ledger, token_id);
+  const balance = Ledger.get_for_user(ledger, from_, token_id);
+  const supply_update: total_supply_update_type =
+                {
+                   token_id: token_id,
+                   new_total_supply: abs(oldSupply-amount),
+                   diff: -amount,
+               };
+  const balance_update: balance_event_data =
+                {
+                   owner: from_,
+                   token_id: token_id,
+                   new_balance: abs(balance - amount),
+                   diff: -amount,
+               };
+  const event_balance = Tezos.emit("%balance_update", balance_update);
+  const event_supply = Tezos.emit("%total_supply_update", supply_update);
+
+  operations = list([event_supply, ...operations]);
+  operations = list([event_balance, ...operations]);
+
+  return [operations, newStorage];
+};
+

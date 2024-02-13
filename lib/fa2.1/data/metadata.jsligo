@@ -1,0 +1,37 @@
+/*
+{
+	"name":"",                            (* Contract name, recommended *)
+	"description":"",                     (* details information *)
+	"version":"",                         (* semver version number *)
+	"license":{"name":"", "details":""},  (* details is optional *)
+	"authors":[],                         (* List of authors with format "Name<'contact'>" *)
+	"homepage":"",                        (* URL for human-consumption *)
+	"source":{"tools":[], "location":""}, (* High-level language source *)
+	"interfaces":[],                      (* TZIP-XYZ others than TZIP-016 *)
+	"errors":[],                          (* List of errors translation object : {"error":<michelson>,"expension":<michelson>, "languages":[]} *)
+	"views":[]                            (* List of off-chain-view objects *)
+} */
+
+export type t = big_map<string, bytes>;
+
+// // @bytes
+// let metadata = [{
+// 	"name":"FA2.1",
+// 	"description":"FA2.1 implementation",
+// 	"version":"1.0.0",
+// 	"license":{"name":"MIT"},
+// 	"authors":[
+// 		"Melwyn Saldanha <melwyn95@gmail.com>",
+// 		"Didier Plaindoux <d.plaindoux@free.fr>"
+// 	],
+// 	"homepage":"",
+// 	"source":{"tools":["Ligo"], "location": "https://github.com/ligolang/generic-fa2.1"},
+// 	"interfaces":["TZIP-012"],
+// 	"errors":[],
+// 	"views":[]
+// }];
+
+// let init () : t = Big_map.literal [
+// 	("", [%bytes {|tezos-storage:data|}]);
+// 	("data", metadata);
+// ]

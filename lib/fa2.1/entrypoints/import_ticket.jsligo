@@ -1,0 +1,112 @@
+#import "../data/errors.jsligo" "Errors"
+#import "../data/token.jsligo" "Token"
+#import "../data/ledger.jsligo" "Ledger"
+#import "../data/storage.jsligo" "Storage"
+#import "../data/amount.jsligo" "Amount"
+
+type Storage = Storage.T;
+
+type imported_ticket = ticket<[Token.T, option<bytes>]>;
+
+type tickets_to_import_to = {
+    to_ : address;
+    tickets_to_import : list<imported_ticket>;
+};
+
+type balance_event_data =
+  @layout("comb")
+  {
+    owner: address,
+    token_id: nat,
+    new_balance: nat,
+    diff: int
+  };
+
+export type transaction =
+  @layout("comb")
+{
+    to_      : option<address>;
+    token_id : Token.T;
+    amount   : Amount.T;
+};
+
+export type transfer =
+  @layout("comb")
+{
+    from_ : option<address>;
+    txs   : list<transaction>;
+};
+
+type import_ticket = list<tickets_to_import_to>;
+export type T = import_ticket;
+
+type LedgerModule = Ledger.ledger_module;
+
+const make_transaction = (to_: option<address>, token_id: Token.T, amount: Amount.T): transaction => {
+    return { to_; token_id; amount };
+}
+
+const make_transfer = (from_: option<address>, txs: list<transaction>): transfer => {
+    return { from_; txs };
+}
+
+// @inline
+const assert_ticketer_is_self_address = (ticketer : address) : unit =>
+    assert_with_error(Tezos.get_self_address() == ticketer, Errors.invalid_ticket);
+
+const import_ticket_to = <L>(
+    to_ : address,
+    imported_ticket : imported_ticket,
+    [transactions, ledger, operations] : [list<transaction>, LedgerModule<L>, list<operation>]
+) : [list<transaction>, LedgerModule<L>, list<operation>] => {
+    let operationsEvent = operations;
+    const [[ticketer, [[token_id, _data], amount]], _] = Tezos.read_ticket(imported_ticket);
+    assert_ticketer_is_self_address(ticketer);
+    const newLedger = Ledger.increase_token_amount_for_user(ledger, to_, token_id, amount);
+    const transaction = make_transaction(Some(to_), token_id, amount);
+    const balance = Ledger.get_for_user(ledger, to_, token_id);
+    const balance_update: balance_event_data =
+                {
+                   owner: to_,
+                   token_id: token_id,
+                   new_balance: balance + amount,
+                   diff: int(amount),
+               };
+    const event_balance = Tezos.emit("%balance_update", balance_update);
+    operationsEvent = list([event_balance, ...operationsEvent]);
+    return [list([transaction, ...transactions]), newLedger, operationsEvent];
+};
+
+export const import_tickets_to = <L>(
+    tickets_to_import_to : tickets_to_import_to,
+    [transfers, ledger, operations] : [list<transfer>, LedgerModule<L>, list<operation>]
+): [list<transfer>, LedgerModule<L>, list<operation>] => {
+    const { to_, tickets_to_import } = tickets_to_import_to;
+    const [transaction, newLedger, events] = List.fold_left( ([r, t]) => import_ticket_to(to_, t, r), [list([]), ledger, operations], tickets_to_import );
+    const transfer = make_transfer(None(), transaction);
+
+    return [list([transfer, ...transfers]), newLedger, events];
+};
+
+export const import_tickets = <A, L>(
+    importTicket : import_ticket,
+    storage : Storage<A, L>,
+    ledger: LedgerModule<L>
+) : [list<operation>, Storage<A, L>] => {
+    let operations = list([]);
+    let finalOperations = list([]);
+
+    const [_transactions, newLedger, events] = List.fold_left(
+        ([r, t]) => import_tickets_to(t, r),
+        [list([]), ledger, operations],
+        importTicket
+    );
+
+   /** Reverse operations list **/
+
+   for (const op of events) {    
+    finalOperations = list([op, ...finalOperations]);
+  }
+  
+    return [finalOperations, Storage.set_ledger(storage, newLedger.data)];
+};

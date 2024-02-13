@@ -1,0 +1,58 @@
+#import "../data/token.jsligo" "Token"
+#import "../data/amount.jsligo" "Amount"
+#import "../data/ledger.jsligo" "Ledger"
+#import "../data/storage.jsligo" "Storage"
+
+type Storage = Storage.T;
+
+type request = {
+   owner    : address;
+   token_id : Token.T;
+};
+
+type callback =
+// @layout comb
+{
+   request : request;
+   balance : Amount.T;
+};
+
+type balance_of = 
+// @layout comb
+{
+   requests : list<request>;
+   callback : contract<list<callback>>;
+};
+export type T = balance_of;
+
+type LedgerModule = Ledger.ledger_module;
+
+const get_balance_info = <A, L>(
+   storage : Storage<A, L>,
+   ledger_module  : LedgerModule<L>,
+   request : request
+) : callback => {
+   const { owner, token_id } = request;
+   Storage.assert_token_exist(storage, token_id);
+
+   return { request, balance : ledger_module.balance_of([ledger_module.data, owner, token_id]) };
+};
+
+export const balance_of = <A, L>(
+   balance: balance_of,
+   storage: Storage<A, L>,
+   ledgerModule: LedgerModule<L>
+) : [list<operation>, Storage<A, L>] => {
+   const { requests, callback } = balance;
+
+   return [list([
+      Tezos.transaction(
+         List.map(
+            (request) => get_balance_info(storage, ledgerModule, request),
+            requests
+         ),
+         (0 as tez),
+         callback
+      )
+   ]), storage];
+};

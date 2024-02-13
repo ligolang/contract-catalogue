@@ -1,0 +1,16 @@
+#import "./data/ledger.jsligo" "Ledger"
+
+#import "./fa2.1-generic.jsligo" "Generic"
+
+export type Storage = Generic.Storage<unit, Ledger.Multi_asset.L>;
+
+const specialised : Generic.Interface<unit, Ledger.Multi_asset.L> =
+  Generic.make(Ledger.Multi_asset.ledger_module)
+
+@entry const transfer = (p, s) => specialised.transfer([p, s]);
+@entry const balance_of = (p, s) => specialised.balance_of([p, s]);
+@entry const update_operators = (p, s) => specialised.update_operators([p, s]);
+@entry const approve = (p, s) => specialised.approve([p, s]);
+@entry const export_ticket = (p, s) => specialised.export_ticket([p, s]);
+@entry const lambda_export = (p, s) => specialised.lambda_export([p, s]);
+@entry const import_ticket = (p, s) => specialised.import_ticket([p, s]);

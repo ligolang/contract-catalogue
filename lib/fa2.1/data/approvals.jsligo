@@ -1,0 +1,61 @@
+#import "errors.jsligo" "Errors"
+#import "token.jsligo" "Token"
+#import "amount.jsligo" "Amount"
+
+export type owner    = address;
+export type spender  = address;
+
+export type T = big_map<[owner, spender, Token.T], Amount.T>;
+
+export const get_amount = (
+  approvals: T,
+  owner: owner,
+  spender: spender,
+  token_id: Token.T
+): Amount.T => {
+  return match(Big_map.find_opt([owner, spender, token_id], approvals)) {
+    when(Some(amount)): do {
+      return amount
+    };
+    when(None): do {
+      return (0 as nat)
+    };
+  };
+};
+
+export const set_amount = (
+  approvals: T,
+  owner: owner,
+  spender: spender,
+  token_id: Token.T,
+  amount_: Amount.T
+): T => {
+  return Big_map.update([owner, spender, token_id], Some(amount_), approvals);
+};
+
+export const decrease_approved_amount = (
+  approvals: T,
+  from_: owner,
+  spender: spender,
+  token_id: Token.T,
+  amount_: Amount.T
+): T => {
+  let balance_ = get_amount(approvals, from_, spender, token_id);
+  assert_with_error((balance_ >= amount_), Errors.ins_balance);
+  balance_ = abs(balance_ - amount_);
+
+  return set_amount(approvals, from_, spender, token_id, balance_);
+};
+
+const increase_approved_amount = (
+  approvals: T,
+  to_: owner,
+  spender: spender,
+  token_id: Token.T,
+  amount_: Amount.T
+): T => {
+  let balance_ = get_amount(approvals, to_, spender, token_id);
+  balance_ = balance_ + amount_;
+
+  return set_amount(approvals, to_, spender, token_id, balance_);
+};

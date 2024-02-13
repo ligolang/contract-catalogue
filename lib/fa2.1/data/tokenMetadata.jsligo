@@ -1,0 +1,47 @@
+#import "token.jsligo" "Token"
+
+type data = {
+    token_id  : Token.T;
+    token_info: map<string, bytes>;
+};
+
+export type T = big_map<nat, data>;
+
+export const get_token_info = (tokenMetadata: T, tokenId: Token.T): map<string, bytes> => {
+    return match(Big_map.find_opt(tokenId, tokenMetadata)) {
+        when(Some(token)): do { return token.token_info };
+        when(None()): do { return Map.empty };
+    };
+};
+
+export const set_token_info = (tokenMetadata: T, tokenId: Token.T, tokenInfo: map<string, bytes>): T => {
+    return Big_map.update(tokenId, Some({
+        token_id: tokenId,
+        token_info: tokenInfo
+    }), tokenMetadata);
+};
+
+// (**
+//     This should be initialized at origination, conforming to either:
+//     TZIP-12 : https://gitlab.com/tezos/tzip/-/blob/master/proposals/tzip-12/tzip-12.md#token-metadata
+//     or 
+//     TZIP-16 : https://gitlab.com/tezos/tzip/-/blob/master/proposals/tzip-12/tzip-12.md#contract-metadata-tzip-016
+// *)
+
+// let data1 = Map.literal [
+//     ("name", [%bytes {| "FA2 multi asset 1" |}]);
+//     ("symbol", [%bytes {| "FMA1" |}]);
+//     ("decimals", [%bytes {| "3" |}]);
+// ]
+
+// let data3 = Map.literal [
+//     ("name", [%bytes {| "FA2 multi asset 3" |}]);
+//     ("symbol", [%bytes {| "FMA3" |}]);
+//     ("decimals", [%bytes {| "3" |}]);
+// ]
+
+
+// let init () : t = Big_map.literal [
+//     (1n, {token_id=1n;token_info=data1});
+//     (3n, {token_id=3n;token_info=data3});
+// ]

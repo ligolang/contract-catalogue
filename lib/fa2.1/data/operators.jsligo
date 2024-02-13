@@ -1,0 +1,75 @@
+#import "errors.jsligo" "Errors"
+#import "token.jsligo" "Token"
+
+type owner    = address;
+type operator = address;
+
+export type t = big_map<[owner, Token.T], set<operator>>;
+
+export const assert_authorisation = (
+   operators : t,
+   from_ : address,
+   token_id : Token.T
+): unit => {
+   const sender_ = Tezos.get_sender();
+   if (sender_ == from_) {
+      return;
+   } else {
+      const authorized = match(Big_map.find_opt([from_, token_id], operators)) {
+         when(Some(v)): do { return v };
+         when(None): do { return Set.empty };
+      };
+      
+      if (Set.mem(sender_, authorized)) {
+         return;
+      } else {
+         failwith(Errors.not_operator);
+      }
+   };
+};
+
+const assert_update_permission = (owner: owner): unit => {
+   assert_with_error(owner == Tezos.get_sender(), Errors.only_sender_manage_operators);
+};
+
+export const add_operator = (
+   operators: t,
+   owner: owner,
+   operator: operator,
+   token_id: Token.T
+): t => {
+   if (owner == operator) {
+      return operators;
+   } else {
+      assert_update_permission(owner);
+      let auth = match(Big_map.find_opt([owner, token_id], operators)) {
+         when(Some(v)): do { return v };
+         when(None): do { return Set.empty };
+      };
+      auth = Set.add(operator, auth);
+      return Big_map.update([owner, token_id], Some(auth), operators);
+   };
+};
+
+export const remove_operator = (
+   operators: t,
+   owner: owner,
+   operator: operator,
+   token_id: Token.T
+): t => {
+   if (owner == operator) {
+      return operators;
+   } else {
+      assert_update_permission(owner);
+      let auth = match(Big_map.find_opt([owner, token_id], operators)) {
+         when(Some(v)): do { return v };
+         when(None): do { return Set.empty };
+      };
+      auth = Set.remove(operator, auth);
+      if (Set.size(auth) == (0 as nat)) {
+         return Big_map.remove([owner, token_id], operators);
+      } else {
+         return Big_map.update([owner, token_id], Some(auth), operators);
+      };
+   };
+};

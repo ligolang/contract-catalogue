@@ -1,0 +1,7 @@
+// #import "storage.jsligo" "Storage"
+
+export type T = address;
+
+// export const isCallerAdmin = <A, L>(s: Storage.T): bool => {
+//   return caller == admin;
+// };
