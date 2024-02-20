@@ -14,11 +14,11 @@ export type operators = big_map<[address, operator], set<nat>>; //[owner,operato
 
 
 export type storage<T> = {
+   extension: T,
    ledger: ledger,
    operators: operators,
    token_metadata: TZIP12.tokenMetadata,
-   metadata: TZIP16.metadata,
-   extension: T
+   metadata: TZIP16.metadata
 };
 
 type ret<T> = [list<operation>, storage<T>];
