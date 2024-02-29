@@ -5,7 +5,7 @@
 export type Storage = Generic.Storage<unit, Ledger.NFT.L>;
 
 const specialised : Generic.Interface<unit, Ledger.NFT.L> =
-  Generic.make(Ledger.NFT.ledger_module)
+Generic.make(Ledger.NFT.ledger_module)
 
 @entry const transfer = (p, s) => specialised.transfer([p, s]);
 @entry const balance_of = (p, s) => specialised.balance_of([p, s]);

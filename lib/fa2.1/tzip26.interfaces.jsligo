@@ -1,7 +1,6 @@
-#import "tzip12.interfaces.jsligo" "TZIP12Interfaces"
 #import "tzip26.datatypes.jsligo" "TZIP26Datatypes"
 
-export interface FA2_1 extends TZIP12Interfaces.FA2 {
+export interface FA2_1 {
     // entry points
 
     /**
