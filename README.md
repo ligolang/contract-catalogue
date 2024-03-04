@@ -14,6 +14,18 @@
     Multi Asset Token where there are several token ids (available in different amounts)
     and they can belong to multiple addresses (m:n)
 
+- the [interface](./lib/fa2.1/common/tzip26.interfaces.jsligo) and [types](./lib/fa2.1/common/tzip26.datatypes.jsligo) defined by [FA2.1 (TZIP-26)](https://tzip.tezosagora.org/proposal/tzip-26/)
+- a [LIGO](https://ligolang.org/) implementation for :
+  - unique [NFTs](./lib/fa2.1/fa2.1-NFT.jsligo): This contract implements the FA2.1 interface for
+    NFT(non-fungible-token) where a token can belong to only one address at a time
+    (1:1)
+  - [Single Assets](./lib/fa2.1/fa2.1-single-asset.jsligo): This is an implementation of
+    Single Asset Token where a different amount of single token can belong to multiple
+    addresses at a time (1:n)
+  - [Multiple Assets](./lib/fa2.1/fa2.1-multi-asset.jsligo): This is an implementation of
+    Multi Asset Token where there are several token ids (available in different amounts)
+    and they can belong to multiple addresses (m:n)
+
 ## Use the implementation directly
 
 The library provides you 3 template implementations ready to deploy

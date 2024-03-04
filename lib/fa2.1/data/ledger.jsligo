@@ -1,0 +1,336 @@
+#import "errors.jsligo" "Errors"
+#import "token.jsligo" "Token"
+#import "amount.jsligo" "Amount"
+
+type owner = address;
+
+export type ledger_module<L> = {
+  data : L;
+  empty : L;
+  increase : (p : [L, owner, Token.T, Amount.T]) => L;
+  decrease : (p : [L, owner, Token.T, Amount.T]) => L;
+  balance_of : (p: [L, owner, Token.T]) => Amount.T;
+  supply: (p: [L, Token.T]) => Amount.T;
+};
+
+//@inline
+export const decrease_token_amount_for_user = <L>(
+  ledger_module: ledger_module<L>,
+  from_: owner,
+  token_id: Token.T,
+  amount_: nat
+): ledger_module<L> => {
+  const data = ledger_module.decrease([ledger_module.data, from_, token_id, amount_]);
+
+  return { ...ledger_module, data };
+};
+
+//@inline
+export const increase_token_amount_for_user = <L>(
+  ledger_module: ledger_module<L>,
+  to_: owner,
+  token_id: Token.T,
+  amount_: nat
+): ledger_module<L> => {
+  const data = ledger_module.increase([ledger_module.data, to_, token_id, amount_]);
+
+  return { ...ledger_module, data };
+};
+
+//@inline
+export const get_supply = <L>(
+  ledger_module: ledger_module<L>,
+  token_id: Token.T
+): Amount.T => {
+  return ledger_module.supply([ledger_module.data, token_id]);
+};
+
+//@inline
+export const get_for_user = <L>(
+  ledger_module: ledger_module<L>,
+  owner: owner,
+  token_id: Token.T
+): Amount.T => {
+  return ledger_module.balance_of([ledger_module.data, owner, token_id]);
+};
+
+
+/* Possible types as defined in the TZIP-12 */
+
+export namespace Common_Asset {
+  export const balance_of = (value: option<Amount.T>): Amount.T => {
+    match(value) {
+      when(Some(v)): do { return v };
+      when(None()): do { return (0 as nat) };
+    };
+  };
+
+  export const add_to_val = (amount_: Amount.T, old_value: option<Amount.T>): Amount.T => {
+    const value = balance_of(old_value);
+
+    return value + amount_;
+  };
+
+  export const sub_to_val = (amount_: Amount.T, old_value: option<Amount.T>): Amount.T => {
+    const value = balance_of(old_value);
+    assert_with_error(value >= amount_, Errors.ins_balance);
+
+    return abs(value - amount_);
+  };
+};
+
+export namespace Single_asset {
+  export type L = {
+    values: big_map<address, Amount.T>;
+    supply: Amount.T;
+  };
+
+  export const empty: L = {
+    values: Big_map.empty;
+    supply: (0 as nat);
+  };
+
+  export const get_for_user = (ledger: L, owner: owner): option<Amount.T> =>
+    Big_map.find_opt(owner, ledger.values);
+
+  export const set_for_user = (ledger: L, owner: owner, value: Amount.T): L => {
+    const values = Big_map.update(owner, Some(value), ledger.values);
+
+    return { ...ledger, values };
+  };
+
+  export const get_supply = (ledger: L): Amount.T => {
+    return ledger.supply;
+  };
+
+  export const set_supply = (ledger: L, value: Amount.T): L => {
+    const supply = value;
+
+    return { ...ledger, supply };
+  };
+
+  export const decrease = (
+    [ledger, from_, _token_id, amount_]: [L, owner, Token.T, Amount.T]
+  ) : L => {
+    return set_supply(
+      set_for_user(
+        ledger,
+        from_,
+        Common_Asset.sub_to_val(amount_, get_for_user(ledger, from_))
+      ),
+      Common_Asset.sub_to_val(amount_, Some(get_supply(ledger)))
+    );
+  };
+
+  export const increase = (
+    [ledger, to_, _token_id, amount_] : [L, owner, Token.T, Amount.T]
+  ): L => {
+    return set_supply(
+      set_for_user(
+        ledger,
+        to_,
+        Common_Asset.add_to_val(amount_, get_for_user(ledger, to_))
+      ),
+      Common_Asset.add_to_val(amount_, Some(get_supply(ledger)))
+    );
+  };
+
+  export const balance_of = (
+    [ledger, owner, _token_id]: [L, owner, Token.T]
+  ) : Amount.T => {
+    return Common_Asset.balance_of(get_for_user(ledger, owner));
+  };
+
+  export const supply = (
+    [ledger, _token_id]: [L, Token.T]
+  ): Amount.T => {
+    return get_supply(ledger);
+  };
+
+  export const ledger_module = (data: L): ledger_module<L> => {
+    return {
+      data,
+      empty,
+      increase,
+      decrease,
+      balance_of,
+      supply,
+    };
+  };
+};
+
+export namespace Multi_asset {
+  export type L = {
+    ledger: big_map<[address, Token.T], Amount.T>;
+    supply: big_map<Token.T, Amount.T>;
+  };
+
+  export const empty: L = {
+    ledger: Big_map.empty;
+    supply: Big_map.empty;
+  };
+
+  export const make_key = (a: address, t: Token.T): [address, Token.T] => {
+    return [a, t];
+  };
+
+  export const get_for_user = (ledger: L, owner: owner, token_id: Token.T): option<Amount.T> => {
+    const key = make_key(owner, token_id);
+
+    return Big_map.find_opt(key, ledger.ledger);
+  };
+
+  export const set_for_user = (ledger: L, owner: owner, token_id: Token.T, value: Amount.T): L => {
+    const key = make_key(owner, token_id);
+    const assets = Big_map.update(key, Some(value), ledger.ledger);
+
+    return { ...ledger, ledger: assets };
+  };
+
+  export const get_supply = (ledger: L, token_id: Token.T): Amount.T => {
+    return match(Big_map.find_opt(token_id, ledger.supply)) {
+      when(Some(n)): do { return n };
+      when(None()): do { return (0 as nat) };
+    };
+  };
+  
+  export const set_supply = (ledger: L, token_id: Token.T, value: Amount.T): L => {
+    const supply = Big_map.update(token_id, Some(value), ledger.supply);
+
+    return { ...ledger, supply };
+  };
+
+  export const decrease = (
+    [ledger, from_, token_id, amount_] : [L, owner, Token.T, Amount.T]
+  ): L => {
+    // const balance_option = get_for_user(ledger, from_, token_id);
+    // const balance_ = Common_Asset.sub_to_val(amount_, get_for_user(ledger, from_, token_id));
+    // let newLedger = set_for_user(ledger, from_, token_id, balance_);
+
+    // return ledger;
+    return set_supply(
+      set_for_user(
+        ledger,
+        from_,
+        token_id,
+        Common_Asset.sub_to_val(amount_, get_for_user(ledger, from_, token_id))
+      ),
+      token_id,
+      Common_Asset.sub_to_val(amount_, Some(get_supply(ledger, token_id)))
+    );
+  };
+
+  export const increase = (
+    [ledger, to_, token_id, amount_] : [L, owner, Token.T, Amount.T]
+  ): L => {
+    return set_supply(
+      set_for_user(
+        ledger, 
+        to_, 
+        token_id, 
+        Common_Asset.add_to_val(amount_, get_for_user(ledger, to_, token_id))
+      ),
+      token_id, 
+      Common_Asset.add_to_val(amount_, Some(get_supply(ledger, token_id)))
+    );
+  };
+
+  export const balance_of = (
+    [ledger, owner, token_id]: [L, owner, Token.T]
+  ): Amount.T => {
+    const value = get_for_user(ledger, owner, token_id);
+
+    return Common_Asset.balance_of(value);
+  };
+
+  export const supply = (
+    [ledger, token_id]: [L, Token.T]
+  ): Amount.T => {
+    return get_supply(ledger, token_id);
+  };
+
+  export const ledger_module = (data: L): ledger_module<L> => {
+    return {
+      data,
+      empty,
+      increase,
+      decrease,
+      balance_of,
+      supply,
+    };
+  };
+}
+
+export namespace NFT {
+  export type L = big_map<Token.T, address>;
+
+  export const empty: L = Big_map.empty;
+
+  export const _balance_of = (address: address, value: option<owner>): Amount.T => {
+    return match(value) {
+      when(Some(own)): do { return (own == address ? (1 as nat) : (0 as nat)) };
+      when(None()): do { return (0 as nat) };
+    };
+  };
+
+  export const add_to_val = (address: address, amount: Amount.T): option<owner> => {
+    return amount == (1 as nat) ? Some(address) : failwith(Errors.amount_net_expected);
+  };
+
+  export const sub_to_val = (amount: Amount.T): option<owner> => {
+    return amount == (1 as nat) ? (None() as option<owner>) : failwith(Errors.amount_net_expected);
+  };
+
+  export const get_for_user = (ledger: L, token_id: Token.T): option<owner> => {
+    return Big_map.find_opt(token_id, ledger);
+  };
+
+  export const set_for_user = (ledger: L, owner: owner, token_id: Token.T): L => {
+    return Big_map.update(token_id, Some(owner), ledger);
+  };
+
+  export const decrease = (
+    [ledger, from_, token_id, amount_] : [L, owner, Token.T, Amount.T]
+  ): L => {
+    get_for_user(ledger, token_id);
+    sub_to_val(amount_);
+
+    return set_for_user(ledger, from_, token_id);
+  };
+
+  export const increase = (
+    [ledger, to_, token_id, amount_] : [L, owner, Token.T, Amount.T]
+  ): L => {
+    get_for_user(ledger, token_id);
+    add_to_val(to_, amount_);
+
+    return set_for_user(ledger, to_, token_id);
+  };
+
+  export const balance_of = (
+    [ledger, owner, token_id]: [L, owner, Token.T]
+  ): Amount.T => {
+    const b = _balance_of(owner, get_for_user(ledger, token_id));
+    return (b as Amount.T);
+  };
+
+  export const supply = (
+    [ledger, token_id]: [L, Token.T]
+  ): Amount.T => {
+    return match(get_for_user(ledger, token_id)) {
+      when(Some(_)): do { return (1 as nat) };
+      when(None()): do { return (0 as nat) };
+    };
+  };
+
+  export const ledger_module = (data: L): ledger_module<L> => {
+    return {
+      data,
+      empty,
+      increase,
+      decrease,
+      balance_of,
+      supply,
+    };
+  };
+}

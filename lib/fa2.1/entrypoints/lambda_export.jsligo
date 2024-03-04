@@ -1,0 +1,140 @@
+#import "../data/errors.jsligo" "Errors"
+#import "../data/token.jsligo" "Token"
+#import "../data/ledger.jsligo" "Ledger"
+#import "../data/storage.jsligo" "Storage"
+#import "../data/approvals.jsligo" "Approvals"
+#import "./transfer.jsligo" "Transfer"
+
+type Storage = Storage.T;
+
+type ExportedTicket = ticket<[Token.T, option<bytes>]>;
+
+type TicketToExport =
+   // @layout comb
+   {
+      from_    : address;
+      token_id : Token.T;
+      amount   : nat;
+   };
+
+type destination = (tickets: list<ExportedTicket>) => list<operation>;
+
+type ExportTicketsTo =
+   // @layout comb
+   {
+      ticketsToExport : list<TicketToExport>;
+      destination : destination;
+   };
+
+type ExportTicket = ExportTicketsTo;
+export type T = ExportTicket;
+
+type ProxyParameters = {
+   tickets: list<ExportedTicket>,
+   action: (tickets: list<ExportedTicket>) => list<operation>
+};
+
+type balance_event_data =
+  @layout("comb")
+  {
+    owner: address,
+    token_id: nat,
+    new_balance: nat,
+    diff: int
+  };
+
+type allowance_update_type = 
+   @layout("comb")
+{
+   owner: address,
+   spender: address,
+   token_id: nat,
+   new_allowance: nat,
+   diff: int
+};
+
+type LedgerModule = Ledger.ledger_module;
+
+const create_ticket = <A, L>(
+   storage: Storage<A, L>,
+   ticketToExport : TicketToExport,
+   ledger: LedgerModule<L>
+) : [list<operation>, ExportedTicket, LedgerModule<L>, Storage<A, L>] => {
+   const { from_, token_id, amount } = ticketToExport;
+   
+   let operations : list<operation> = list([]);
+
+   /** Allowance & Operator checks **/
+
+   Storage.assert_token_exist(storage, token_id);
+   const approvals = Storage.get_approvals(storage);
+
+   const oldApprovals = Approvals.get_amount(approvals, from_, Tezos.get_sender(), token_id);
+   const authorizedApprovals = Transfer.authorize_transfer(storage, approvals, from_, token_id, amount);
+   const newApprovals = Approvals.get_amount(authorizedApprovals, from_, Tezos.get_sender(), token_id);
+
+   if (oldApprovals != newApprovals) {
+       const allowance_update: allowance_update_type = {
+           owner: from_,
+           spender: Tezos.get_sender(),
+           token_id: token_id,
+           new_allowance: newApprovals,
+           diff: newApprovals - oldApprovals;
+       };
+       const allowance_event_op = Tezos.emit("%allowance_update", allowance_update);
+       operations = list([allowance_event_op, ...operations]);
+   }
+   const balance = Ledger.get_for_user(ledger, from_, token_id);
+   const balance_update: balance_event_data =
+                {
+                   owner: from_,
+                   token_id: token_id,
+                   new_balance: abs(balance - amount),
+                   diff: -amount,
+               };
+   const event_balance = Tezos.emit("%balance_update", balance_update);
+   operations = list([event_balance, ...operations]);
+   const newLedger = Ledger.decrease_token_amount_for_user(ledger, from_, token_id, amount);
+   let newStorage = Storage.set_approvals(storage, authorizedApprovals);
+   newStorage = Storage.set_ledger(newStorage, newLedger.data);
+
+   const ticket = Option.unopt_with_error(
+      Tezos.create_ticket([token_id, None()], amount),
+      Errors.cannot_create_ticket
+   );
+   return [operations, ticket, newLedger, newStorage];
+};
+
+export const lambda_export = <A, L>(
+   exportTicket : ExportTicket,
+   storage : Storage<A, L>,
+   ledger : LedgerModule<L>
+) : [list<operation>, Storage<A, L>] => {
+   let finalOperations : list<operation> = list([]);
+   const { ticketsToExport, destination } = exportTicket;
+
+   const [tickets, newLedger, newStorage, newOperations] = List.fold_left(
+      ([[lt, l, s, ops], tk]) => {
+         const [ticketOps, ticket, updatedLedger, updatedStorage] = create_ticket(s, tk, l);
+         let combinedOps = list([...ops, ...ticketOps]);
+         return [list([ticket, ...lt]), updatedLedger, updatedStorage, combinedOps];
+      },
+      [list([]), ledger, storage, finalOperations],
+      ticketsToExport
+   );
+   
+   const operation = Tezos.transaction(
+      {
+         tickets,
+         action: destination
+      },
+      Tezos.get_amount(),
+      Option.unopt_with_error(
+         Tezos.get_contract_opt(storage.proxy),
+         Errors.invalid_proxy
+      )
+   );
+   finalOperations = list([operation, ...newOperations]);
+
+   return [finalOperations, Storage.set_ledger(newStorage, newLedger.data)];
+};

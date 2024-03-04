@@ -1,0 +1,235 @@
+#import "../data/token.jsligo" "Token"
+#import "../data/amount.jsligo" "Amount"
+#import "../data/approvals.jsligo" "Approvals"
+#import "../data/operators.jsligo" "Operators"
+#import "../data/ledger.jsligo" "Ledger"
+#import "../data/storage.jsligo" "Storage"
+#import "../data/errors.jsligo" "Errors"
+
+type storage = Storage.T;
+
+type atomic_trans =
+// @layout comb
+{
+   to_      : address;
+   amount   : Amount.T;
+   token_id : Token.T;
+};
+
+type transfer_from = {
+   from_ : address;
+   txs   : list<atomic_trans>;
+};
+
+type balance_event_data =
+  @layout("comb")
+  {
+    owner: address,
+    token_id: nat,
+    new_balance: nat,
+    diff: int
+  };
+
+type allowance_update_type = 
+   @layout("comb")
+{
+   owner: address,
+   spender: address,
+   token_id: nat,
+   new_allowance: nat,
+   diff: int
+};
+
+type transfer_event_type = 
+   @layout("comb")
+{
+   from_: address,
+   to_: address,
+   token_id: nat,
+   amount: nat
+};
+
+type transfer = list<transfer_from>;
+export type t = transfer;
+
+type ledger_module = Ledger.ledger_module;
+
+export const authorize_transfer = <A, L>(
+   storage: storage<A, L>,
+   approvals: Approvals.T,
+   from_: address,
+   token_id: Token.T,
+   amount: Amount.T
+): Approvals.T => {
+
+  if (from_ == Tezos.get_sender()) {
+    return approvals;
+  }
+
+  const current_allowance: nat = Approvals.get_amount(approvals, from_, Tezos.get_sender(), token_id);
+  
+  if (current_allowance > (0 as nat)) {
+    if (current_allowance >= amount) {
+      return Approvals.decrease_approved_amount(approvals, from_, Tezos.get_sender(), token_id, amount);
+    }
+  }
+
+   return match(Storage.get_operators(storage)) {
+      when(Some(operators)): do {
+         Operators.assert_authorisation(operators, from_, token_id);
+         return approvals;
+      };
+      when(None()): do {
+         failwith(Errors.insufficient_allowance);
+      };
+   };
+};
+
+type event_map_key = [address, Token.T];
+type allowance_event_map_key = [address, address, Token.T];
+type event_map_value = [nat, int];
+
+const atomic_trans = <A, L>(
+   storage : storage<A, L>,
+   from_ : address,
+   [[ledger, approvals, operations, event_balance, event_allowance], transfer] : [[ledger_module<L>, Approvals.T, list<operation>, map<event_map_key, event_map_value>, map<allowance_event_map_key, event_map_value>], atomic_trans]
+): [ledger_module<L>, Approvals.T, list<operation>, map<event_map_key, event_map_value>, map<allowance_event_map_key, event_map_value>] => {
+   let operationsEvent = operations;
+   let event_balance_map: map<event_map_key, event_map_value> = event_balance;
+   let event_allowance_map: map<allowance_event_map_key, event_map_value> = event_allowance;
+
+   const { to_, token_id, amount } = transfer;
+   Storage.assert_token_exist(storage, token_id);
+
+   const oldApprovals = Approvals.get_amount(approvals, from_, Tezos.get_sender(), token_id);
+   const authorizedApprovals = authorize_transfer(storage, approvals, from_, token_id, amount);
+   const newApprovals = Approvals.get_amount(authorizedApprovals, from_, Tezos.get_sender(), token_id);
+   const balance_from = Ledger.get_for_user(ledger, from_, token_id);
+   const balance_to = Ledger.get_for_user(ledger, to_, token_id);
+
+   let diff_from: int = 0;
+   let diff_to: int = 0;
+   let diff_allowance: int = 0;
+   const key_from: event_map_key = [from_, token_id];
+   const key_to: event_map_key = [to_, token_id];
+   const key_allowance: allowance_event_map_key = [from_, Tezos.get_sender(), token_id];
+
+   const oldData_from: option<event_map_value> = Map.find_opt(key_from, event_balance_map);
+   const oldData_to: option<event_map_value> = Map.find_opt(key_to, event_balance_map);
+   const oldData_allowance: option<event_map_value> = Map.find_opt(key_allowance, event_allowance_map);
+   let new_balance_from: nat = abs(balance_from - amount);
+   let new_balance_to: nat = balance_to + amount;
+
+   match(oldData_from) {
+        when(Some(data)): do { diff_from = data[1] - amount;
+        event_balance_map = Map.update(key_from, Some([new_balance_from, diff_from]), event_balance_map)};
+        when(None): do { diff_from = - amount;
+        event_balance_map = Map.add(key_from, [new_balance_from, diff_from], event_balance_map); };
+    };
+
+    match(oldData_to) {
+        when(Some(data)): do { diff_to = data[1] + amount;
+        event_balance_map = Map.update(key_to, Some([new_balance_to, diff_to]), event_balance_map);};
+        when(None): do { diff_to = int(amount);
+        event_balance_map = Map.add(key_to, [new_balance_to, diff_to], event_balance_map); };
+    };
+
+   if (oldApprovals != newApprovals) {
+       match(oldData_allowance) {
+        when(Some(data)): do { diff_allowance = data[1] + (newApprovals - oldApprovals);
+        event_allowance_map = Map.update(key_allowance, Some([newApprovals, diff_allowance]), event_allowance_map);};
+        when(None): do { diff_allowance = newApprovals - oldApprovals;
+         event_allowance_map = Map.add(key_allowance, [newApprovals, diff_allowance], event_allowance_map);};
+    };
+   }
+   const transfer_event_data: transfer_event_type =
+      {
+       from_: from_,
+       to_: to_,
+       token_id: token_id,
+       amount: amount
+   };
+   const transfer_event_op = Tezos.emit("%transfer_event", transfer_event_data);
+   operationsEvent = list([transfer_event_op, ...operationsEvent]);
+
+   const newLedger = Ledger.decrease_token_amount_for_user(ledger, from_, token_id, amount);
+
+   return [Ledger.increase_token_amount_for_user(newLedger, to_, token_id, amount), authorizedApprovals, operationsEvent, event_balance_map, event_allowance_map];
+};
+
+const transfer_from = <A, L>(
+   storage: storage<A, L>,
+   [[ledger, approvals, operations, event_balance, event_allowance], transfer] : [[ledger_module<L>, Approvals.T, list<operation>, map<event_map_key, event_map_value>, map<allowance_event_map_key, event_map_value>], transfer_from]
+): [ledger_module<L>, Approvals.T, list<operation>, map<event_map_key, event_map_value>, map<allowance_event_map_key, event_map_value>] => {
+   const { from_, txs } = transfer;
+   let currentOperations = operations;
+   let event_balance_map: map<event_map_key, event_map_value> = event_balance;
+   let event_allowance_map: map<allowance_event_map_key, event_map_value> = event_allowance;
+
+   return List.fold_left(atomic_trans(storage, from_), [ledger, approvals, currentOperations, event_balance_map, event_allowance_map], txs);
+}
+
+export const transfer = <A, L>(
+   transfer: transfer,
+   storage: storage<A, L>,
+   ledger: ledger_module<L>
+): [list<operation>, storage<A, L>] => {
+   let operations = list([]);
+   let finalOperations = list([]);
+   let event_balance_map: map<event_map_key, event_map_value> = Map.empty;
+   let event_allowance_map: map<allowance_event_map_key, event_map_value> = Map.empty;
+
+   const approvals = Storage.get_approvals(storage);
+   const [newLedger, newApprovals, operationsEvent, event_balance, event_allowance] = List.fold_left(transfer_from(storage), [ledger, approvals, operations, event_balance_map, event_allowance_map ], transfer);
+
+   let newStorage = Storage.set_approvals(storage, newApprovals);
+   newStorage = Storage.set_ledger(newStorage, newLedger.data);
+
+   let balance_updates: list<operation> = Map.fold(
+      ([acc, [key, value]]: [list<operation>, [event_map_key, event_map_value]]) => {
+         if (value[1] != 0) {
+               const data: balance_event_data = 
+               {
+                  owner: key[0],
+                  token_id: key[1],
+                  new_balance: value[0],
+                  diff: value[1]
+               };
+               const event_balance = Tezos.emit("%balance_update", data);
+               return list([event_balance, ...acc]);
+         }
+         return acc;
+      },
+      event_balance,
+      list([])
+   )
+
+   let allowance_updates: list<operation> = Map.fold(
+      ([acc, [key, value]]: [list<operation>, [allowance_event_map_key, event_map_value]]) => {
+         if (value[1] != 0) {
+               const data: allowance_update_type = 
+               {
+                  owner: key[0],
+                    spender: key[1],
+                    token_id: key[2],
+                    new_allowance: value[0],
+                    diff: value[1]
+               };
+               const event_allowance_op = Tezos.emit("%allowance_update", data);
+               return list([event_allowance_op, ...acc]);
+         }
+         return acc;
+      },
+      event_allowance,
+      list([])
+   )
+
+  /** Reverse operations list **/
+
+  for (const op of operationsEvent) {    
+    finalOperations = list([op, ...finalOperations]);
+  }
+  finalOperations = list([...allowance_updates, ...finalOperations]);
+  finalOperations = list([...balance_updates, ...finalOperations]);
+   return [finalOperations, newStorage];
+};

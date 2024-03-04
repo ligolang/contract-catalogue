@@ -1,0 +1,91 @@
+#import "../data/errors.jsligo" "Errors"
+#import "../data/operators.jsligo" "Operators"
+#import "../data/ledger.jsligo" "Ledger"
+#import "../data/storage.jsligo" "Storage"
+#import "../data/token.jsligo" "Token"
+
+type Storage = Storage.T;
+
+type operator =
+// @layout comb
+{
+      owner    : address;
+      operator : address;
+      token_id : nat;
+};
+
+export type operator_update =
+@layout("comb")
+{
+    owner       : address;
+    operator    : address;
+    token_id    : Token.T;
+    is_operator : bool;
+};
+
+type operator_update_event =
+@layout("comb")
+{
+    sender         : address;
+    operator_update: list<operator_update>; 
+};
+
+type unit_update =
+| ["AddOperator", operator]
+| ["RemoveOperator", operator];
+
+type update_operators = list<unit_update>;
+export type T = update_operators;
+
+const _update_ops = (
+      [updates, operators] : [list<operator_update>, Operators.t],
+      update : unit_update
+) : [list<operator_update>, Operators.t] => {
+      return match(update) {
+            when(AddOperator(operator)): do {
+                  const { owner, operator, token_id } = operator;
+                  const newOperators = Operators.add_operator(operators, owner, operator, token_id);
+                  const updatedOp: operator_update = {
+                        owner,
+                        operator,
+                        token_id,
+                        is_operator: true
+                  };
+                  return [list([updatedOp, ...updates]), newOperators];
+            };
+            when(RemoveOperator(operator)): do {
+                  const { owner, operator, token_id } = operator;
+                  const newOperators = Operators.remove_operator(operators, owner, operator, token_id);
+                  const updatedOp: operator_update = {
+                        owner,
+                        operator,
+                        token_id,
+                        is_operator: true
+                  };
+
+                  return [list([updatedOp, ...updates]), newOperators];
+            };
+      };
+};
+
+export const update_ops = <A, L>(
+      updates: update_operators,
+      storage: Storage<A, L>
+) : [list<operation>, Storage<A, L>] => {
+      const sender = Tezos.get_sender();
+      return match(Storage.get_operators(storage)) {
+            when(Some(operators)): do {
+                  const [newUpdates, newOperators] = List.fold_left(
+                        ([acc, item]) => _update_ops(acc, item),
+                        [list([]), operators],
+                        updates
+                  );
+                  
+                  return [
+                        list([ Tezos.emit("%operator_update", { sender, newUpdates }) ]),
+                        Storage.set_operators(storage, newOperators)
+                  ];
+            };
+            when(None()): failwith(Errors.storage_has_no_operators);
+      };
+};

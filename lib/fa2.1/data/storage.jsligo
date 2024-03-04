@@ -1,0 +1,60 @@
+#import "errors.jsligo" "Errors"
+#import "metadata.jsligo" "Metadata"
+#import "token.jsligo" "Token"
+#import "operators.jsligo" "Operators"
+#import "approvals.jsligo" "Approvals"
+#import "tokenMetadata.jsligo" "TokenMetadata"
+#import "ledger.jsligo" "Ledger"
+#import "proxy.jsligo" "Proxy"
+
+export type T<A, L> = {
+    metadata: Metadata.t;
+    assets: L;
+    token_metadata: TokenMetadata.T;
+    operators: option<Operators.t>;
+    approvals: Approvals.T;
+    proxy: Proxy.T;
+    extension: A;
+};
+
+export const token_exist = <A, L>(s: T<A, L>, token_id): bool => {
+    return Big_map.mem(token_id, s.token_metadata);
+};
+
+export const assert_token_exist = <A, L>(s: T<A, L>, token_id): unit => {
+    if (!token_exist(s, token_id)) {
+        failwith(Errors.undefined_token);
+    };
+};
+
+const get_ledger = <A, L>(s: T<A, L>): L => {
+    return s.assets;
+};
+
+export const set_ledger = <A, L>(s: T<A, L>, ledger: L): T<A, L> => {
+    return { ...s, assets: ledger };
+};
+
+export const get_operators = <A, L>(s: T<A, L>): option<Operators.t> => {
+    return s.operators;
+};
+
+export const set_operators = <A, L>(s: T<A, L>, operators: Operators.t): T<A, L> => {
+    return { ...s, operators: Some(operators) };
+};
+
+export const get_approvals = <A, L>(s: T<A, L>): Approvals.T => {
+    return s.approvals;
+};
+
+export const set_approvals = <A, L>(s: T<A, L>, approvals: Approvals.T): T<A, L> => {
+    return { ...s, approvals };
+};
+
+export const get_token_metadata = <A, L>(s: T<A, L>): TokenMetadata.T => {
+    return s.token_metadata;
+};
+
+export const set_token_metadata = <A, L>(s: T<A, L>, token_metadata: TokenMetadata.T): T<A, L> => {
+    return { ...s, token_metadata };
+};

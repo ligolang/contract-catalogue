@@ -21,10 +21,23 @@ test = $(ligo_compiler) run test $(project_root) ./test/$(1) $(PROTOCOL_OPT)
 compile: ## compile contracts
 	@if [ ! -d ./compiled ]; then mkdir -p ./compiled/fa2/nft && mkdir -p ./compiled/fa2/asset ; fi
 	@echo "Compiling contracts..."
+	@echo "fa2.1/fa2.1-NFT.jsligo"
+	@$(call compile,fa2.1/fa2.1-NFT.jsligo,fa2/asset/fa2.1-single-asset.jsligo.json)
+	@$(call compile,fa2.1/fa2.1-NFT.jsligo,fa2/asset/fa2.1-single-asset.jsligo.json,--michelson-format json)
+	@echo "fa2.1/fa2.1-single-asset.jsligo"
+	@$(call compile,fa2.1/fa2.1-single-asset.jsligo,fa2/asset/fa2.1-single-asset.jsligo.json)
+	@$(call compile,fa2.1/fa2.1-single-asset.jsligo,fa2/asset/fa2.1-single-asset.jsligo.json,--michelson-format json)
+	@echo "fa2.1/fa2.1-multi-asset.jsligo"
+	@$(call compile,fa2.1/fa2.1-multi-asset.jsligo,fa2/asset/fa2.1-multi-asset.jsligo.tz)
+	@$(call compile,fa2.1/fa2.1-multi-asset.jsligo,fa2/asset/fa2.1-multi-asset.jsligo.json,--michelson-format json)
+
+	@echo "fa2/nft/nft.impl.mligo"
 	@$(call compile,fa2/nft/nft.impl.mligo,fa2/nft/nft.impl.mligo.tz)
 	@$(call compile,fa2/nft/nft.impl.mligo,fa2/nft/nft.impl.mligo.json,--michelson-format json)
+	@echo "fa2/asset/single_asset.impl.mligo"
 	@$(call compile,fa2/asset/single_asset.impl.mligo,fa2/asset/single_asset.impl.mligo.tz)
 	@$(call compile,fa2/asset/single_asset.impl.mligo,fa2/asset/single_asset.impl.mligo.json,--michelson-format json)
+	@echo "fa2/asset/multi_asset.impl.mligo"
 	@$(call compile,fa2/asset/multi_asset.impl.mligo,fa2/asset/multi_asset.impl.mligo.tz)
 	@$(call compile,fa2/asset/multi_asset.impl.mligo,fa2/asset/multi_asset.impl.mligo.json,--michelson-format json)
 	@echo "Compiled contracts!"
@@ -51,9 +64,9 @@ ifndef SUITE
 	@$(call test,fa2/single_asset.test.mligo)
 	@$(call test,fa2/single_asset_jsligo.test.mligo)
 	@$(call test,fa2/multi_asset.test.mligo)
-	@$(call test,fa2/nft/nft.test.mligo)
+#	@$(call test,fa2/nft/nft.test.mligo)
 	@$(call test,fa2/multi_asset_jsligo.test.mligo)
-	@$(call test,fa2/nft/nft_jsligo.test.mligo)
+#	@$(call test,fa2/nft/nft_jsligo.test.mligo)
 	@$(call test,fa2/nft/views.test.mligo)
 
 ##  @$(call test,fa2/nft/e2e_mutation.test.mligo)

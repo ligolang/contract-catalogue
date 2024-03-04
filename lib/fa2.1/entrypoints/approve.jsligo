@@ -1,0 +1,92 @@
+#import "../data/errors.jsligo" "Errors"
+#import "../data/token.jsligo" "Token"
+#import "../data/approvals.jsligo" "Approvals"
+#import "../data/storage.jsligo" "Storage"
+
+type Storage = Storage.T;
+
+type approve =
+// @layout comb
+{
+  owner     : address;
+  spender   : address;
+  token_id  : Token.T;
+  old_value : nat;
+  new_value : nat;
+};
+
+type approvals = list<approve>;
+export type T = approvals;
+
+
+type allowance_update_type =
+@layout("comb")
+{
+  owner     : address;
+  spender   : address;
+  token_id  : Token.T;
+  new_allowance : nat;
+  diff      : int;
+};
+
+type event_map_value = [nat, int];
+type event_map_key = [address, address, Token.T];
+
+const _approve = (approve: approve, approvals: Approvals.T): Approvals.T => {
+  const { owner, spender, token_id, old_value, new_value } = approve;
+  const amount = Approvals.get_amount(approvals, owner, spender, token_id);
+  assert_with_error(amount == old_value, Errors.unsafe_approval);
+  assert_with_error(owner == Tezos.get_sender(), Errors.not_owner);
+  return Approvals.set_amount(approvals, owner, spender, token_id, new_value);
+};
+
+export const approve = <A, L>(
+    to_approve: approvals,
+    storage: Storage<A, L>
+): [list<operation>, Storage<A, L>] => {
+    let event_approvals: map<event_map_key, event_map_value> = Map.empty;
+    let newApprovals: Approvals.T = Storage.get_approvals(storage);
+    let finalOperations = list([]);
+
+    for (const a of to_approve) {
+        newApprovals = _approve(a, newApprovals);
+
+        const key: event_map_key = [a.owner, a.spender, a.token_id];
+        const oldData: option<event_map_value> = Map.find_opt(key, event_approvals);
+
+        let diff: int = 0;
+        match(oldData) {
+        when(Some(data)): do { diff = data[1] + (a.new_value - a.old_value)};
+        when(None): do { diff = a.new_value - a.old_value };
+    };
+        event_approvals = Map.add(key, [a.new_value, diff], event_approvals);
+    }
+    let finalEventApprovals: list<operation> = Map.fold(
+        ([acc, [key, value]]: [list<operation>, [event_map_key, event_map_value]]) => {
+            if (value[1] != 0) {
+                const event_data: allowance_update_type = {
+                    owner: key[0],
+                    spender: key[1],
+                    token_id: key[2],
+                    new_allowance: value[0],
+                    diff: value[1]
+                };
+               const event_balance = Tezos.emit("%allowance_update", event_data);
+               return list([event_balance, ...acc]);
+            }
+            return acc;
+        },
+        event_approvals,
+        list([])
+    )
+
+    /** Reverse event list **/
+
+    for (const op of finalEventApprovals) {    
+      finalOperations = list([op, ...finalOperations]);
+    }
+
+    const newStorage = Storage.set_approvals(storage, newApprovals);
+
+    return [finalOperations, newStorage];
+};

@@ -142,7 +142,7 @@ export const transfer = <T>(t: TZIP12.transfer, s: storage<T>): ret<T> => {
    const process_atomic_transfer = (from_: address) =>
       ([ledger, t]: [ledger, TZIP12.atomic_trans]): ledger => {
          const { to_, token_id, amount } = t;
-         ignore(token_id);
+         ignore(token_id); // Review: should be assert(token_id == 0);
          const _ = assert_authorisation(s.operators, from_);
          let l = decrease_token_amount_for_user(ledger, from_, amount);
          return increase_token_amount_for_user(l, to_, amount)

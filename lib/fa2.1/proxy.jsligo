@@ -1,0 +1,17 @@
+
+type Fa21Ticket = ticket<[nat, option<bytes>]>;
+type Transfer = {
+  tickets: list<Fa21Ticket>,
+  action: (tickets: list<Fa21Ticket>) => list<operation>
+};
+
+type Storage = unit;
+type Parameter =
+  | ["Default", Transfer];
+
+@entry
+const main = (p: Parameter, s: Storage) : [list<operation>, Storage] => {
+  return match(p) {
+    when(Default({ tickets, action })): do { return [action(tickets), s] };
+  };
+};
