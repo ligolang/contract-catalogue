@@ -10,7 +10,7 @@ export type ledger_module<L> = {
   increase : (p : [L, owner, Token.T, Amount.T]) => L;
   decrease : (p : [L, owner, Token.T, Amount.T]) => L;
   balance_of : (p: [L, owner, Token.T]) => Amount.T;
-  supply: (p: [L, Token.T]) => Amount.T;
+  supply: (p: [L, Token.T]) => option<Amount.T>;
 };
 
 //@inline
@@ -41,9 +41,8 @@ export const increase_token_amount_for_user = <L>(
 export const get_supply = <L>(
   ledger_module: ledger_module<L>,
   token_id: Token.T
-): Amount.T => {
-  return ledger_module.supply([ledger_module.data, token_id]);
-};
+): option<Amount.T> =>
+  ledger_module.supply([ledger_module.data, token_id]);
 
 //@inline
 export const get_for_user = <L>(
@@ -142,9 +141,13 @@ export namespace Single_asset {
   };
 
   export const supply = (
-    [ledger, _token_id]: [L, Token.T]
-  ): Amount.T => {
-    return get_supply(ledger);
+    [ledger, token_id]: [L, Token.T]
+  ): option<Amount.T> => {
+    if (token_id == 0n) {
+      return Some(get_supply(ledger));
+    } else {
+      return None();
+    }
   };
 
   export const ledger_module = (data: L): ledger_module<L> => {
@@ -187,12 +190,13 @@ export namespace Multi_asset {
     return { ...ledger, ledger: assets };
   };
 
-  export const get_supply = (ledger: L, token_id: Token.T): Amount.T => {
-    return match(Big_map.find_opt(token_id, ledger.supply)) {
-      when(Some(n)): do { return n };
-      when(None()): do { return (0 as nat) };
-    };
-  };
+  export const supply = (
+    [ledger, token_id]: [L, Token.T]
+  ): option<Amount.T> =>
+    Big_map.find_opt(token_id, ledger.supply);
+
+  export const get_supply = (ledger: L, token_id: Token.T): Amount.T =>
+    Option.value(0n, supply([ledger, token_id]))
   
   export const set_supply = (ledger: L, token_id: Token.T, value: Amount.T): L => {
     const supply = Big_map.update(token_id, Some(value), ledger.supply);
@@ -241,12 +245,6 @@ export namespace Multi_asset {
     const value = get_for_user(ledger, owner, token_id);
 
     return Common_Asset.balance_of(value);
-  };
-
-  export const supply = (
-    [ledger, token_id]: [L, Token.T]
-  ): Amount.T => {
-    return get_supply(ledger, token_id);
   };
 
   export const ledger_module = (data: L): ledger_module<L> => {
@@ -316,10 +314,10 @@ export namespace NFT {
 
   export const supply = (
     [ledger, token_id]: [L, Token.T]
-  ): Amount.T => {
+  ): option<Amount.T> => {
     return match(get_for_user(ledger, token_id)) {
-      when(Some(_)): do { return (1 as nat) };
-      when(None()): do { return (0 as nat) };
+      when(Some(_)): Some(1n);
+      when(None()): None();
     };
   };
 
