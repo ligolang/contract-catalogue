@@ -4,43 +4,78 @@
 #import "./data/storage.jsligo" "Storage"
 #import "./data/admin.jsligo" "Admin"
 
-type ExtendedStorage = {
-   admin: Admin.T;
-};
-type ParametricStorage = Storage.T;
-type Ledger = Ledger.ledger_module<Ledger.Multi_asset.L>;
-export type Storage = ParametricStorage<ExtendedStorage, Ledger.Multi_asset.L>;
+//type ExtendedStorage = {
+//   admin: Admin.T;
+//};
+//type ParametricStorage = Storage.T;
+//type Ledger = Ledger.ledger_module<Ledger.Multi_asset.L>;
+//export type Storage = ParametricStorage<ExtendedStorage, Ledger.Multi_asset.L>;
 
-export const get_total_supply = (token_id: Token.T, s: Storage) : nat => {
+export type Storage = Storage.T;
+type LedgerModule = Ledger.ledger_module;
+
+export type get_total_supply_T = Token.T;
+export type get_total_supply_R = nat;
+
+export const get_total_supply = <A, L>(
+    token_id: get_total_supply_T,
+    s: Storage<A, L>,
+    ledgerModule: LedgerModule<L>
+) : get_total_supply_R =>
+  Option.value(0n, ledgerModule.supply([s.assets, token_id]));
+  
+ /*{
     return match(Big_map.find_opt(token_id, s.assets.supply)) {
         when(Some(n)): do { return n };
         when(None): do { return 0n };
     };
-};
+};*/
 
-export const balance_of = (params: {owner: address; token_id: Token.T}, s: Storage) : nat => {
-   const key = [params.owner, params.token_id];
-    return match(Big_map.find_opt(key, s.assets.ledger)) {
-        when(Some(n)): do { return n };
-        when(None): do { return 0n };
+export type get_balance_T = {owner: address; token_id: Token.T};
+export type get_balance_R = nat;
+
+export const get_balance = <A, L>(
+    params: get_balance_T,
+    s: Storage<A, L>,
+    ledgerModule: LedgerModule<L>
+) : get_balance_R =>
+  ledgerModule.balance_of([s.assets, params.owner, params.token_id]);
+
+export type is_token_T = Token.T;
+export type is_token_R = bool;
+
+export const is_token = <A, L>(
+    token_id: is_token_T,
+    s: Storage<A, L>,
+    ledgerModule: LedgerModule<L>
+) : is_token_R =>
+    match (ledgerModule.supply([s.assets, token_id])) {
+        when(Some(_n)): true;
+        when(None): false;
     };
-};
 
-export const is_token = (token_id: Token.T, s: Storage) : bool => {
-    return match(Big_map.find_opt(token_id, s.assets.supply)) {
-        when(Some(_n)): do { return true };
-        when(None): do { return false };
-    };
-};
+export type get_token_metadata_T = Token.T;
+export type get_token_metadata_R = map<string, bytes>;
 
-export const get_token_metadata = (token_id: Token.T, s: Storage) : map<string, bytes> => {
+export const get_token_metadata = <A, L>(
+    token_id: get_token_metadata_T,
+    s: Storage<A, L>,
+    _ledgerModule: LedgerModule<L>
+) : get_token_metadata_R => {
     return match(Big_map.find_opt(token_id, s.token_metadata)) {
         when(Some(token)): do { return token.token_info };
         when(None): do { return Map.empty };
     };
 };
 
-export const get_allowance = (params: {owner: address; spender: address; token_id: nat}, s: Storage) : nat => {
+export type get_allowance_T = {owner: address; spender: address; token_id: nat};
+export type get_allowance_R = nat;
+
+export const get_allowance = <A, L>(
+    params: get_allowance_T,
+    s: Storage<A, L>,
+    _ledgerModule: LedgerModule<L>
+) : get_allowance_R => {
     const key = [params.owner, params.spender, params.token_id];
     return match(Big_map.find_opt(key, s.approvals)) {
         when(Some(n)): do { return n };
@@ -48,7 +83,14 @@ export const get_allowance = (params: {owner: address; spender: address; token_i
     };
 };
 
-export const is_operator = (params: {owner: address; operator: address; token_id: nat}, s: Storage) : bool => {
+export type is_operator_T = {owner: address; operator: address; token_id: nat};
+export type is_operator_R = bool;
+
+export const is_operator = <A, L>(
+    params: is_operator_T,
+    s: Storage<A, L>,
+    _ledgerModule: LedgerModule<L>
+) : is_operator_R => {
     return match(s.operators) {
         when(Some(operators)): do {
             return match(Big_map.find_opt([params.owner, params.token_id], operators)) {
