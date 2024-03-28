@@ -1,11 +1,11 @@
 // An implementaion of FA2 Interface (TZIP-12) for NFT
-#import "./fa2/nft/nft.impl.jsligo" "NFT"
-#import "./fa2/nft/extendable_nft.impl.jsligo" "NFTExtendable"
+export #import "./fa2/nft/nft.impl.jsligo" "NFT"
+export #import "./fa2/nft/extendable_nft.impl.jsligo" "NFTExtendable"
 
 // An implementaion of FA2 Interface (TZIP-12) for a Single Asset Token
-#import "./fa2/asset/single_asset.impl.jsligo" "SingleAsset"
-#import "./fa2/asset/extendable_single_asset.impl.jsligo" "SingleAssetExtendable"
+export #import "./fa2/asset/single_asset.impl.jsligo" "SingleAsset"
+export #import "./fa2/asset/extendable_single_asset.impl.jsligo" "SingleAssetExtendable"
 
 // An implementaion of FA2 Interface (TZIP-12) for a Multi Asset Token
-#import "./fa2/asset/multi_asset.impl.jsligo" "MultiAsset"
-#import "./fa2/asset/extendable_multi_asset.impl.jsligo" "MultiAssetExtendable"
+export #import "./fa2/asset/multi_asset.impl.jsligo" "MultiAsset"
+export #import "./fa2/asset/extendable_multi_asset.impl.jsligo" "MultiAssetExtendable"
