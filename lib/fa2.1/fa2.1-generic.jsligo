@@ -3,24 +3,22 @@
  * This implementation of FA2.1 norm is work in progress, this implementation is not yet ready for production.
  */
 
-#import "./data/errors.jsligo" "Errors"
-#import "./data/metadata.jsligo" "Metadata"
-#import "./data/token.jsligo" "Token"
-#import "./data/ledger.jsligo" "Ledger"
-#import "./data/operators.jsligo" "Operators"
-#import "./data/approvals.jsligo" "Approvals"
-#import "./data/tokenMetadata.jsligo" "TokenMetadata"
-#import "./data/storage.jsligo" "Storage"
-
-#import "./entrypoints/transfer.jsligo" "Transfer"
-#import "./entrypoints/balance_of.jsligo" "Balance_of"
-#import "./entrypoints/update.jsligo" "Update"
-#import "./entrypoints/approve.jsligo" "Approve"
-#import "./entrypoints/export_ticket.jsligo" "Export_ticket"
-#import "./entrypoints/lambda_export.jsligo" "Lambda_export"
-#import "./entrypoints/import_ticket.jsligo" "Import_ticket"
-
-#import "views.jsligo" "Views"
+export #import "./data/errors.jsligo" "Errors"
+export #import "./data/metadata.jsligo" "Metadata"
+export #import "./data/token.jsligo" "Token"
+export #import "./data/ledger.jsligo" "Ledger"
+export #import "./data/operators.jsligo" "Operators"
+export #import "./data/approvals.jsligo" "Approvals"
+export #import "./data/tokenMetadata.jsligo" "TokenMetadata"
+export #import "./data/storage.jsligo" "Storage"
+export #import "./entrypoints/transfer.jsligo" "Transfer"
+export #import "./entrypoints/balance_of.jsligo" "Balance_of"
+export #import "./entrypoints/update.jsligo" "Update"
+export #import "./entrypoints/approve.jsligo" "Approve"
+export #import "./entrypoints/export_ticket.jsligo" "Export_ticket"
+export #import "./entrypoints/lambda_export.jsligo" "Lambda_export"
+export #import "./entrypoints/import_ticket.jsligo" "Import_ticket"
+export #import "views.jsligo" "Views"
 
 type LedgerModule = Ledger.ledger_module;
 export type Storage = Storage.T;
