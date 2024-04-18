@@ -1,7 +1,7 @@
-#import "../common/assertions.jsligo" "Assertions"
-#import "../common/errors.mligo" "Errors"
-#import "../common/tzip12.datatypes.jsligo" "TZIP12"
-#import "../common/tzip16.datatypes.jsligo" "TZIP16"
+[@public] #import "../common/assertions.jsligo" "Assertions"
+[@public] #import "../common/errors.mligo" "Errors"
+[@public] #import "../common/tzip12.datatypes.jsligo" "TZIP12"
+[@public] #import "../common/tzip16.datatypes.jsligo" "TZIP16"
 
 type ledger = (address, nat) big_map
 

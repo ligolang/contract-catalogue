@@ -1,12 +1,8 @@
-#import "../common/assertions.jsligo" "Assertions"
-
-#import "../common/errors.mligo" "Errors"
-
-#import "../common/tzip12.datatypes.jsligo" "TZIP12"
-
-#import "../common/tzip12.interfaces.jsligo" "TZIP12Interface"
-
-#import "../common/tzip16.datatypes.jsligo" "TZIP16"
+export #import "../common/assertions.jsligo" "Assertions"
+export #import "../common/errors.mligo" "Errors"
+export #import "../common/tzip12.datatypes.jsligo" "TZIP12"
+export #import "../common/tzip12.interfaces.jsligo" "TZIP12Interface"
+export #import "../common/tzip16.datatypes.jsligo" "TZIP16"
 
 #import "./extendable_single_asset.impl.jsligo" "SingleAssetExtendable"
 
