@@ -33,19 +33,41 @@ export type Interface<A, L> = {
    approve: (ps : [Approve.T, Storage<A, L>]) => [list<operation>, Storage<A, L>],
    export_ticket: (ps : [Export_ticket.T, Storage<A, L>]) => [list<operation>, Storage<A, L>],
    lambda_export: (ps : [Lambda_export.T, Storage<A, L>]) => [list<operation>, Storage<A, L>],
-   import_ticket: (ps : [Import_ticket.T, Storage<A, L>]) => [list<operation>, Storage<A, L>]
+   import_ticket: (ps : [Import_ticket.T, Storage<A, L>]) => [list<operation>, Storage<A, L>],
+};
+
+export type InterfaceViews<A, L> = {
+   get_balance: (ps: [Views.get_balance_T, Storage<A, L>]) => Views.get_balance_R,
+   get_total_supply: (ps: [Views.get_total_supply_T, Storage<A, L>]) => Views.get_total_supply_R,
+   is_operator: (ps: [Views.is_operator_T, Storage<A, L>]) => Views.is_operator_R,
+   get_allowance: (ps: [Views.get_allowance_T, Storage<A, L>]) => Views.get_allowance_R,
+   get_token_metadata: (ps: [Views.get_token_metadata_T, Storage<A, L>]) => Views.get_token_metadata_R,
+   is_token: (ps: [Views.is_token_T, Storage<A, L>]) => Views.is_token_R,
 };
 
 export const make = <A, L>(makeLedger: (l: L) => LedgerModule<L>) : Interface<A, L> => {
    const ledger = (s : Storage<A, L>) : LedgerModule<L> => makeLedger(s.assets);
 
    return {
-      transfer:         ([p, s]) => Transfer.transfer(p, s, ledger(s)),
-      balance_of:       ([p, s]) => Balance_of.balance_of(p, s, ledger(s)),
-      update_operators: ([p, s]) => Update.update_ops(p, s),
-      approve:          ([p, s]) => Approve.approve(p, s),
-      export_ticket:    ([p, s]) => Export_ticket.export_tickets(p, s, ledger(s)),
-      lambda_export:    ([p, s]) => Lambda_export.lambda_export(p, s, ledger(s)),
-      import_ticket:    ([p, s]) => Import_ticket.import_tickets(p, s, ledger(s))
+      transfer:           ([p, s]) => Transfer.transfer(p, s, ledger(s)),
+      balance_of:         ([p, s]) => Balance_of.balance_of(p, s, ledger(s)),
+      update_operators:   ([p, s]) => Update.update_ops(p, s),
+      approve:            ([p, s]) => Approve.approve(p, s),
+      export_ticket:      ([p, s]) => Export_ticket.export_tickets(p, s, ledger(s)),
+      lambda_export:      ([p, s]) => Lambda_export.lambda_export(p, s, ledger(s)),
+      import_ticket:      ([p, s]) => Import_ticket.import_tickets(p, s, ledger(s)),
+   };
+};
+
+export const makeViews = <A, L>(makeLedger: (l: L) => LedgerModule<L>) : InterfaceViews<A, L> => {
+   const ledger = (s : Storage<A, L>) : LedgerModule<L> => makeLedger(s.assets);
+
+   return {
+      get_balance:        ([p, s]) => Views.get_balance(p, s, ledger(s)),
+      get_total_supply:   ([p, s]) => Views.get_total_supply(p, s, ledger(s)),
+      is_operator:        ([p, s]) => Views.is_operator(p, s, ledger(s)),
+      get_allowance:      ([p, s]) => Views.get_allowance(p, s, ledger(s)),
+      get_token_metadata: ([p, s]) => Views.get_token_metadata(p, s, ledger(s)),
+      is_token:           ([p, s]) => Views.is_token(p, s, ledger(s)),
    };
 };

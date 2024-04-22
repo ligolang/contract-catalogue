@@ -2,11 +2,27 @@
 
 #import "./fa2.1-generic.jsligo" "Generic"
 
+//// This is an NFT marketplace derived from the generic FA2.1 implementation.
+
+/// The main customisation happens in the two declarations below.
+///
+/// The Ledger.NFT.L type and associated Ledger.NFT.ledger_module
+/// are used to keep track of token-specific information. An NFT
+/// it records the owner of each token, but, for example, in a simple
+/// currency-like financial asset (e.g. fa2.1-single-asset.jsligo),
+/// the ledger type and module would keep track of the amount owned by
+/// each "shareholder-like" account.
+
 export type Storage = Generic.Storage<unit, Ledger.NFT.L>;
 
 const specialised : Generic.Interface<unit, Ledger.NFT.L> =
-Generic.make(Ledger.NFT.ledger_module)
+  Generic.make(Ledger.NFT.ledger_module);
 
+const specialisedViews : Generic.InterfaceViews<unit, Ledger.NFT.L> =
+  Generic.makeViews(Ledger.NFT.ledger_module);
+
+/// Following that, the entry points and views are exported from the
+/// specialised implementation:
 @entry const transfer = (p, s) => specialised.transfer([p, s]);
 @entry const balance_of = (p, s) => specialised.balance_of([p, s]);
 @entry const update_operators = (p, s) => specialised.update_operators([p, s]);
@@ -14,3 +30,13 @@ Generic.make(Ledger.NFT.ledger_module)
 @entry const export_ticket = (p, s) => specialised.export_ticket([p, s]);
 @entry const lambda_export = (p, s) => specialised.lambda_export([p, s]);
 @entry const import_ticket = (p, s) => specialised.import_ticket([p, s]);
+
+@view const get_balance = (p, s) => specialisedViews.get_balance([p, s]);
+@view const get_total_supply = (p, s) => specialisedViews.get_total_supply([p, s]);
+@view const is_operator = (p, s) => specialisedViews.is_operator([p, s]);
+@view const get_allowance = (p, s) => specialisedViews.get_allowance([p, s]);
+@view const get_token_metadata = (p, s) => specialisedViews.get_token_metadata([p, s]);
+@view const is_token = (p, s) => specialisedViews.is_token([p, s]);
+
+/// You can then add your own entry points like you would do in any contract, by adding e.g.
+@view const get_marketplace_name = (_params: unit, _s: Storage) : string => "My NFT Marketplace";

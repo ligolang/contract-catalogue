@@ -5,7 +5,10 @@
 export type Storage = Generic.Storage<unit, Ledger.Multi_asset.L>;
 
 const specialised : Generic.Interface<unit, Ledger.Multi_asset.L> =
-  Generic.make(Ledger.Multi_asset.ledger_module)
+  Generic.make(Ledger.Multi_asset.ledger_module);
+
+const specialisedViews : Generic.InterfaceViews<unit, Ledger.Multi_asset.L> =
+  Generic.makeViews(Ledger.Multi_asset.ledger_module);
 
 @entry const transfer = (p, s) => specialised.transfer([p, s]);
 @entry const balance_of = (p, s) => specialised.balance_of([p, s]);
@@ -14,3 +17,10 @@ const specialised : Generic.Interface<unit, Ledger.Multi_asset.L> =
 @entry const export_ticket = (p, s) => specialised.export_ticket([p, s]);
 @entry const lambda_export = (p, s) => specialised.lambda_export([p, s]);
 @entry const import_ticket = (p, s) => specialised.import_ticket([p, s]);
+
+@view const get_balance = (p, s) => specialisedViews.get_balance([p, s]);
+@view const get_total_supply = (p, s) => specialisedViews.get_total_supply([p, s]);
+@view const is_operator = (p, s) => specialisedViews.is_operator([p, s]);
+@view const get_allowance = (p, s) => specialisedViews.get_allowance([p, s]);
+@view const get_token_metadata = (p, s) => specialisedViews.get_token_metadata([p, s]);
+@view const is_token = (p, s) => specialisedViews.is_token([p, s]);
