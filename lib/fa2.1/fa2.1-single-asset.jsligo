@@ -1,6 +1,4 @@
-#import "./data/ledger.jsligo" "Ledger"
-
-#import "./fa2.1-generic.jsligo" "Generic"
+export #import "./fa2.1-generic.jsligo" "Generic"
 
 
 export type Storage = Generic.Storage<unit, Ledger.Single_asset.L>;

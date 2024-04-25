@@ -1,6 +1,4 @@
-#import "./data/ledger.jsligo" "Ledger"
-
-#import "./fa2.1-generic.jsligo" "Generic"
+export #import "./fa2.1-generic.jsligo" "Generic"
 
 //// This is an NFT marketplace derived from the generic FA2.1 implementation.
 

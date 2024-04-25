@@ -30,7 +30,7 @@ type operator_update_event =
     operator_update: list<operator_update>; 
 };
 
-type unit_update =
+export type unit_update =
 | ["AddOperator", operator]
 | ["RemoveOperator", operator];
 
