@@ -49,7 +49,7 @@ export const mint = <A, L>(
 ): [list<operation>, Storage<A, L>] => {
     let operations = list([]);
     let finalOperations = list([]);
-  // assert_with_error(storage.extension.admin == Tezos.get_sender(), Errors.not_admin);
+  // Assert.Error.assert(storage.extension.admin == Tezos.get_sender(), Errors.not_admin);
 
   let oldSupply = Ledger.get_supply(ledger, mint.token_id);
   const balance = Ledger.get_for_user(ledger, mint.to_, mint.token_id);
@@ -75,7 +75,7 @@ export const mint = <A, L>(
   let token_info = TokenMetadata.get_token_info(storage.token_metadata, mint.token_id);
   let newTokenMetadata = TokenMetadata.set_token_info(storage.token_metadata, mint.token_id, token_info);
   if (Map.size(token_info) == (0 as nat) && Map.size(new_token_info) == (0 as nat)) {
-    token_info = Option.unopt_with_error(mint.token_info, "Token info must be provided");
+    token_info = Option.value_with_error("Token info must be provided", mint.token_info);
   };
   if(Map.size(new_token_info) > (0 as nat)) {
     newTokenMetadata = TokenMetadata.set_token_info(storage.token_metadata, mint.token_id, new_token_info);

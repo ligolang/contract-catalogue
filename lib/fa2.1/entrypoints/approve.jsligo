@@ -35,8 +35,8 @@ type event_map_key = [address, address, Token.T];
 const _approve = (approve: approve, approvals: Approvals.T): Approvals.T => {
   const { owner, spender, token_id, old_value, new_value } = approve;
   const amount = Approvals.get_amount(approvals, owner, spender, token_id);
-  assert_with_error(amount == old_value, Errors.unsafe_approval);
-  assert_with_error(owner == Tezos.get_sender(), Errors.not_owner);
+  Assert.Error.assert(amount == old_value, Errors.unsafe_approval);
+  Assert.Error.assert(owner == Tezos.get_sender(), Errors.not_owner);
   return Approvals.set_amount(approvals, owner, spender, token_id, new_value);
 };
 

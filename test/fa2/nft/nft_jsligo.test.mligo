@@ -237,7 +237,7 @@ let _test_update_operator_remove_operator_and_transfer1 () =
     ] : FA2_NFT.TZIP12.update_operators)) 0tez in
   let storage = Test.get_storage orig.addr in
   let operator_tokens = Big_map.find_opt (owner4,op1) storage.operators in
-  let operator_tokens = Option.unopt operator_tokens in
+  let operator_tokens = Option.value_with_error "option is None" operator_tokens in
   Test.assert (operator_tokens = Set.literal [5n])
 let test_update_operator_remove_operator_and_transfer1 =
   _test_update_operator_remove_operator_and_transfer1 ()
