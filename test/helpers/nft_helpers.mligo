@@ -1,7 +1,7 @@
 #import "../../lib/fa2/nft/nft.impl.mligo" "FA2_NFT"
 
 let get_initial_storage () =
-  let () = Test.reset_state 8n ([
+  let () = Test.Next.State.reset 8n ([
     1000000tez;
     1000000tez;
     1000000tez;
@@ -13,7 +13,7 @@ let get_initial_storage () =
   ] : tez list) in
 
   let baker = Test.Next.Account.address 7n in
-  let () = Test.set_baker baker in
+  let () = Test.Next.State.set_baker baker in
 
   let owner1 = Test.Next.Account.address 0n in
   let owner2 = Test.Next.Account.address 1n in
@@ -89,24 +89,24 @@ let assert_balances
   let (owner1, token_id_1) = a in
   let (owner2, token_id_2) = b in
   let (owner3, token_id_3) = c in
-  let storage = Test.Next.Typed_address.get_storage contract_address in
+  let storage:FA2_NFT.storage = Test.Next.Typed_address.get_storage contract_address in
   let ledger = storage.ledger in
   let () = match (Big_map.find_opt token_id_1 ledger) with
-    Some amt -> assert (amt = owner1)
-  | None -> Test.failwith "incorret address"
+    Some amt -> Assert.assert (amt = owner1)
+  | None -> Test.Next.Assert.failwith "incorret address"
   in
   let () = match (Big_map.find_opt token_id_2 ledger) with
-    Some amt ->  assert (amt = owner2)
-  | None -> Test.failwith "incorret address"
+    Some amt ->  Assert.assert (amt = owner2)
+  | None -> Test.Next.Assert.failwith "incorret address"
   in
   let () = match (Big_map.find_opt token_id_3 ledger) with
-    Some amt -> assert (amt = owner3)
-  | None -> Test.failwith "incorret address"
+    Some amt -> Assert.assert (amt = owner3)
+  | None -> Test.Next.Assert.failwith "incorret address"
   in
   ()
 
 let assert_error (result : test_exec_result) (error : FA2_NFT.Errors.t) =
   match result with
-    Success _ -> Test.failwith "This test should fail"
-  | Fail (Rejected (err, _))  -> assert (Test.Next.Compare.eq err (Test.Next.Michelson.eval error))
-  | Fail _ -> Test.failwith "invalid test failure"
+    Success _ -> Test.Next.Assert.failwith "This test should fail"
+  | Fail (Rejected (err, _))  -> Assert.assert (Test.Next.Compare.eq err (Test.Next.Michelson.eval error))
+  | Fail _ -> Test.Next.Assert.failwith "invalid test failure"

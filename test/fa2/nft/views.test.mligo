@@ -30,7 +30,7 @@ let test_get_balance_view =
   in
   let storage = Test.Next.Typed_address.get_storage orig_v.addr in
   let get_balance = storage.get_balance in
-  assert (get_balance = Some 1n)
+  Assert.assert (get_balance = Some 1n)
 
 (* Test total_supply view *)
 let test_total_supply_view =
@@ -54,7 +54,7 @@ let test_total_supply_view =
   in
   let storage = Test.Next.Typed_address.get_storage orig_v.addr in
   let total_supply = storage.total_supply in
-  assert (total_supply = Some 1n)
+  Assert.assert (total_supply = Some 1n)
 
 
 (* Test total_supply view - undefined token *)
@@ -107,6 +107,6 @@ let test_is_operator_view =
   in
   let storage = Test.Next.Typed_address.get_storage orig_v.addr in
   let is_operator = storage.is_operator in
-  assert (is_operator = Some true)
+  Assert.assert (is_operator = Some true)
 
 

@@ -20,7 +20,7 @@ module List_helper = struct
 end
 
 let get_initial_storage (a, b, c : nat * nat * nat) =
-  let () = Test.reset_state 6n ([] : tez list) in
+  let () = Test.Next.State.reset 6n ([] : tez list) in
 
   let owner1 = Test.Next.Account.address 0n in
   let owner2 = Test.Next.Account.address 1n in
@@ -95,15 +95,15 @@ let assert_balances
   let storage = Test.Next.Typed_address.get_storage contract_address in
   let ledger = storage.ledger in
   let () = match (Big_map.find_opt owner1 ledger) with
-    Some amt -> assert (amt = balance1)
+    Some amt -> Assert.assert (amt = balance1)
   | None -> failwith "incorret address"
   in
   let () = match (Big_map.find_opt owner2 ledger) with
-    Some amt ->  assert (amt = balance2)
+    Some amt ->  Assert.assert (amt = balance2)
   | None -> failwith "incorret address"
   in
   let () = match (Big_map.find_opt owner3 ledger) with
-    Some amt -> assert (amt = balance3)
+    Some amt -> Assert.assert (amt = balance3)
   | None -> failwith "incorret address"
   in
   ()
@@ -146,7 +146,7 @@ let test_atomic_transfer_failure_not_operator =
   let result = Test.Next.Typed_address.transfer orig.taddr (Transfer transfer_requests) 0tez in
   match result with
     Success _ -> failwith "This test should fail"
-  | Fail (Rejected (err, _))  -> assert (Test.Next.Compare.eq err (Test.Next.Michelson.eval FA2_single_asset.Errors.not_operator))
+  | Fail (Rejected (err, _))  -> Assert.assert (Test.Next.Compare.eq err (Test.Next.Michelson.eval FA2_single_asset.Errors.not_operator))
   | Fail _ -> failwith "invalid test failure"
 
 (* 3. transfer failure insuffient balance *)
@@ -167,7 +167,7 @@ let test_atomic_transfer_failure_not_suffient_balance =
   let result = Test.Next.Typed_address.transfer orig.taddr (Transfer transfer_requests) 0tez in
   match result with
     Success _ -> failwith "This test should fail"
-  | Fail (Rejected (err, _))  -> assert (Test.Next.Compare.eq err (Test.Next.Michelson.eval FA2_single_asset.Errors.ins_balance))
+  | Fail (Rejected (err, _))  -> Assert.assert (Test.Next.Compare.eq err (Test.Next.Michelson.eval FA2_single_asset.Errors.ins_balance))
   | Fail _ -> failwith "invalid test failure"
 
 (* 4. transfer successful 0 amount & self transfer *)
@@ -206,7 +206,7 @@ let test_transfer_failure_transitive_operators =
   let result = Test.Next.Typed_address.transfer orig.taddr (Transfer transfer_requests) 0tez in
   match result with
     Success _ -> failwith "This test should fail"
-  | Fail (Rejected (err, _))  -> assert (Test.Next.Compare.eq err (Test.Next.Michelson.eval FA2_single_asset.Errors.not_operator))
+  | Fail (Rejected (err, _))  -> Assert.assert (Test.Next.Compare.eq err (Test.Next.Michelson.eval FA2_single_asset.Errors.not_operator))
   | Fail _ -> failwith "invalid test failure"
 
 (* Balance of *)
@@ -227,7 +227,7 @@ let test_empty_transfer_and_balance_of =
   let _ = Test.Next.Typed_address.transfer_exn orig.taddr (Balance_of balance_of_requests) 0tez in
 
   let callback_storage = Test.Next.Typed_address.get_storage orig_callback.taddr in
-  assert (callback_storage = ([] : nat list))
+  Assert.assert (callback_storage = ([] : nat list))
 
 (* 7. duplicate balance_of requests *)
 let test_balance_of_requests_with_duplicates =
@@ -253,7 +253,7 @@ let test_balance_of_requests_with_duplicates =
   let _ = Test.Next.Typed_address.transfer_exn orig.taddr (Balance_of balance_of_requests) 0tez in
 
   let callback_storage = Test.Next.Typed_address.get_storage orig_callback.taddr in
-  assert (callback_storage = ([10n; 5n; 10n]))
+  Assert.assert (callback_storage = ([10n; 5n; 10n]))
 
 (* 8. 0 balance if does not hold any tokens (not in ledger) *)
 let test_balance_of_0_balance_if_address_does_not_hold_tokens =
@@ -279,7 +279,7 @@ let test_balance_of_0_balance_if_address_does_not_hold_tokens =
   let _ = Test.Next.Typed_address.transfer_exn orig.taddr (Balance_of balance_of_requests) 0tez in
 
   let callback_storage = Test.Next.Typed_address.get_storage orig_callback.taddr in
-  assert (callback_storage = ([10n; 5n; 0n]))
+  Assert.assert (callback_storage = ([10n; 5n; 0n]))
 
 (* Update operators *)
 
@@ -312,7 +312,7 @@ let test_update_operator_remove_operator_and_transfer =
   let result = Test.Next.Typed_address.transfer orig.taddr (Transfer transfer_requests) 0tez in
   match result with
     Success _ -> failwith "This test should fail"
-  | Fail (Rejected (err, _))  -> assert (Test.Next.Compare.eq err (Test.Next.Michelson.eval FA2_single_asset.Errors.not_operator))
+  | Fail (Rejected (err, _))  -> Assert.assert (Test.Next.Compare.eq err (Test.Next.Michelson.eval FA2_single_asset.Errors.not_operator))
   | Fail _ -> failwith "invalid test failure"
 
 (* 10. Add operator & do transfer - success *)
