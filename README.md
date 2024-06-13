@@ -99,10 +99,10 @@ type mint = {
 [@entry]
 let mint (mint : mint) (s : storage): ret =
   let sender = Tezos.get_sender () in
-  let () = assert (sender = s.extension.admin) in
+  let () = Assert.assert (sender = s.extension.admin) in
   let () = NFT.Assertions.assert_token_exist s.token_metadata mint.token_id in
   (* Check that nobody owns the token already *)
-  let () = assert (Option.is_none (Big_map.find_opt mint.token_id s.ledger)) in
+  let () = Assert.assert (Option.is_none (Big_map.find_opt mint.token_id s.ledger)) in
   let s = NFT.set_balance s mint.owner mint.token_id in
   [], s
 ```

@@ -41,7 +41,7 @@ export const decrease_approved_amount = (
   amount_: Amount.T
 ): T => {
   let balance_ = get_amount(approvals, from_, spender, token_id);
-  assert_with_error((balance_ >= amount_), Errors.ins_balance);
+  Assert.Error.assert((balance_ >= amount_), Errors.ins_balance);
   balance_ = abs(balance_ - amount_);
 
   return set_amount(approvals, from_, spender, token_id, balance_);

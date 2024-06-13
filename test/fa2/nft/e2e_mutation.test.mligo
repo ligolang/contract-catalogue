@@ -36,4 +36,4 @@ let test_mutation =
           (fun ((_, mutation) : unit * mutation) -> let () = Test.log mutation in
              ())
           ms in
-      Test.failwith "Some mutation also passes the tests! ^^"
+      Test.Next.Assert.failwith "Some mutation also passes the tests! ^^"

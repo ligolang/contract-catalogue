@@ -10,7 +10,7 @@
 */
 
 export const assert_update_permission = (owner: address): unit => {
-    return assert_with_error(
+    return Assert.Error.assert(
         (owner == (Tezos.get_sender())),
         Errors.only_sender_manage_operators
     )
@@ -27,8 +27,8 @@ export const assert_token_exist = (
     token_id: nat
 ): unit => {
     const _ =
-        Option.unopt_with_error(
-            Big_map.find_opt(token_id, token_metadata),
-            Errors.undefined_token
+        Option.value_with_error(
+            Errors.undefined_token,
+            Big_map.find_opt(token_id, token_metadata)
         )
 };

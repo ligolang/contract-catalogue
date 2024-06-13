@@ -97,9 +97,9 @@ const create_ticket = <A, L>(
    const newLedger = Ledger.decrease_token_amount_for_user(ledger, from_, token_id, amount);
    let newStorage = Storage.set_approvals(storage, authorizedApprovals);
    newStorage = Storage.set_ledger(newStorage, newLedger.data);
-   const ticket = Option.unopt_with_error(
-      Tezos.create_ticket([token_id, None()], amount),
-      Errors.cannot_create_ticket
+   const ticket = Option.value_with_error(
+      Errors.cannot_create_ticket,
+      Tezos.Next.Ticket.create([token_id, None()], amount)
    );
    return [operations, ticket, newLedger, newStorage];
 };
@@ -121,7 +121,7 @@ export const export_tickets = <A, L>(
          newLedger = updatedLedger;
          operations = list([...newOps, ...operations]);
          const ticketReceiver: contract<ExportedTicket> = Tezos.get_contract_with_error(request.to_, Errors.invalid_destination);
-         operations = list([Tezos.transaction(ticket, 0tez, ticketReceiver), ...operations]);
+         operations = list([Tezos.Next.Operation.transaction(ticket, 0tez, ticketReceiver), ...operations]);
          finalStorage = newStorage;
       }
    }
@@ -134,8 +134,8 @@ export const export_tickets = <A, L>(
             operations = list([...newOps, ...operations]);
             let ticketOps : list<ExportedTicket> = list([ticket]);
             let finalTicketOps : list<ExportTicketsTo> = list([{to_: request.to_, ticketsToExport: ticketOps}]);
-            const ticketReceiver: contract<list<ExportTicketsTo>> = Tezos.get_contract_with_error(Option.unopt(op.destination), Errors.invalid_destination);
-            operations = list([Tezos.transaction(finalTicketOps, 0tez, ticketReceiver), ...operations]);
+            const ticketReceiver: contract<list<ExportTicketsTo>> = Tezos.get_contract_with_error(Option.value_with_error("option is None", op.destination), Errors.invalid_destination);
+            operations = list([Tezos.Next.Operation.transaction(finalTicketOps, 0tez, ticketReceiver), ...operations]);
             finalStorage = newStorage;
          }
       }

@@ -108,12 +108,12 @@ export const remove_operator = (
 
 //  ledger
 export const is_owner_of = (ledger: ledger, token_id: nat, owner: address): bool => {
-   const current_owner = Option.unopt(Big_map.find_opt(token_id, ledger));
+   const current_owner = Option.value_with_error("option is None", Big_map.find_opt(token_id, ledger));
    return (current_owner == owner)
 };
 
 export const assert_owner_of = (ledger: ledger, token_id: nat, owner: address): unit =>
-   assert_with_error(is_owner_of(ledger, token_id, owner), Errors.ins_balance);
+   Assert.Error.assert(is_owner_of(ledger, token_id, owner), Errors.ins_balance);
 
 export const transfer_token_from_user_to_user = (
    ledger: ledger,
@@ -171,7 +171,7 @@ export const balance_of = <T>(b: TZIP12.balance_of, s: storage<T>): ret<T> => {
       return ({ request: request, balance: balance_ })
    };
    const callback_param = List.map(get_balance_info, requests);
-   const operation = Tezos.transaction(Main(callback_param), 0mutez, callback);
+   const operation = Tezos.Next.Operation.transaction(Main(callback_param), 0mutez, callback);
    return [list([operation]), s]
 };
 

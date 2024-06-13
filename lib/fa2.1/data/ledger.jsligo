@@ -72,7 +72,7 @@ export namespace Common_Asset {
 
   export const sub_to_val = (amount_: Amount.T, old_value: option<Amount.T>): Amount.T => {
     const value = balance_of(old_value);
-    assert_with_error(value >= amount_, Errors.ins_balance);
+    Assert.Error.assert(value >= amount_, Errors.ins_balance);
 
     return abs(value - amount_);
   };

@@ -46,7 +46,7 @@ export const balance_of = <A, L>(
    const { requests, callback } = balance;
 
    return [list([
-      Tezos.transaction(
+      Tezos.Next.Operation.transaction(
          List.map(
             (request) => get_balance_info(storage, ledgerModule, request),
             requests

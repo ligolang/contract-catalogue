@@ -102,7 +102,7 @@ let decrease_token_amount_for_user
   (amount_ : nat)
 : ledger =
   let balance_ = get_for_user ledger from_ token_id in
-  let () = assert_with_error (balance_ >= amount_) Errors.ins_balance in
+  let () = Assert.Error.assert (balance_ >= amount_) Errors.ins_balance in
   let balance_ = abs (balance_ - amount_) in
   let ledger = set_for_user ledger from_ token_id balance_ in
   ledger
@@ -121,9 +121,9 @@ let increase_token_amount_for_user
 // Storage
 let assert_token_exist (type a) (s : a storage) (token_id : nat) : unit =
   let _ =
-    Option.unopt_with_error
-      (Big_map.find_opt token_id s.token_metadata)
-      Errors.undefined_token in
+    Option.value_with_error
+      Errors.undefined_token
+      (Big_map.find_opt token_id s.token_metadata) in
   ()
 
 let set_ledger (type a) (s : a storage) (ledger : ledger) =
@@ -176,7 +176,7 @@ let balance_of (type a) (b : TZIP12.balance_of) (s : a storage) : a ret =
      balance = balance_
     } in
   let callback_param = List.map get_balance_info requests in
-  let operation = Tezos.transaction (Main callback_param) 0mutez callback in
+  let operation = Tezos.Next.Operation.transaction (Main callback_param) 0mutez callback in
   ([operation] : operation list), s
 
 let update_operators (type a)
