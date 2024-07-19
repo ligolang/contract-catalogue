@@ -68,8 +68,7 @@ ifndef SUITE
 	@$(call test,fa2/multi_asset_jsligo.test.mligo)
 	@$(call test,fa2/nft/nft_jsligo.test.mligo)
 	@$(call test,fa2/nft/views.test.mligo)
-
-##  @$(call test,fa2/nft/e2e_mutation.test.mligo)
+	@$(call test,fa2/nft/e2e_mutation.test.mligo)
 else
 	@$(call test,$(SUITE).test.mligo)
 endif

@@ -108,13 +108,11 @@ export const remove_operator = (
 
 //  ledger
 export const is_owner_of = (ledger: ledger, token_id: nat, owner: address): bool => {
-   // const current_owner = Option.unopt(Big_map.find_opt(token_id, ledger));
    const current_owner = Option.value_with_error ("option is None", Big_map.find_opt(token_id, ledger));
    return (current_owner == owner)
 };
 
 export const assert_owner_of = (ledger: ledger, token_id: nat, owner: address): unit =>
-   // assert_with_error(is_owner_of(ledger, token_id, owner), Errors.ins_balance);
    Assert.Error.assert(is_owner_of(ledger, token_id, owner), Errors.ins_balance);
 
 
