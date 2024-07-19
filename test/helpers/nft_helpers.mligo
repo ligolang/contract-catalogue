@@ -1,4 +1,4 @@
-#import "../../lib/fa2/nft/nft.impl.mligo" "FA2_NFT"
+[@public] #import "../../lib/fa2/nft/nft.impl.mligo" "FA2_NFT"
 
 let get_initial_storage () =
   let () = Test.Next.State.reset 8n ([
@@ -89,19 +89,19 @@ let assert_balances
   let (owner1, token_id_1) = a in
   let (owner2, token_id_2) = b in
   let (owner3, token_id_3) = c in
-  let storage:FA2_NFT.storage = Test.Next.Typed_address.get_storage contract_address in
+  let storage = Test.Next.Typed_address.get_storage contract_address in
   let ledger = storage.ledger in
   let () = match (Big_map.find_opt token_id_1 ledger) with
     Some amt -> Assert.assert (amt = owner1)
-  | None -> Test.Next.Assert.failwith "incorret address"
+  | None -> Test.Next.Assert.failwith "incorrect address"
   in
   let () = match (Big_map.find_opt token_id_2 ledger) with
     Some amt ->  Assert.assert (amt = owner2)
-  | None -> Test.Next.Assert.failwith "incorret address"
+  | None -> Test.Next.Assert.failwith "incorrect address"
   in
   let () = match (Big_map.find_opt token_id_3 ledger) with
     Some amt -> Assert.assert (amt = owner3)
-  | None -> Test.Next.Assert.failwith "incorret address"
+  | None -> Test.Next.Assert.failwith "incorrect address"
   in
   ()
 

@@ -11,7 +11,7 @@
 
 export const assert_update_permission = (owner: address): unit => {
     return Assert.Error.assert(
-        (owner == (Tezos.get_sender())),
+        (owner == Tezos.get_sender()),
         Errors.only_sender_manage_operators
     )
 }
@@ -19,7 +19,7 @@ export const assert_update_permission = (owner: address): unit => {
 /**
 * Check if the token id is already defined
 * @param token_metadata : bigmap of token definitions
-* @param token_id : the token id to test 
+* @param token_id : the token id to test
 */
 
 export const assert_token_exist = (
@@ -28,7 +28,7 @@ export const assert_token_exist = (
 ): unit => {
     const _ =
         Option.value_with_error(
-            Errors.undefined_token,
-            Big_map.find_opt(token_id, token_metadata)
+          Errors.undefined_token,
+          Big_map.find_opt(token_id, token_metadata)
         )
 };

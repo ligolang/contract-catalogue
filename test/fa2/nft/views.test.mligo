@@ -16,7 +16,7 @@ let test_get_balance_view =
 
 
   let initial_storage : ViewsTestContract.storage = {
-    main_contract = Test.to_address orig.taddr;
+    main_contract = Test.Next.Typed_address.to_address orig.taddr;
     get_balance   = (None : nat option);
     total_supply  = (None : nat option);
     is_operator   = (None : bool option);
@@ -25,12 +25,12 @@ let test_get_balance_view =
 
   let orig_v = Test.Next.Originate.contract (contract_of ViewsTestContract) initial_storage 0tez in
 
-  let _ = Test.Next.Typed_address.transfer_exn orig_v.addr
+  let _ = Test.Next.Typed_address.transfer_exn orig_v.taddr
     (Get_balance (owner1,1n) : ViewsTestContract parameter_of) 0tez
   in
-  let storage = Test.Next.Typed_address.get_storage orig_v.addr in
+  let storage = Test.Next.Typed_address.get_storage orig_v.taddr in
   let get_balance = storage.get_balance in
-  Assert.assert (get_balance = Some 1n)
+  Test.Next.Assert.assert (get_balance = Some 1n)
 
 (* Test total_supply view *)
 let test_total_supply_view =
@@ -40,7 +40,7 @@ let test_total_supply_view =
 
 
   let initial_storage : ViewsTestContract.storage = {
-    main_contract = Test.to_address orig.taddr;
+    main_contract = Test.Next.Typed_address.to_address orig.taddr;
     get_balance   = (None : nat option);
     total_supply  = (None : nat option);
     is_operator   = (None : bool option);
@@ -49,12 +49,12 @@ let test_total_supply_view =
 
   let orig_v = Test.Next.Originate.contract (contract_of ViewsTestContract) initial_storage 0tez in
 
-  let _ = Test.Next.Typed_address.transfer_exn orig_v.addr
+  let _ = Test.Next.Typed_address.transfer_exn orig_v.taddr
     (Total_supply 2n : ViewsTestContract parameter_of) 0tez
   in
-  let storage = Test.Next.Typed_address.get_storage orig_v.addr in
+  let storage = Test.Next.Typed_address.get_storage orig_v.taddr in
   let total_supply = storage.total_supply in
-  Assert.assert (total_supply = Some 1n)
+  Test.Next.Assert.assert (total_supply = Some 1n)
 
 
 (* Test total_supply view - undefined token *)
@@ -65,7 +65,7 @@ let test_total_supply_undefined_token_view =
 
 
   let initial_storage : ViewsTestContract.storage = {
-    main_contract = Test.to_address orig.taddr;
+    main_contract = Test.Next.Typed_address.to_address orig.taddr;
     get_balance   = (None : nat option);
     total_supply  = (None : nat option);
     is_operator   = (None : bool option);
@@ -89,7 +89,7 @@ let test_is_operator_view =
 
 
   let initial_storage : ViewsTestContract.storage = {
-    main_contract = Test.to_address orig.taddr;
+    main_contract = Test.Next.Typed_address.to_address orig.taddr;
     get_balance   = (None : nat option);
     total_supply  = (None : nat option);
     is_operator   = (None : bool option);
@@ -98,14 +98,14 @@ let test_is_operator_view =
 
   let orig_v = Test.Next.Originate.contract (contract_of ViewsTestContract) initial_storage 0tez in
 
-  let _ = Test.Next.Typed_address.transfer_exn orig_v.addr
+  let _ = Test.Next.Typed_address.transfer_exn orig_v.taddr
     (Is_operator {
       owner    = owner1;
       operator = op1;
       token_id = 1n;
     } : ViewsTestContract parameter_of) 0tez
   in
-  let storage = Test.Next.Typed_address.get_storage orig_v.addr in
+  let storage = Test.Next.Typed_address.get_storage orig_v.taddr in
   let is_operator = storage.is_operator in
   Assert.assert (is_operator = Some true)
 

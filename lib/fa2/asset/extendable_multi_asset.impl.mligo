@@ -123,7 +123,8 @@ let assert_token_exist (type a) (s : a storage) (token_id : nat) : unit =
   let _ =
     Option.value_with_error
       Errors.undefined_token
-      (Big_map.find_opt token_id s.token_metadata) in
+      (Big_map.find_opt token_id s.token_metadata)
+      in
   ()
 
 let set_ledger (type a) (s : a storage) (ledger : ledger) =

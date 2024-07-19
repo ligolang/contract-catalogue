@@ -150,7 +150,7 @@ let _test_empty_transfer_and_balance_of (contract: fa2_nft) =
   let _ = Test.Next.Typed_address.transfer_exn orig.taddr (Balance_of balance_of_requests) 0tez in
 
   let callback_storage = Test.Next.Typed_address.get_storage orig_callback.taddr in
-  Test.Next.Assert.assert (callback_storage = ([] : nat list))
+  Test.Next.Assert.assert (Test.Next.Compare.eq callback_storage ([] : nat list))
 
 let test_empty_transfer_and_balance_of = _test_empty_transfer_and_balance_of (contract_of FA2_NFT)
 
@@ -204,7 +204,7 @@ let _test_balance_of_requests_with_duplicates (contract: fa2_nft) =
   let _ = Test.Next.Typed_address.transfer_exn orig.taddr (Balance_of balance_of_requests) 0tez in
 
   let callback_storage = Test.Next.Typed_address.get_storage orig_callback.taddr in
-  Test.Next.Assert.assert (callback_storage = ([1n; 1n; 1n; 0n]))
+  Test.Next.Assert.assert (Test.Next.Compare.eq callback_storage ([1n; 1n; 1n; 0n]))
 let test_balance_of_requests_with_duplicates
 
   = _test_balance_of_requests_with_duplicates (contract_of FA2_NFT)
@@ -233,7 +233,7 @@ let _test_balance_of_0_balance_if_address_does_not_hold_tokens (contract: fa2_nf
     let _ = Test.Next.Typed_address.transfer_exn orig.taddr (Balance_of balance_of_requests) 0tez in
 
     let callback_storage = Test.Next.Typed_address.get_storage orig_callback.taddr in
-    Test.Next.Assert.assert (callback_storage = ([1n; 1n; 0n]))
+    Test.Next.Assert.assert (Test.Next.Compare.eq callback_storage ([1n; 1n; 0n]))
 let test_balance_of_0_balance_if_address_does_not_hold_tokens =
 
   _test_balance_of_0_balance_if_address_does_not_hold_tokens (contract_of FA2_NFT)
@@ -292,8 +292,8 @@ let _test_update_operator_remove_operator_and_transfer1 (contract: fa2_nft) =
 
   let storage = Test.Next.Typed_address.get_storage orig.taddr in
   let operator_tokens = Big_map.find_opt (owner4,op1) storage.operators in
-  let operator_tokens = Option.value_with_error "option is None" operator_tokens in
-  Test.Next.Assert.assert (operator_tokens = Set.literal [5n])
+  let operator_tokens = Option.value_with_error "Option is None" operator_tokens in
+  Test.Next.Assert.assert (Test.Next.Compare.eq operator_tokens (Set.literal [5n]))
 let test_update_operator_remove_operator_and_transfer1 =
 
   _test_update_operator_remove_operator_and_transfer1 (contract_of FA2_NFT)
