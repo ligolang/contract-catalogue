@@ -292,7 +292,7 @@ let _test_update_operator_remove_operator_and_transfer1 (contract: fa2_nft) =
 
   let storage = Test.Next.Typed_address.get_storage orig.taddr in
   let operator_tokens = Big_map.find_opt (owner4,op1) storage.operators in
-  let operator_tokens = Option.value_with_error "Option is None" operator_tokens in
+  let operator_tokens = Option.value_with_error "option is None" operator_tokens in
   Test.Next.Assert.assert (Test.Next.Compare.eq operator_tokens (Set.literal [5n]))
 let test_update_operator_remove_operator_and_transfer1 =
 

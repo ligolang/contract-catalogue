@@ -94,7 +94,7 @@ let remove_operator
 
 //module Ledger = struct
 let is_owner_of (ledger : ledger) (token_id : nat) (owner : address) : bool =
-  let current_owner: address = Option.value_with_error "Option is None" (Big_map.find_opt token_id ledger) in
+  let current_owner: address = Option.value_with_error "option is None" (Big_map.find_opt token_id ledger) in
   current_owner = owner
 
 let assert_owner_of (ledger : ledger) (token_id : nat) (owner : address) : unit =

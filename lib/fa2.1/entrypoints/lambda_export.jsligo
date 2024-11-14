@@ -117,7 +117,7 @@ export const lambda_export = <A, L>(
       ([[lt, l, s, ops], tk]) => {
          const [ticketOps, ticket, updatedLedger, updatedStorage] = create_ticket(s, tk, l);
          let combinedOps = list([...ops, ...ticketOps]);
-         return [list([ticket, ...lt]), updatedLedger, updatedStorage, combinedOps];
+         return [List.cons(ticket, lt), updatedLedger, updatedStorage, combinedOps];
       },
       [list([]), ledger, storage, finalOperations],
       ticketsToExport

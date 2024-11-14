@@ -134,7 +134,7 @@ export const export_tickets = <A, L>(
             operations = list([...newOps, ...operations]);
             let ticketOps : list<ExportedTicket> = list([ticket]);
             let finalTicketOps : list<ExportTicketsTo> = list([{to_: request.to_, ticketsToExport: ticketOps}]);
-            const ticketReceiver: contract<list<ExportTicketsTo>> = Tezos.get_contract_with_error(Option.value_with_error("Option is None", op.destination), Errors.invalid_destination);
+            const ticketReceiver: contract<list<ExportTicketsTo>> = Tezos.get_contract_with_error(Option.value_with_error("option is None", op.destination), Errors.invalid_destination);
             operations = list([Tezos.Next.Operation.transaction(finalTicketOps, 0tez, ticketReceiver), ...operations]);
             finalStorage = newStorage;
          }

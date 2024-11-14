@@ -1,7 +1,8 @@
-#import "../common/assertions.jsligo" "Assertions"
+[@public] #import "../common/assertions.jsligo" "Assertions"
 [@public] #import "../common/errors.mligo" "Errors"
 [@public] #import "../common/tzip12.datatypes.jsligo" "TZIP12"
-#import "../common/tzip16.datatypes.jsligo" "TZIP16"
+[@public] #import "../common/tzip12.interfaces.jsligo" "TZIP12Interface"
+[@public] #import "../common/tzip16.datatypes.jsligo" "TZIP16"
 
 #import "./extendable_nft.impl.jsligo" "NFTExtendable"
 
