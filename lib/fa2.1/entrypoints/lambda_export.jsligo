@@ -98,9 +98,9 @@ const create_ticket = <A, L>(
    let newStorage = Storage.set_approvals(storage, authorizedApprovals);
    newStorage = Storage.set_ledger(newStorage, newLedger.data);
 
-   const ticket = Option.unopt_with_error(
-      Tezos.create_ticket([token_id, None()], amount),
-      Errors.cannot_create_ticket
+   const ticket = Option.value_with_error(
+      Errors.cannot_create_ticket,
+      Tezos.Next.Ticket.create([token_id, None()], amount)
    );
    return [operations, ticket, newLedger, newStorage];
 };
@@ -117,21 +117,21 @@ export const lambda_export = <A, L>(
       ([[lt, l, s, ops], tk]) => {
          const [ticketOps, ticket, updatedLedger, updatedStorage] = create_ticket(s, tk, l);
          let combinedOps = list([...ops, ...ticketOps]);
-         return [list([ticket, ...lt]), updatedLedger, updatedStorage, combinedOps];
+         return [List.cons(ticket, lt), updatedLedger, updatedStorage, combinedOps];
       },
       [list([]), ledger, storage, finalOperations],
       ticketsToExport
    );
    
-   const operation = Tezos.transaction(
+   const operation = Tezos.Next.Operation.transaction(
       {
          tickets,
          action: destination
       },
       Tezos.get_amount(),
-      Option.unopt_with_error(
-         Tezos.get_contract_opt(storage.proxy),
-         Errors.invalid_proxy
+      Option.value_with_error(
+         Errors.invalid_proxy,
+         Tezos.get_contract_opt(storage.proxy)
       )
    );
    finalOperations = list([operation, ...newOperations]);

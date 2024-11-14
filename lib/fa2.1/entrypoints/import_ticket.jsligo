@@ -52,7 +52,7 @@ const make_transfer = (from_: option<address>, txs: list<transaction>): transfer
 
 // @inline
 const assert_ticketer_is_self_address = (ticketer : address) : unit =>
-    assert_with_error(Tezos.get_self_address() == ticketer, Errors.invalid_ticket);
+    Assert.Error.assert (Tezos.get_self_address() == ticketer, Errors.invalid_ticket);
 
 const import_ticket_to = <L>(
     to_ : address,
@@ -60,7 +60,7 @@ const import_ticket_to = <L>(
     [transactions, ledger, operations] : [list<transaction>, LedgerModule<L>, list<operation>]
 ) : [list<transaction>, LedgerModule<L>, list<operation>] => {
     let operationsEvent = operations;
-    const [[ticketer, [[token_id, _data], amount]], _] = Tezos.read_ticket(imported_ticket);
+    const [[ticketer, [[token_id, _data], amount]], _] = Tezos.Next.Ticket.read (imported_ticket);
     assert_ticketer_is_self_address(ticketer);
     const newLedger = Ledger.increase_token_amount_for_user(ledger, to_, token_id, amount);
     const transaction = make_transaction(Some(to_), token_id, amount);

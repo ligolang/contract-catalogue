@@ -1,7 +1,6 @@
 [@public] #import "../common/assertions.jsligo" "Assertions"
 [@public] #import "../common/errors.mligo" "Errors"
 [@public] #import "../common/tzip12.datatypes.jsligo" "TZIP12"
-[@public] #import "../common/tzip12.interfaces.jsligo" "TZIP12Interface"
 [@public] #import "../common/tzip16.datatypes.jsligo" "TZIP16"
 
 type ledger = (nat, address) big_map
@@ -36,15 +35,14 @@ let assert_authorisation
   (from_ : address)
   (token_id : nat)
 : unit =
-  let sender_ = (Tezos.get_sender ()) in
-  if (sender_ = from_)
-  then ()
-  else
+  let sender_ = Tezos.get_sender () in
+  if sender_ <> from_
+  then
     let authorized =
       match Big_map.find_opt (from_, sender_) operators with
         Some (a) -> a
       | None -> Set.empty in
-    if Set.mem token_id authorized then () else failwith Errors.not_operator
+    if not (Set.mem token_id authorized) then failwith Errors.not_operator
 
 let is_operator
   (operators, owner, operator, token_id : (operators * address * address * nat))
@@ -96,11 +94,11 @@ let remove_operator
 
 //module Ledger = struct
 let is_owner_of (ledger : ledger) (token_id : nat) (owner : address) : bool =
-  let current_owner = Option.unopt (Big_map.find_opt token_id ledger) in
+  let current_owner: address = Option.value_with_error "option is None" (Big_map.find_opt token_id ledger) in
   current_owner = owner
 
 let assert_owner_of (ledger : ledger) (token_id : nat) (owner : address) : unit =
-  assert_with_error (is_owner_of ledger token_id owner) Errors.ins_balance
+  Assert.Error.assert (is_owner_of ledger token_id owner) Errors.ins_balance
 
 let transfer_token_from_user_to_user
   (ledger : ledger)
@@ -176,7 +174,7 @@ let balance_of (type a) (b : TZIP12.balance_of) (s : a storage) : a ret =
      balance = balance_
     } in
   let callback_param = List.map get_balance_info requests in
-  let operation = Tezos.transaction (Main callback_param) 0mutez callback in
+  let operation = Tezos.Next.Operation.transaction (Main callback_param) 0mutez callback in
   ([operation] : operation list), s
 
 let update_operators (type a)

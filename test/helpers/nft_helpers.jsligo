@@ -1,0 +1,124 @@
+export #import "../../lib/fa2/nft/nft.impl.jsligo" "FA2_NFT"
+
+export function get_initial_storage () {
+  Test.Next.State.reset(8n, [
+    1000000tez,
+    1000000tez,
+    1000000tez,
+    1000000tez,
+    1000000tez,
+    1000000tez,
+    1000000tez,
+    1000000tez,
+  ] as list<tez>);
+
+  const baker = Test.Next.Account.address(7n);
+  Test.Next.State.set_baker(baker);
+
+  const owner1 = Test.Next.Account.address(0n);
+  const owner2 = Test.Next.Account.address(1n);
+  const owner3 = Test.Next.Account.address(2n);
+  const owner4 = Test.Next.Account.address(6n);
+
+  const owners = list([owner1, owner2, owner3, owner4]);
+
+  const op1 = Test.Next.Account.address(3n);
+  const op2 = Test.Next.Account.address(4n);
+  const op3 = Test.Next.Account.address(5n);
+
+  const ops = list([op1, op2, op3]);
+
+  const ledger = Big_map.literal([
+    [1n, owner1],
+    [2n, owner2],
+    [3n, owner3],
+    [4n, owner4],
+    [5n, owner4]
+  ]);
+
+  const operators = Big_map.literal([
+    [[owner1, op1], Set.literal([1n])],
+    [[owner2, op1], Set.literal([2n])],
+    [[owner3, op1], Set.literal([3n])],
+    [[op1   , op3], Set.literal([1n])],
+    [[owner4, op1], Set.literal([4n, 5n])]
+  ]);
+
+  const token_metadata = Big_map.literal([
+    [1n, ({token_id: 1n, token_info: Map.empty as map<string, bytes>}
+          as FA2_NFT.TZIP12.tokenMetadataData)],
+    [2n, ({token_id: 2n, token_info: Map.empty as map<string, bytes>}
+          as FA2_NFT.TZIP12.tokenMetadataData)],
+    [3n, ({token_id: 3n, token_info: Map.empty as map<string, bytes>}
+          as FA2_NFT.TZIP12.tokenMetadataData)],
+    [4n, ({token_id: 3n, token_info: Map.empty as map<string, bytes>}
+          as FA2_NFT.TZIP12.tokenMetadataData)],
+    [5n, ({token_id: 3n, token_info: Map.empty as map<string, bytes>}
+          as FA2_NFT.TZIP12.tokenMetadataData)]
+  ]) as FA2_NFT.TZIP12.tokenMetadata;
+
+  const metadata = Big_map.literal([
+    ["", bytes`tezos-storage:data`],
+    ["data", bytes`{
+	"name":"FA2",
+	"description":"Example FA2 implementation",
+	"version":"0.1.0",
+	"license":{"name":"MIT"},
+	"authors":["Benjamin Fuentes<benjamin.fuentes@marigold.dev>"],
+	"homepage":"",
+	"source":{"tools":["Ligo"], "location":"https://github.com/ligolang/contract-catalogue/tree/main/lib/fa2"},
+	"interfaces":["TZIP-012"],
+	"errors":[],
+	"views":[]
+
+}`]]);
+
+  const initial_storage : FA2_NFT.storage = {
+    ledger         : ledger,
+    token_metadata : token_metadata,
+    operators      : operators,
+    metadata       : metadata
+  };
+
+  return [initial_storage, owners, ops];
+}
+
+export function assert_balances
+  (contract_address:
+     typed_address <parameter_of FA2_NFT, FA2_NFT.storage>,
+   [a, b, c]:
+     [[address, nat], [address, nat], [address, nat]]) {
+  const [owner1, token_id_1] = a;
+  const [owner2, token_id_2] = b;
+  const [owner3, token_id_3] = c;
+  const storage = Test.Next.Typed_address.get_storage(contract_address);
+  const ledger = storage.ledger;
+  const _x =
+    match(Big_map.find_opt(token_id_1, ledger)) {
+      when(Some(amt)) : Assert.assert(amt == owner1);
+      when(None) : Test.Next.Assert.failwith("incorrect address");
+    };
+
+  const _y =
+    match(Big_map.find_opt(token_id_2, ledger)) {
+      when(Some(amt)) : Assert.assert (amt == owner2);
+      when(None) : Test.Next.Assert.failwith("incorrect address");
+    };
+
+  const _z =
+    match(Big_map.find_opt(token_id_3, ledger)) {
+      when(Some(amt)) : Assert.assert (amt == owner3);
+      when(None) : Test.Next.Assert.failwith("incorrect address");
+    };
+
+  return unit;
+};
+
+export const assert_error =
+  (result: test_exec_result, error : FA2_NFT.Errors.t) =>
+  match(result) {
+    when(Success(_)) : Test.Next.Assert.failwith("This test should fail");
+    when(Fail(Rejected(err, _))) :
+      Assert.assert (Test.Next.Compare.eq(err, Test.Next.Michelson.eval(error)))
+    when(Fail(_)) : Test.Next.Assert.failwith("invalid test failure")
+  };

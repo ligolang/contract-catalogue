@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-ligo_compiler?=docker run --rm -v "$(PWD)":"$(PWD)" -w "$(PWD)" ligolang/ligo:1.2.0
+ligo_compiler?=docker run --rm -v "$(PWD)":"$(PWD)" -w "$(PWD)" ligolang/ligo:1.6.0
 # ^ Override this variable when you run make command by make <COMMAND> ligo_compiler=<LIGO_EXECUTABLE>
 # ^ Otherwise use default one (you'll need docker)
 PROTOCOL_OPT?=
@@ -68,8 +68,7 @@ ifndef SUITE
 	@$(call test,fa2/multi_asset_jsligo.test.mligo)
 	@$(call test,fa2/nft/nft_jsligo.test.mligo)
 	@$(call test,fa2/nft/views.test.mligo)
-
-##  @$(call test,fa2/nft/e2e_mutation.test.mligo)
+	@$(call test,fa2/nft/e2e_mutation.test.mligo)
 else
 	@$(call test,$(SUITE).test.mligo)
 endif

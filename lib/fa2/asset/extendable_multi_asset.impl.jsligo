@@ -113,7 +113,7 @@ export const decrease_token_amount_for_user = (
    [ledger, from_, token_id, amount_]: [ledger, address, nat, nat]
 ): ledger => {
    let balance_ = get_for_user([ledger, from_, token_id]);
-   assert_with_error((balance_ >= amount_), Errors.ins_balance);
+   Assert.Error.assert((balance_ >= amount_), Errors.ins_balance);
    balance_ = abs(balance_ - amount_);
    return set_for_user([ledger, from_, token_id, balance_])
 };
@@ -167,7 +167,7 @@ export const balance_of = <T>(b: TZIP12.balance_of, s: storage<T>): ret<T> => {
       return ({ request: request, balance: balance_ })
    };
    const callback_param = List.map(get_balance_info, requests);
-   const operation = Tezos.transaction(Main(callback_param), 0mutez, callback);
+   const operation = Tezos.Next.Operation.transaction(Main(callback_param), 0mutez, callback);
    return [list([operation]), s]
 };
 

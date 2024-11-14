@@ -27,13 +27,13 @@ let originate_and_test_e2e contract =
   ()
 
 let test_mutation =
-  match Test.mutation_test_all (contract_of  FA2_NFT.NFT) originate_and_test_e2e
+  match Test.Next.Mutation.All.func (contract_of  FA2_NFT) originate_and_test_e2e
   with
     [] -> ()
   | ms ->
       let () =
         List.iter
-          (fun ((_, mutation) : unit * mutation) -> let () = Test.log mutation in
+          (fun ((_, mutation) : unit * mutation) -> let () = Test.Next.IO.log mutation in
              ())
           ms in
-      Test.failwith "Some mutation also passes the tests! ^^"
+      Test.Next.Assert.failwith "Some mutation also passes the tests! ^^"

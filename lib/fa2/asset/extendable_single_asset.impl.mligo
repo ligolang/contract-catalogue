@@ -88,7 +88,7 @@ let decrease_token_amount_for_user
   (amount_ : nat)
 : ledger =
   let tokens = get_for_user ledger from_ in
-  let () = assert_with_error (tokens >= amount_) Errors.ins_balance in
+  let () = Assert.Error.assert (tokens >= amount_) Errors.ins_balance in
   let tokens = abs (tokens - amount_) in
   let ledger = update_for_user ledger from_ tokens in
   ledger
@@ -156,7 +156,7 @@ let balance_of (type a) (b : TZIP12.balance_of) (s : a storage) : a ret =
      balance = balance_
     } in
   let callback_param = List.map get_balance_info requests in
-  let operation = Tezos.transaction (Main callback_param) 0mutez callback in
+  let operation = Tezos.Next.Operation.transaction (Main callback_param) 0mutez callback in
   ([operation] : operation list), s
 
 (**

@@ -3,7 +3,8 @@
 [@public] #import "../common/tzip12.datatypes.jsligo" "TZIP12"
 [@public] #import "../common/tzip12.interfaces.jsligo" "TZIP12Interface"
 [@public] #import "../common/tzip16.datatypes.jsligo" "TZIP16"
-#import "./extendable_nft.impl.mligo" "NFTExtendable"
+
+#import "./extendable_nft.impl.jsligo" "NFTExtendable"
 
 type ledger = NFTExtendable.ledger
 
@@ -40,8 +41,7 @@ let lift (s : storage) : unit NFTExtendable.storage =
   }
 
 [@inline]
-let unlift (ret : operation list * unit NFTExtendable.storage) : ret =
-  let ops, s = ret in
+let unlift (ops, s : operation list * unit NFTExtendable.storage) : ret =
   ops,
   {
    ledger = s.ledger;

@@ -19,7 +19,7 @@ type total_supply_update_type =
 @layout("comb")
 {
   token_id: Token.T,
-  new_total_supply: nat,
+  new_total_supply: Amount.T,
   diff: int
 };
 

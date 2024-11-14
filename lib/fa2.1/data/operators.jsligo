@@ -29,7 +29,7 @@ export const assert_authorisation = (
 };
 
 const assert_update_permission = (owner: owner): unit => {
-   assert_with_error(owner == Tezos.get_sender(), Errors.only_sender_manage_operators);
+   Assert.Error.assert(owner == Tezos.get_sender(), Errors.only_sender_manage_operators);
 };
 
 export const add_operator = (
